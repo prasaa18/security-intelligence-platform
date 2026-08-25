@@ -5,7 +5,7 @@ spring:
     mongodb:
       uri: mongodb://localhost:27017/securityintel
       database: securityintel
-      auto-index-creation: true
+      auto-index-creation: false
   servlet:
     multipart:
       max-file-size: 10MB
