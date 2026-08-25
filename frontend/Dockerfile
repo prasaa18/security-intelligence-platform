@@ -1,4 +1,4 @@
-# Multi-stage build with verbose output
+# Multi-stage build with direct Angular CLI usage
 FROM node:20 AS build
 
 WORKDIR /app
@@ -9,11 +9,8 @@ RUN npm install
 
 COPY . .
 
-# Ensure Angular CLI is available
-RUN npx ng version
-
-# Build with verbose output
-RUN npm run build -- --configuration=production --verbose
+# Use Angular CLI directly for build
+RUN npx ng build --configuration=production
 
 # Debug: Show what was created
 RUN echo "=== Build output ===" && \
@@ -22,12 +19,12 @@ RUN echo "=== Build output ===" && \
     ls -la /app/dist/ && \
     echo "=== Dist/frontend directory ===" && \
     ls -la /app/dist/frontend/ && \
-    echo "=== Finding index.html ===" && \
-    find /app -name "index.html" -type f
+    echo "=== Finding JS files ===" && \
+    find /app/dist/frontend -name "*.js" -type f
 
 FROM nginx:alpine
 
-# Copy build output - try the expected location first
+# Copy build output
 COPY --from=build /app/dist/frontend /usr/share/nginx/html/
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
