@@ -3,7 +3,7 @@ spring:
     name: security-intelligence-platform
   data:
     mongodb:
-      uri: mongodb+srv://admin:admin@cluster0.hs3mybp.mongodb.net/securityintel?retryWrites=true&w=majority
+      uri: mongodb+srv://admin:admin@cluster0.hs3mybp.mongodb.net/securityintel
       database: securityintel
       auto-index-creation: true
   servlet:
