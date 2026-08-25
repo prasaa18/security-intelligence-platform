@@ -1,3 +1,4 @@
+# Multi-stage build with verbose output
 FROM node:20 AS build
 
 WORKDIR /app
@@ -8,20 +9,23 @@ RUN npm install
 
 COPY . .
 
-# Try different build approaches
-RUN npm run build -- --configuration=production || npm run build || echo "Build failed, checking available scripts..."
+# Build with verbose output
+RUN npm run build -- --configuration=production --verbose
 
-# Debug: show what's in dist
-RUN ls -la dist/ || echo "No dist directory"
-RUN ls -la dist/frontend/ || echo "No dist/frontend directory"
-RUN ls -la dist/ || echo "Trying to find build output"
+# Debug: Show what was created
+RUN echo "=== Build output ===" && \
+    ls -la /app/ && \
+    echo "=== Dist directory ===" && \
+    ls -la /app/dist/ && \
+    echo "=== Dist/frontend directory ===" && \
+    ls -la /app/dist/frontend/ && \
+    echo "=== Finding index.html ===" && \
+    find /app -name "index.html" -type f
 
 FROM nginx:alpine
 
-# Try multiple possible build output locations
-COPY --from=build /app/dist/frontend /usr/share/nginx/html/ || \
-COPY --from=build /app/dist /usr/share/nginx/html/ || \
-echo "No build output found"
+# Copy build output - try the expected location first
+COPY --from=build /app/dist/frontend /usr/share/nginx/html/
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
