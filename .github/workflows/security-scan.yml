@@ -1,0 +1,59 @@
+name: Security Scan with Trivy
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'json'
+        output: 'trivy-report.json'
+        severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+    
+    - name: Generate service metadata
+      run: |
+        cat > service-metadata.json << EOF
+        {
+          "serviceName": "${{ github.repository }}",
+          "environment": "PRODUCTION",
+          "branch": "${{ github.ref_name }}",
+          "commit": "${{ github.sha }}",
+          "author": "${{ github.actor }}"
+        }
+        EOF
+    
+    - name: Send scan results to Security Intelligence Platform
+      run: |
+        curl -X POST ${{ secrets.SECURITY_INTEL_API_URL }}/api/integrations/scans/github-actions \
+          -H "Authorization: Bearer ${{ secrets.SCAN_INGESTION_TOKEN }}" \
+          -H "Content-Type: multipart/form-data" \
+          -F "file=@trivy-report.json" \
+          -F "metadata=@service-metadata.json"
+    
+    - name: Upload Trivy report as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: trivy-scan-report
+        path: trivy-report.json
+        retention-days: 30
+    
+    - name: Upload service metadata as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: service-metadata
+        path: service-metadata.json
+        retention-days: 30
