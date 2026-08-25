@@ -38,6 +38,9 @@ public class MongoConfig {
 
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
 
+        // Disable auto index creation to handle existing indexes
+        template.setAutoIndexCreation(false);
+
         return template;
     }
 
