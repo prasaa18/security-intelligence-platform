@@ -3,8 +3,6 @@ package com.securityintel.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
-import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
-import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -22,15 +20,6 @@ public class MongoConfig {
             new LocalDateTimeToDateConverter(),
             new DateToLocalDateTimeConverter()
         ));
-    }
-
-    @Bean
-    public MappingMongoConverter mappingMongoConverter(
-            org.springframework.data.mongodb.core.MongoTemplate mongoTemplate) {
-        MappingMongoConverter converter =
-                (MappingMongoConverter) mongoTemplate.getConverter();
-        converter.setTypeMapper(new DefaultMongoTypeMapper(null));
-        return converter;
     }
 
     // Custom converters for LocalDateTime
