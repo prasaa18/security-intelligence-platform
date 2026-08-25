@@ -5,6 +5,9 @@ import com.securityintel.mapper.EntityMapper;
 import com.securityintel.model.*;
 import com.securityintel.repository.ScanReportRepository;
 import com.securityintel.repository.SecurityFindingRepository;
+import com.securityintel.remediation.RemediationService;
+import com.securityintel.scan.ScanExecutionService;
+import com.securityintel.securitystate.SecurityStateCalculator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,11 +36,21 @@ class DashboardServiceTest {
     @Mock
     private EntityMapper entityMapper;
 
+    @Mock
+    private RemediationService remediationService;
+
+    @Mock
+    private ScanExecutionService scanExecutionService;
+
+    @Mock
+    private SecurityStateCalculator securityStateCalculator;
+
     private DashboardService dashboardService;
 
     @BeforeEach
     void setUp() {
-        dashboardService = new DashboardService(securityFindingRepository, scanReportRepository, entityMapper);
+        dashboardService = new DashboardService(securityFindingRepository, scanReportRepository, entityMapper, 
+            remediationService, scanExecutionService, securityStateCalculator);
     }
 
     @Test

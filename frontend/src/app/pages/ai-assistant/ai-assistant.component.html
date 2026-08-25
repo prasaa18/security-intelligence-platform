@@ -1,0 +1,135 @@
+<div class="ai-assistant-container">
+  <div class="page-header">
+    <h1>AI Security Assistant</h1>
+    <p class="subtitle">Context-aware security guidance powered by Gemini AI</p>
+  </div>
+
+  <div *ngIf="loading" class="loading">Checking AI configuration...</div>
+
+  <div *ngIf="!loading && !isConfigured" class="not-configured">
+    <div class="config-warning">
+      <h2>⚠️ AI Not Configured</h2>
+      <p>The Gemini AI integration is not configured. To enable AI features:</p>
+      <ol>
+        <li>Set the <code>GEMINI_API_KEY</code> environment variable in your backend</li>
+        <li>Restart the backend server</li>
+        <li>Refresh this page</li>
+      </ol>
+      <p class="note">Note: AI features require a valid Google Gemini API key.</p>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && isConfigured" class="ai-interface">
+    <div class="context-section">
+      <h3>Context Selection</h3>
+      <div class="context-inputs">
+        <div class="input-group">
+          <label>Finding ID:</label>
+          <input 
+            type="text" 
+            [(ngModel)]="selectedFindingId" 
+            placeholder="Enter finding ID for context-specific guidance"
+            class="context-input"
+          >
+        </div>
+        <div class="input-group">
+          <label>Service ID:</label>
+          <input 
+            type="text" 
+            [(ngModel)]="selectedServiceId" 
+            placeholder="Enter service ID for service-specific analysis"
+            class="context-input"
+          >
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-actions-section">
+      <h3>Quick Actions</h3>
+      <div class="quick-actions-grid">
+        <button 
+          *ngFor="let action of quickActions"
+          class="quick-action-btn"
+          (click)="executeQuickAction(action.action)"
+          [disabled]="isProcessing"
+        >
+          <span class="action-icon">{{ action.icon }}</span>
+          <span class="action-label">{{ action.label }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="chat-section">
+      <h3>AI Chat</h3>
+      <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+          <div *ngFor="let msg of chatHistory" class="chat-message" [class]="msg.role">
+            <div class="message-header">
+              <span class="message-role">{{ msg.role === 'user' ? 'You' : msg.role === 'assistant' ? 'AI Assistant' : 'System' }}</span>
+              <span class="message-time">{{ formatTime(msg.timestamp) }}</span>
+            </div>
+            <div class="message-content">
+              <div [innerHTML]="msg.message"></div>
+            </div>
+          </div>
+          <div *ngIf="chatHistory.length === 0" class="no-messages">
+            Start a conversation by using quick actions or typing a message below.
+          </div>
+        </div>
+
+        <div class="chat-input-section">
+          <div class="input-wrapper">
+            <input 
+              type="text" 
+              [(ngModel)]="chatMessage" 
+              placeholder="Ask about security priorities, remediation, or risk analysis..."
+              (keyup.enter)="sendChatMessage()"
+              [disabled]="isProcessing"
+              class="chat-input"
+            >
+            <button 
+              (click)="sendChatMessage()" 
+              [disabled]="!chatMessage.trim() || isProcessing"
+              class="send-btn"
+            >
+              {{ isProcessing ? 'Processing...' : 'Send' }}
+            </button>
+          </div>
+          <button 
+            (click)="clearChat()" 
+            class="clear-btn"
+            [disabled]="chatHistory.length === 0"
+          >
+            Clear Chat
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <h3>AI Principles</h3>
+      <div class="principles-grid">
+        <div class="principle-card">
+          <div class="principle-icon">🎯</div>
+          <div class="principle-title">Deterministic First</div>
+          <div class="principle-description">Risk scores and priorities come from the scanner/system, not AI</div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-icon">🧠</div>
+          <div class="principle-title">AI Explains Context</div>
+          <div class="principle-description">AI provides explanations and guidance based on system facts</div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-icon">🔍</div>
+          <div class="principle-title">Clear Separation</div>
+          <div class="principle-description">UI clearly distinguishes between facts and AI guidance</div>
+        </div>
+        <div class="principle-card">
+          <div class="principle-icon">🚫</div>
+          <div class="principle-title">No Invention</div>
+          <div class="principle-description">AI cannot invent facts - only explains provided data</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

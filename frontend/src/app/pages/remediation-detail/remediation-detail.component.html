@@ -1,0 +1,123 @@
+<div class="remediation-detail-container">
+  <div class="page-header">
+    <h1>Remediation Item Details</h1>
+    <button class="back-btn" (click)="router.navigate(['/remediation'])">← Back to Remediation Plan</button>
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading remediation item...</div>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div *ngIf="!loading && !error && remediationItem" class="remediation-detail">
+    <div class="detail-header">
+      <div class="header-info">
+        <span class="priority-badge" [class]="'priority-' + remediationItem.priority.toLowerCase()">
+          {{ remediationItem.priority }}
+        </span>
+        <span class="service-name">{{ remediationItem.serviceName }}</span>
+      </div>
+      <div class="header-actions">
+        <select 
+          [value]="remediationItem.remediationStatus" 
+          (change)="updateStatus($event)"
+          class="status-select"
+          [disabled]="remediationItem.remediationStatus === 'RESOLVED' || remediationItem.remediationStatus === 'ACCEPTED_RISK'">
+          <option value="NEW">New</option>
+          <option value="OPEN">Open</option>
+          <option value="IN_PROGRESS">In Progress</option>
+          <option value="RESOLVED">Resolved</option>
+          <option value="ACCEPTED_RISK">Accept Risk</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-section">
+        <h2>Item Information</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Finding ID:</span>
+            <span class="value">{{ remediationItem.findingId || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Owner Team:</span>
+            <span class="value">{{ remediationItem.teamName || 'Unassigned' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Risk Score:</span>
+            <span class="value risk-score">{{ remediationItem.riskScore || 'N/A' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Finding Status:</span>
+            <span class="value">{{ remediationItem.status }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Remediation Status:</span>
+            <span class="value">{{ remediationItem.remediationStatus }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Target Date:</span>
+            <span class="value">{{ remediationItem.targetDate || 'Not set' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h2>Timeline</h2>
+        <div class="timeline">
+          <div class="timeline-item">
+            <span class="timeline-label">First Detected:</span>
+            <span class="timeline-value">{{ formatDate(remediationItem.firstDetectedAt) }}</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-label">Last Detected:</span>
+            <span class="timeline-value">{{ formatDate(remediationItem.lastDetectedAt) }}</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-label">Latest Scan:</span>
+            <span class="timeline-value">{{ formatDate(remediationItem.latestScanAt) }}</span>
+          </div>
+          <div *ngIf="remediationItem.resolvedAt" class="timeline-item">
+            <span class="timeline-label">Resolved At:</span>
+            <span class="timeline-value">{{ formatDate(remediationItem.resolvedAt) }}</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-label">Created:</span>
+            <span class="timeline-value">{{ formatDate(remediationItem.createdAt) }}</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-label">Last Updated:</span>
+            <span class="timeline-value">{{ formatDate(remediationItem.updatedAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2>Recommended Action</h2>
+      <div class="action-content">
+        <p *ngIf="remediationItem.recommendedAction" class="action-text">
+          {{ remediationItem.recommendedAction }}
+        </p>
+        <p *ngIf="!remediationItem.recommendedAction" class="no-action">
+          No recommended action specified for this remediation item.
+        </p>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2>AI Assistance</h2>
+      <div class="ai-actions">
+        <button class="ai-btn" [routerLink]="['/ai-assistant']" [queryParams]="{findingId: remediationItem.findingId}">
+          🤖 Ask AI for Priority Explanation
+        </button>
+        <button class="ai-btn" [routerLink]="['/ai-assistant']" [queryParams]="{findingId: remediationItem.findingId}">
+          🛠️ Get Remediation Guidance
+        </button>
+      </div>
+      <p class="ai-note">
+        AI assistance requires Gemini API configuration. Visit the AI Assistant page for more details.
+      </p>
+    </div>
+  </div>
+</div>

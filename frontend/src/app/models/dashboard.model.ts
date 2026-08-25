@@ -16,7 +16,7 @@ export interface DashboardSummary {
 }
 
 export interface TopPriorityFinding {
-  cve: string;
+  cve?: string;
   serviceName: string;
   severity: string;
   riskScore: number;
@@ -29,13 +29,13 @@ export interface SecurityFinding {
   tool: string;
   scanType: string;
   serviceName: string;
-  repository: string;
+  repository?: string;
   environment: string;
   severity: string;
   cvssScore?: number;
   cve?: string;
   cwe?: string;
-  title: string;
+  title?: string;
   description?: string;
   packageName?: string;
   installedVersion?: string;
@@ -53,6 +53,10 @@ export interface SecurityFinding {
   priorityReasons?: string[];
   createdAt: string;
   updatedAt: string;
+  firstDetectedAt?: string;
+  lastDetectedAt?: string;
+  latestScanId?: string;
+  detectionState?: string;
 }
 
 export interface ScanReport {
@@ -75,12 +79,71 @@ export interface ServiceModel {
   serviceName: string;
   teamName?: string;
   environment: string;
-  businessCriticality: string;
-  internetExposed: boolean;
-  dataSensitivity: string;
+  businessCriticality?: string;
+  internetExposed?: boolean;
+  dataSensitivity?: string;
   repository?: string;
   deploymentPlatform?: string;
   owner?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface RemediationItem {
+  id: string;
+  findingId: string;
+  serviceName: string;
+  teamName?: string;
+  priority: string;
+  riskScore?: number;
+  status: string;
+  remediationStatus: string;
+  recommendedAction?: string;
+  targetDate?: string;
+  firstDetectedAt?: string;
+  lastDetectedAt?: string;
+  latestScanAt?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScanExecution {
+  id: string;
+  serviceName: string;
+  repository?: string;
+  branch?: string;
+  commitId?: string;
+  tool: string;
+  scanType: string;
+  status: string;
+  triggerType: string;
+  startedAt?: string;
+  completedAt?: string;
+  receivedAt: string;
+  totalRawFindings: number;
+  totalUniqueFindings: number;
+  criticalCount: number;
+  highCount: number;
+  mediumCount: number;
+  lowCount: number;
+  newFindings: number;
+  resolvedFindings: number;
+  unchangedFindings: number;
+  createdAt: string;
+}
+
+export interface ActionCenterDashboard {
+  immediateActions: number;
+  dueThisWeek: number;
+  staleServices: number;
+  recentlyResolved: number;
+  topRemediationItems: RemediationItem[];
+  recentScanActivity: ScanExecution[];
+}
+
+export interface ActionCenterSummary {
+  immediateActions: number;
+  dueThisWeek: number;
+  recentlyResolved: number;
 }

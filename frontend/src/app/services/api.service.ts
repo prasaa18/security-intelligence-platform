@@ -16,6 +16,10 @@ export class ApiService {
     return this.http.get<DashboardSummary>(`${this.baseUrl}/dashboard/summary`);
   }
 
+  getActionCenterDashboard(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/dashboard/action-center`);
+  }
+
   // Findings
   getAllFindings(): Observable<SecurityFinding[]> {
     return this.http.get<SecurityFinding[]>(`${this.baseUrl}/findings`);
@@ -43,7 +47,7 @@ export class ApiService {
     return this.http.get<SecurityFinding[]>(`${this.baseUrl}/findings/search`, { params });
   }
 
-  // Reports
+  // Reports (Scans)
   getAllReports(): Observable<ScanReport[]> {
     return this.http.get<ScanReport[]>(`${this.baseUrl}/reports`);
   }
@@ -58,6 +62,83 @@ export class ApiService {
     formData.append('serviceName', serviceName);
     formData.append('environment', environment);
     return this.http.post(`${this.baseUrl}/reports/upload`, formData);
+  }
+
+  // Scan Executions
+  getAllScanExecutions(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/scans`);
+  }
+
+  getScanExecutionById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/scans/${id}`);
+  }
+
+  getScanExecutionsByService(serviceName: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/scans/service/${serviceName}`);
+  }
+
+  getRecentScanExecutions(hours: number = 24): Observable<any[]> {
+    const params = new HttpParams().set('hours', hours.toString());
+    return this.http.get<any[]>(`${this.baseUrl}/scans/recent`, { params });
+  }
+
+  getStaleServicesSummary(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/scans/stale-summary`);
+  }
+
+  // Remediation Items
+  getAllRemediationItems(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/remediation`);
+  }
+
+  getRemediationItemById(id: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/remediation/${id}`);
+  }
+
+  getRemediationItemsByService(serviceName: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/remediation/service/${serviceName}`);
+  }
+
+  getRemediationItemsByPriority(priority: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/remediation/priority/${priority}`);
+  }
+
+  getRemediationItemsByTeam(teamName: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/remediation/team/${teamName}`);
+  }
+
+  getActionCenterSummary(): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/remediation/action-center`);
+  }
+
+  getTopRemediationItems(limit: number = 10): Observable<any[]> {
+    const params = new HttpParams().set('limit', limit.toString());
+    return this.http.get<any[]>(`${this.baseUrl}/remediation/top`, { params });
+  }
+
+  updateRemediationStatus(id: string, status: string): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/remediation/${id}/status`, { remediationStatus: status });
+  }
+
+  // AI Assistant
+  isAiConfigured(): Observable<boolean> {
+    return this.http.get<boolean>(`${this.baseUrl}/ai-assistant/configured`);
+  }
+
+  explainPriority(findingId: string): Observable<string> {
+    return this.http.post<string>(`${this.baseUrl}/ai-assistant/explain-priority`, { findingId });
+  }
+
+  generateRemediationGuidance(findingId: string): Observable<string> {
+    return this.http.post<string>(`${this.baseUrl}/ai-assistant/remediation-guidance`, { findingId });
+  }
+
+  generateServiceRiskSummary(serviceId: string): Observable<string> {
+    return this.http.post<string>(`${this.baseUrl}/ai-assistant/service-risk-summary`, { serviceId });
+  }
+
+  generateDailySecurityBrief(): Observable<string> {
+    return this.http.post<string>(`${this.baseUrl}/ai-assistant/daily-security-brief`, {});
   }
 
   // Services

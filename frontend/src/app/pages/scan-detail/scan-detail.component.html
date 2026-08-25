@@ -1,0 +1,148 @@
+<div class="scan-detail-container">
+  <div class="page-header">
+    <h1>Scan Execution Details</h1>
+    <button class="back-btn" (click)="router.navigate(['/scans'])">← Back to Scan History</button>
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading scan execution...</div>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div *ngIf="!loading && !error && scanExecution" class="scan-detail">
+    <div class="detail-header">
+      <div class="header-info">
+        <span class="service-name">{{ scanExecution.serviceName }}</span>
+        <span class="scan-status" [class]="getStatusClass(scanExecution.status)">
+          {{ scanExecution.status }}
+        </span>
+      </div>
+      <div class="header-actions">
+        <span class="scan-time">{{ formatDate(scanExecution.createdAt) }}</span>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-section">
+        <h2>Scan Information</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Tool:</span>
+            <span class="value">{{ scanExecution.tool }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Scan Type:</span>
+            <span class="value">{{ scanExecution.scanType }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Trigger Type:</span>
+            <span class="value trigger-badge" [class]="getTriggerTypeClass(scanExecution.triggerType)">
+              {{ scanExecution.triggerType.replace('_', ' ') }}
+            </span>
+          </div>
+          <div class="info-item">
+            <span class="label">Duration:</span>
+            <span class="value">{{ calculateDuration() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <h2>Timeline</h2>
+        <div class="timeline">
+          <div class="timeline-item">
+            <span class="timeline-label">Received:</span>
+            <span class="timeline-value">{{ formatDate(scanExecution.receivedAt) }}</span>
+          </div>
+          <div *ngIf="scanExecution.startedAt" class="timeline-item">
+            <span class="timeline-label">Started:</span>
+            <span class="timeline-value">{{ formatDate(scanExecution.startedAt) }}</span>
+          </div>
+          <div *ngIf="scanExecution.completedAt" class="timeline-item">
+            <span class="timeline-label">Completed:</span>
+            <span class="timeline-value">{{ formatDate(scanExecution.completedAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h2>Results Summary</h2>
+      <div class="results-grid">
+        <div class="result-item">
+          <span class="result-label">Total Raw Findings:</span>
+          <span class="result-value">{{ scanExecution.totalRawFindings }}</span>
+        </div>
+        <div class="result-item">
+          <span class="result-label">Total Unique Findings:</span>
+          <span class="result-value">{{ scanExecution.totalUniqueFindings }}</span>
+        </div>
+        <div class="result-item critical">
+          <span class="result-label">Critical:</span>
+          <span class="result-value">{{ scanExecution.criticalCount }}</span>
+        </div>
+        <div class="result-item high">
+          <span class="result-label">High:</span>
+          <span class="result-value">{{ scanExecution.highCount }}</span>
+        </div>
+        <div class="result-item medium">
+          <span class="result-label">Medium:</span>
+          <span class="result-value">{{ scanExecution.mediumCount }}</span>
+        </div>
+        <div class="result-item low">
+          <span class="result-label">Low:</span>
+          <span class="result-value">{{ scanExecution.lowCount }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section" *ngIf="scanExecution.status === 'SUCCESS'">
+      <h2>Comparison Results</h2>
+      <div class="comparison-grid">
+        <div class="comparison-item new">
+          <span class="comparison-label">NEW Findings:</span>
+          <span class="comparison-value">{{ scanExecution.newFindings }}</span>
+        </div>
+        <div class="comparison-item unchanged">
+          <span class="comparison-label">UNCHANGED Findings:</span>
+          <span class="comparison-value">{{ scanExecution.unchangedFindings }}</span>
+        </div>
+        <div class="comparison-item resolved">
+          <span class="comparison-label">NOT DETECTED IN LATEST SCAN:</span>
+          <span class="comparison-value">{{ scanExecution.resolvedFindings }}</span>
+        </div>
+      </div>
+      <div class="comparison-legend">
+        <div class="legend-item">
+          <span class="legend-badge new"></span>
+          <span class="legend-text">NEW: Found in this scan but not in previous scan</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-badge unchanged"></span>
+          <span class="legend-text">UNCHANGED: Found in both this and previous scan</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-badge resolved"></span>
+          <span class="legend-text">NOT DETECTED: Found in previous scan but not in this scan</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section" *ngIf="scanExecution.repository || scanExecution.branch || scanExecution.commitId">
+      <h2>Source Information</h2>
+      <div class="source-info">
+        <div *ngIf="scanExecution.repository" class="source-item">
+          <span class="source-label">Repository:</span>
+          <span class="source-value">{{ scanExecution.repository }}</span>
+        </div>
+        <div *ngIf="scanExecution.branch" class="source-item">
+          <span class="source-label">Branch:</span>
+          <span class="source-value">{{ scanExecution.branch }}</span>
+        </div>
+        <div *ngIf="scanExecution.commitId" class="source-item">
+          <span class="source-label">Commit:</span>
+          <span class="source-value">{{ scanExecution.commitId }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

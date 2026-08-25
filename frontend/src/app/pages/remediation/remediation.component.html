@@ -1,0 +1,146 @@
+<div class="remediation-container">
+  <div class="page-header">
+    <h1>Remediation Plan</h1>
+    <p class="subtitle">Track and manage security remediation items</p>
+  </div>
+
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Priority:</label>
+      <select [(ngModel)]="priorityFilter" (change)="onFilterChange()">
+        <option value="">All Priorities</option>
+        <option value="P0">P0 - Critical</option>
+        <option value="P1">P1 - High</option>
+        <option value="P2">P2 - Medium</option>
+        <option value="P3">P3 - Low</option>
+        <option value="P4">P4 - Minimal</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Team:</label>
+      <select [(ngModel)]="teamFilter" (change)="onFilterChange()">
+        <option value="">All Teams</option>
+        <option *ngFor="let team of getUniqueTeams()" [value]="team">{{ team }}</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Service:</label>
+      <select [(ngModel)]="serviceFilter" (change)="onFilterChange()">
+        <option value="">All Services</option>
+        <option *ngFor="let service of getUniqueServices()" [value]="service">{{ service }}</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Status:</label>
+      <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
+        <option value="">All Statuses</option>
+        <option value="NEW">New</option>
+        <option value="OPEN">Open</option>
+        <option value="IN_PROGRESS">In Progress</option>
+        <option value="RESOLVED">Resolved</option>
+        <option value="ACCEPTED_RISK">Accepted Risk</option>
+      </select>
+    </div>
+
+    <button class="refresh-btn" (click)="loadRemediationItems()">Refresh</button>
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading remediation items...</div>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div *ngIf="!loading && !error" class="remediation-table-container">
+    <table class="remediation-table">
+      <thead>
+        <tr>
+          <th>Priority</th>
+          <th>Finding</th>
+          <th>Service</th>
+          <th>Owner Team</th>
+          <th>Risk</th>
+          <th>Status</th>
+          <th>First Detected</th>
+          <th>Last Seen</th>
+          <th>Recommended Action</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of filteredItems" [class]="getPriorityClass(item.priority)">
+          <td>
+            <span class="priority-badge" [class]="getPriorityClass(item.priority)">
+              {{ item.priority }}
+            </span>
+          </td>
+          <td>
+            <div class="finding-info">
+              <div *ngIf="item.findingId" class="finding-id">{{ item.findingId.substring(0, 8) }}...</div>
+              <div *ngIf="item.recommendedAction" class="action-preview">{{ item.recommendedAction.substring(0, 50) }}...</div>
+            </div>
+          </td>
+          <td>{{ item.serviceName }}</td>
+          <td>{{ item.teamName || 'Unassigned' }}</td>
+          <td>
+            <span class="risk-score" [ngClass]="getRiskClass(item.riskScore)">
+              {{ item.riskScore || 'N/A' }}
+            </span>
+          </td>
+          <td>
+            <span class="status-badge" [class]="getStatusClass(item.remediationStatus)">
+              {{ item.remediationStatus }}
+            </span>
+          </td>
+          <td>{{ formatDate(item.firstDetectedAt) }}</td>
+          <td>{{ formatDate(item.lastDetectedAt) }}</td>
+          <td>
+            <div class="recommended-action" [title]="item.recommendedAction">
+              {{ item.recommendedAction || 'No action specified' }}
+            </div>
+          </td>
+          <td>
+            <select 
+              [value]="item.remediationStatus" 
+              (change)="updateStatus(item.id, $event)"
+              class="status-select"
+              [disabled]="item.remediationStatus === 'RESOLVED' || item.remediationStatus === 'ACCEPTED_RISK'">
+              <option value="NEW">New</option>
+              <option value="OPEN">Open</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="RESOLVED">Resolved</option>
+              <option value="ACCEPTED_RISK">Accept Risk</option>
+            </select>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="filteredItems.length === 0" class="no-results">
+      No remediation items match the current filters.
+    </div>
+  </div>
+
+  <div class="summary-section">
+    <h3>Summary</h3>
+    <div class="summary-stats">
+      <div class="stat-item">
+        <span class="stat-label">Total Items:</span>
+        <span class="stat-value">{{ filteredItems.length }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">P0 Items:</span>
+        <span class="stat-value">{{ getP0Count() }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">P1 Items:</span>
+        <span class="stat-value">{{ getP1Count() }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">In Progress:</span>
+        <span class="stat-value">{{ getInProgressCount() }}</span>
+      </div>
+    </div>
+  </div>
+</div>

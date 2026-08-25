@@ -1,0 +1,169 @@
+<div class="scans-container">
+  <div class="page-header">
+    <h1>Scan History</h1>
+    <p class="subtitle">Track security scan executions and comparison results</p>
+  </div>
+
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Service:</label>
+      <input 
+        type="text" 
+        [(ngModel)]="serviceFilter" 
+        (input)="onFilterChange()"
+        placeholder="Filter by service name"
+        class="filter-input"
+      >
+    </div>
+
+    <div class="filter-group">
+      <label>Tool:</label>
+      <select [(ngModel)]="toolFilter" (change)="onFilterChange()" class="filter-select">
+        <option value="">All Tools</option>
+        <option *ngFor="let tool of getUniqueTools()" [value]="tool">{{ tool }}</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Status:</label>
+      <select [(ngModel)]="statusFilter" (change)="onFilterChange()" class="filter-select">
+        <option value="">All Statuses</option>
+        <option *ngFor="let status of getUniqueStatuses()" [value]="status">{{ status }}</option>
+      </select>
+    </div>
+
+    <button class="refresh-btn" (click)="loadScanExecutions()">Refresh</button>
+  </div>
+
+  <div *ngIf="loading" class="loading">Loading scan executions...</div>
+
+  <div *ngIf="error" class="error">{{ error }}</div>
+
+  <div *ngIf="!loading && !error" class="scans-grid">
+    <div *ngFor="let scan of filteredScans" class="scan-card" [class]="getStatusClass(scan.status)">
+      <div class="scan-header">
+        <div class="scan-service">{{ scan.serviceName }}</div>
+        <div class="scan-status">
+          <span class="status-badge" [class]="getStatusClass(scan.status)">
+            {{ scan.status }}
+          </span>
+        </div>
+      </div>
+
+      <div class="scan-info">
+        <div class="info-row">
+          <span class="label">Tool:</span>
+          <span class="value">{{ scan.tool }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Type:</span>
+          <span class="value">{{ scan.scanType }}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Trigger:</span>
+          <span class="value trigger-badge" [class]="getTriggerTypeClass(scan.triggerType)">
+            {{ scan.triggerType.replace('_', ' ') }}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="label">Received:</span>
+          <span class="value">{{ formatScanTime(scan.receivedAt) }}</span>
+        </div>
+        <div *ngIf="scan.completedAt" class="info-row">
+          <span class="label">Completed:</span>
+          <span class="value">{{ formatScanTime(scan.completedAt) }}</span>
+        </div>
+      </div>
+
+      <div class="scan-results">
+        <div class="results-header">Results</div>
+        <div class="results-grid">
+          <div class="result-item">
+            <span class="result-label">Total:</span>
+            <span class="result-value">{{ scan.totalUniqueFindings }}</span>
+          </div>
+          <div class="result-item critical">
+            <span class="result-label">Critical:</span>
+            <span class="result-value">{{ scan.criticalCount }}</span>
+          </div>
+          <div class="result-item high">
+            <span class="result-label">High:</span>
+            <span class="result-value">{{ scan.highCount }}</span>
+          </div>
+          <div class="result-item medium">
+            <span class="result-label">Medium:</span>
+            <span class="result-value">{{ scan.mediumCount }}</span>
+          </div>
+          <div class="result-item low">
+            <span class="result-label">Low:</span>
+            <span class="result-value">{{ scan.lowCount }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="scan-comparison" *ngIf="scan.status === 'SUCCESS'">
+        <div class="comparison-header">Comparison</div>
+        <div class="comparison-grid">
+          <div class="comparison-item new">
+            <span class="comparison-label">NEW:</span>
+            <span class="comparison-value">{{ scan.newFindings }}</span>
+          </div>
+          <div class="comparison-item unchanged">
+            <span class="comparison-label">UNCHANGED:</span>
+            <span class="comparison-value">{{ scan.unchangedFindings }}</span>
+          </div>
+          <div class="comparison-item resolved">
+            <span class="comparison-label">NOT DETECTED:</span>
+            <span class="comparison-value">{{ scan.resolvedFindings }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="scan-metadata" *ngIf="scan.repository || scan.branch || scan.commitId">
+        <div class="metadata-header">Metadata</div>
+        <div *ngIf="scan.repository" class="metadata-item">
+          <span class="metadata-label">Repository:</span>
+          <span class="metadata-value">{{ scan.repository }}</span>
+        </div>
+        <div *ngIf="scan.branch" class="metadata-item">
+          <span class="metadata-label">Branch:</span>
+          <span class="metadata-value">{{ scan.branch }}</span>
+        </div>
+        <div *ngIf="scan.commitId" class="metadata-item">
+          <span class="metadata-label">Commit:</span>
+          <span class="metadata-value">{{ scan.commitId.substring(0, 8) }}...</span>
+        </div>
+      </div>
+
+      <div class="scan-actions">
+        <button class="action-btn" [routerLink]="['/scans', scan.id]">View Details</button>
+      </div>
+    </div>
+
+    <div *ngIf="filteredScans.length === 0" class="no-results">
+      No scan executions match the current filters.
+    </div>
+  </div>
+
+  <div class="summary-section">
+    <h3>Summary</h3>
+    <div class="summary-stats">
+      <div class="stat-item">
+        <span class="stat-label">Total Scans:</span>
+        <span class="stat-value">{{ filteredScans.length }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Successful:</span>
+        <span class="stat-value">{{ getSuccessfulScansCount() }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Failed:</span>
+        <span class="stat-value">{{ getFailedScansCount() }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Total Findings:</span>
+        <span class="stat-value">{{ getTotalFindingsCount() }}</span>
+      </div>
+    </div>
+  </div>
+</div>

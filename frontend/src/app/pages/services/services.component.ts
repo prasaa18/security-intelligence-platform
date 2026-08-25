@@ -147,11 +147,13 @@ export class ServicesComponent implements OnInit {
     });
   }
 
-  getBusinessCriticalityClass(criticality: string): string {
+  getBusinessCriticalityClass(criticality: string | undefined): string {
+    if (!criticality) return '';
     return `criticality-${criticality.toLowerCase()}`;
   }
 
-  getDataSensitivityClass(sensitivity: string): string {
+  getDataSensitivityClass(sensitivity: string | undefined): string {
+    if (!sensitivity) return '';
     return `sensitivity-${sensitivity.toLowerCase()}`;
   }
 
