@@ -5,7 +5,7 @@ spring:
     mongodb:
       uri: mongodb+srv://admin:admin@cluster0.hs3mybp.mongodb.net/securityintel?retryWrites=true&w=majority
       database: securityintel
-      auto-index-creation: true
+      auto-index-creation: false
   servlet:
     multipart:
       max-file-size: 10MB
