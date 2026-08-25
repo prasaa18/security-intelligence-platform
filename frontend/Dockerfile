@@ -8,7 +8,10 @@ RUN npm install
 
 COPY . .
 
-RUN npm run build
+RUN npm run build -- --configuration=production
+
+# Verify the build output
+RUN ls -la dist/frontend
 
 FROM nginx:alpine
 
