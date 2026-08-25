@@ -2,10 +2,9 @@ package com.securityintel.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
+import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -26,22 +25,12 @@ public class MongoConfig {
     }
 
     @Bean
-    public MongoTemplate mongoTemplate(
-            org.springframework.data.mongodb.MongoDatabaseFactory mongoDatabaseFactory,
-            org.springframework.data.mongodb.core.convert.MongoConverter mongoConverter) {
-
-        MongoTemplate template = new MongoTemplate(mongoDatabaseFactory, mongoConverter);
-
-        // Remove _class field from documents
+    public MappingMongoConverter mappingMongoConverter(
+            org.springframework.data.mongodb.core.MongoTemplate mongoTemplate) {
         MappingMongoConverter converter =
-                (MappingMongoConverter) template.getConverter();
-
+                (MappingMongoConverter) mongoTemplate.getConverter();
         converter.setTypeMapper(new DefaultMongoTypeMapper(null));
-
-        // Disable auto index creation to handle existing indexes
-        template.setAutoIndexCreation(false);
-
-        return template;
+        return converter;
     }
 
     // Custom converters for LocalDateTime
