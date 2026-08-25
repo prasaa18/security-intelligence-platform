@@ -9,6 +9,9 @@ RUN npm install
 
 COPY . .
 
+# Ensure Angular CLI is available
+RUN npx ng version
+
 # Build with verbose output
 RUN npm run build -- --configuration=production --verbose
 
