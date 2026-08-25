@@ -1,0 +1,270 @@
+{
+  "vulnerabilities": [
+    {
+      "id": "SNYK-JS-LODASH-567746",
+      "title": "Prototype Pollution",
+      "type": "vuln",
+      "packageName": "lodash",
+      "version": "4.17.20",
+      "severity": "high",
+      "language": "js",
+      "packageManager": "npm",
+      "semver": {
+        "vulnerable": "<4.17.21"
+      },
+      "CVSSv3": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H/E:P",
+      "cvssScore": 7.4,
+      "exploit": "Proof of Concept",
+      "upgradePath": ["lodash@4.17.21"],
+      "patches": [],
+      "isUpgradable": true,
+      "isPatchable": false,
+      "from": [
+        "payment-service@1.0.0",
+        "lodash@4.17.20"
+      ],
+      "description": "Affected versions of `lodash` are vulnerable to prototype pollution in `zipObjectDeep` due to an incomplete fix to CVE-2020-8203.",
+      "functions": [
+        {
+          "functionId": {
+            "filePath": "zipObjectDeep.js",
+            "functionName": "zipObjectDeep"
+          },
+          "version": [
+            ">=4.0.0 <4.17.21"
+          ]
+        }
+      ],
+      "identifiers": {
+        "CVE": ["CVE-2021-23337"],
+        "CWE": ["CWE-1321"],
+        "GHSA": ["GHSA-35jh-r3h4-6jhm"]
+      },
+      "references": [
+        {
+          "title": "GitHub Commit",
+          "url": "https://github.com/lodash/lodash/commit/c84fe82760fb2d3e03a63379b297a1cc1a2fce12"
+        },
+        {
+          "title": "GitHub Issue",
+          "url": "https://github.com/lodash/lodash/issues/5065"
+        },
+        {
+          "title": "Snyk Report",
+          "url": "https://snyk.io/vuln/SNYK-JS-LODASH-567746"
+        }
+      ],
+      "creationTime": "2021-02-12T16:51:06.176497Z",
+      "modificationTime": "2021-02-15T17:32:47.738219Z",
+      "publicationTime": "2021-02-12T16:51:06.176497Z",
+      "disclosureTime": "2021-02-12T16:51:06.176497Z"
+    },
+    {
+      "id": "SNYK-JAVA-ORGSPRINGFRAMEWORK-31282",
+      "title": "Expression Language Injection",
+      "type": "vuln",
+      "packageName": "org.springframework:spring-expression",
+      "version": "5.3.18",
+      "severity": "high",
+      "language": "java",
+      "packageManager": "maven",
+      "semver": {
+        "vulnerable": ">=5.3.0 <5.3.21"
+      },
+      "CVSSv3": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+      "cvssScore": 9.8,
+      "exploit": "Not Defined",
+      "upgradePath": ["org.springframework:spring-expression@5.3.21"],
+      "patches": [],
+      "isUpgradable": true,
+      "isPatchable": false,
+      "from": [
+        "payment-service@1.0.0",
+        "org.springframework:spring-boot-starter-web@2.7.0",
+        "org.springframework:spring-expression@5.3.18"
+      ],
+      "description": "The package org.springframework:spring-expression is vulnerable to Expression Language Injection via the SimpleEvaluationContext class which can be leveraged to execute arbitrary Java code.",
+      "identifiers": {
+        "CVE": ["CVE-2022-22950"],
+        "CWE": ["CWE-94"]
+      },
+      "references": [
+        {
+          "title": "Spring Framework Blog",
+          "url": "https://spring.io/blog/2022/03/31/spring-framework-rce-early-announcement"
+        },
+        {
+          "title": "GitHub Advisory",
+          "url": "https://github.com/advisories/GHSA-6v73-fgf6-w5j7"
+        },
+        {
+          "title": "CVE Details",
+          "url": "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-22950"
+        }
+      ],
+      "creationTime": "2022-03-31T15:15:17.505280Z",
+      "modificationTime": "2022-04-05T10:22:11.838291Z",
+      "publicationTime": "2022-03-31T15:15:17.505280Z",
+      "disclosureTime": "2022-03-31T15:15:17.505280Z"
+    },
+    {
+      "id": "SNYK-JS-AXIOS-6032459",
+      "title": "Regular Expression Denial of Service (ReDoS)",
+      "type": "vuln",
+      "packageName": "axios",
+      "version": "0.27.2",
+      "severity": "medium",
+      "language": "js",
+      "packageManager": "npm",
+      "semver": {
+        "vulnerable": ">=0.8.1 <0.28.0"
+      },
+      "CVSSv3": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L",
+      "cvssScore": 5.3,
+      "exploit": "Not Defined",
+      "upgradePath": ["axios@0.28.0"],
+      "patches": [],
+      "isUpgradable": true,
+      "isPatchable": false,
+      "from": [
+        "payment-service@1.0.0",
+        "axios@0.27.2"
+      ],
+      "description": "A regular expression used in axios to validate URLs is susceptible to ReDoS attacks, potentially causing denial of service.",
+      "identifiers": {
+        "CVE": ["CVE-2023-45857"],
+        "CWE": ["CWE-1333"]
+      },
+      "references": [
+        {
+          "title": "GitHub Issue",
+          "url": "https://github.com/axios/axios/issues/5463"
+        },
+        {
+          "title": "GitHub Pull Request",
+          "url": "https://github.com/axios/axios/pull/5835"
+        },
+        {
+          "title": "Snyk Report",
+          "url": "https://snyk.io/vuln/SNYK-JS-AXIOS-6032459"
+        }
+      ],
+      "creationTime": "2023-10-11T14:23:45.123456Z",
+      "modificationTime": "2023-10-15T16:45:32.987654Z",
+      "publicationTime": "2023-10-11T14:23:45.123456Z",
+      "disclosureTime": "2023-10-11T14:23:45.123456Z"
+    },
+    {
+      "id": "SNYK-JS-EXPRESS-5926818",
+      "title": "Open Redirect",
+      "type": "vuln",
+      "packageName": "express",
+      "version": "4.18.1",
+      "severity": "medium",
+      "language": "js",
+      "packageManager": "npm",
+      "semver": {
+        "vulnerable": ">=4.0.0 <4.18.2"
+      },
+      "CVSSv3": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+      "cvssScore": 6.1,
+      "exploit": "Not Defined",
+      "upgradePath": ["express@4.18.2"],
+      "patches": [],
+      "isUpgradable": true,
+      "isPatchable": false,
+      "from": [
+        "payment-service@1.0.0",
+        "express@4.18.1"
+      ],
+      "description": "All versions of package express are vulnerable to Open Redirect via the response.redirect() function.",
+      "identifiers": {
+        "CVE": ["CVE-2022-29078"],
+        "CWE": ["CWE-601"]
+      },
+      "references": [
+        {
+          "title": "GitHub Security Advisory",
+          "url": "https://github.com/expressjs/express/security/advisories/GHSA-rv95-896h-c2vc"
+        },
+        {
+          "title": "NPM Advisory",
+          "url": "https://npmjs.com/advisories/1800"
+        }
+      ],
+      "creationTime": "2022-05-02T09:30:15.456789Z",
+      "modificationTime": "2022-05-05T11:15:22.789012Z",
+      "publicationTime": "2022-05-02T09:30:15.456789Z",
+      "disclosureTime": "2022-05-02T09:30:15.456789Z"
+    }
+  ],
+  "ok": false,
+  "dependencyCount": 147,
+  "org": "my-payment-org",
+  "policy": "# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.\nversion: v1.25.0",
+  "isPrivate": true,
+  "licensesPolicy": {
+    "severities": {},
+    "orgLicenseRules": {}
+  },
+  "packageManager": "npm",
+  "ignoreSettings": null,
+  "summary": "4 vulnerable dependency paths",
+  "remediation": {
+    "unresolved": [
+      {
+        "id": "SNYK-JS-LODASH-567746",
+        "title": "Prototype Pollution",
+        "packageName": "lodash",
+        "version": "4.17.20",
+        "severity": "high"
+      }
+    ],
+    "upgrade": {
+      "lodash@4.17.21": {
+        "upgrades": [
+          "lodash@4.17.20"
+        ],
+        "vulns": [
+          "SNYK-JS-LODASH-567746"
+        ]
+      },
+      "org.springframework:spring-expression@5.3.21": {
+        "upgrades": [
+          "org.springframework:spring-expression@5.3.18"
+        ],
+        "vulns": [
+          "SNYK-JAVA-ORGSPRINGFRAMEWORK-31282"
+        ]
+      },
+      "axios@0.28.0": {
+        "upgrades": [
+          "axios@0.27.2"
+        ],
+        "vulns": [
+          "SNYK-JS-AXIOS-6032459"
+        ]
+      },
+      "express@4.18.2": {
+        "upgrades": [
+          "express@4.18.1"
+        ],
+        "vulns": [
+          "SNYK-JS-EXPRESS-5926818"
+        ]
+      }
+    },
+    "patch": {},
+    "ignore": {},
+    "pin": {}
+  },
+  "filesystemPolicy": false,
+  "filtered": {
+    "ignore": [],
+    "patch": []
+  },
+  "uniqueCount": 4,
+  "projectName": "payment-service",
+  "foundProjectCount": 1,
+  "path": "/app"
+}

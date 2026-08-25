@@ -1,0 +1,192 @@
+{
+  "SchemaVersion": 2,
+  "ArtifactName": "payment-service:v1.2.0",
+  "ArtifactType": "container_image",
+  "Metadata": {
+    "OS": {
+      "Family": "ubuntu",
+      "Name": "22.04"
+    },
+    "ImageID": "sha256:b2f8f8c32b4d",
+    "DiffIDs": [
+      "sha256:a8b2c3d4e5f6"
+    ],
+    "ImageConfig": {
+      "architecture": "amd64",
+      "created": "2024-01-15T10:30:00Z"
+    }
+  },
+  "Results": [
+    {
+      "Target": "payment-service (ubuntu 22.04)",
+      "Class": "os-pkgs",
+      "Type": "ubuntu",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-1234",
+          "PkgID": "openssl@3.0.2-0ubuntu1.10",
+          "PkgName": "openssl",
+          "InstalledVersion": "3.0.2-0ubuntu1.10",
+          "FixedVersion": "3.0.2-0ubuntu1.12",
+          "Layer": {
+            "Digest": "sha256:a8b2c3d4e5f6",
+            "DiffID": "sha256:a8b2c3d4e5f6"
+          },
+          "SeveritySource": "ubuntu",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-1234",
+          "DataSource": {
+            "ID": "ubuntu",
+            "Name": "Ubuntu CVE Tracker",
+            "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
+          },
+          "Title": "OpenSSL: Buffer overflow in SSL certificate parsing",
+          "Description": "A buffer overflow vulnerability exists in OpenSSL's certificate parsing functionality that could allow remote code execution.",
+          "Severity": "CRITICAL",
+          "CweIDs": [
+            "CWE-119",
+            "CWE-787"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 8.1
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-1234",
+            "https://www.openssl.org/news/secadv/20240115.txt",
+            "https://security.ubuntu.com/notices/USN-6622-1"
+          ],
+          "PublishedDate": "2024-01-15T14:15:00Z",
+          "LastModifiedDate": "2024-01-16T10:30:00Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2023-5678",
+          "PkgID": "curl@7.81.0-1ubuntu1.15",
+          "PkgName": "curl",
+          "InstalledVersion": "7.81.0-1ubuntu1.15",
+          "FixedVersion": "7.81.0-1ubuntu1.16",
+          "Layer": {
+            "Digest": "sha256:b9c0d1e2f3a4",
+            "DiffID": "sha256:b9c0d1e2f3a4"
+          },
+          "SeveritySource": "ubuntu",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-5678",
+          "DataSource": {
+            "ID": "ubuntu",
+            "Name": "Ubuntu CVE Tracker",
+            "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
+          },
+          "Title": "curl: HTTP/2 push headers memory disclosure",
+          "Description": "curl can be told to save the HTTP/2 push headers to disk separately from the body, but a bug in the code meant that headers for the most recently received header could be saved again instead of the headers for the push.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-200"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+              "V3Score": 7.5
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-5678",
+            "https://curl.se/docs/CVE-2023-5678.html",
+            "https://security.ubuntu.com/notices/USN-6560-1"
+          ],
+          "PublishedDate": "2023-12-06T06:15:00Z",
+          "LastModifiedDate": "2023-12-14T14:30:00Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2023-9999",
+          "PkgID": "libc6@2.35-0ubuntu3.4",
+          "PkgName": "libc6",
+          "InstalledVersion": "2.35-0ubuntu3.4",
+          "FixedVersion": "2.35-0ubuntu3.5",
+          "Layer": {
+            "Digest": "sha256:c1d2e3f4a5b6",
+            "DiffID": "sha256:c1d2e3f4a5b6"
+          },
+          "SeveritySource": "ubuntu",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-9999",
+          "DataSource": {
+            "ID": "ubuntu",
+            "Name": "Ubuntu CVE Tracker",
+            "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
+          },
+          "Title": "glibc: Integer overflow in string functions",
+          "Description": "An integer overflow in GNU C Library string functions could lead to buffer overflow.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-190"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+              "V3Score": 6.6
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-9999",
+            "https://sourceware.org/bugzilla/show_bug.cgi?id=30934"
+          ],
+          "PublishedDate": "2023-11-28T08:15:00Z",
+          "LastModifiedDate": "2023-12-05T16:45:00Z"
+        }
+      ]
+    },
+    {
+      "Target": "Java",
+      "Class": "lang-pkgs",
+      "Type": "jar",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2023-4444",
+          "PkgID": "com.fasterxml.jackson.core:jackson-databind:2.13.3",
+          "PkgName": "com.fasterxml.jackson.core:jackson-databind",
+          "PkgPath": "app/lib/jackson-databind-2.13.3.jar",
+          "InstalledVersion": "2.13.3",
+          "FixedVersion": "2.13.5",
+          "Layer": {
+            "Digest": "sha256:d4e5f6a7b8c9",
+            "DiffID": "sha256:d4e5f6a7b8c9"
+          },
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-4444",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Title": "Jackson Databind: Deserialization of Untrusted Data vulnerability",
+          "Description": "FasterXML jackson-databind allows attackers to cause a denial of service or other unspecified impact via a crafted object.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-502"
+          ],
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-4444",
+            "https://github.com/FasterXML/jackson-databind/issues/3972",
+            "https://github.com/advisories/GHSA-jjjh-jjxp-wpff"
+          ],
+          "PublishedDate": "2023-10-14T16:15:00Z",
+          "LastModifiedDate": "2023-10-20T18:45:00Z"
+        }
+      ]
+    }
+  ]
+}

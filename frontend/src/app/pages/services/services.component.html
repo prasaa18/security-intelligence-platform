@@ -1,0 +1,197 @@
+<div class="services-container">
+  <div class="services-header">
+    <h1>Services</h1>
+    <button class="btn btn-primary" (click)="openAddForm()">Add Service</button>
+  </div>
+
+  <!-- Search -->
+  <div class="card search-card">
+    <div class="search-section">
+      <input type="text" 
+             [(ngModel)]="searchQuery" 
+             (input)="onSearchChange()"
+             placeholder="Search services by name, team, or owner..."
+             class="search-input">
+      <div class="search-stats" *ngIf="!loading">
+        Showing {{ filteredServices.length }} of {{ services.length }} services
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner">Loading services...</div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <div class="error-message">{{ error }}</div>
+    <button class="btn btn-primary" (click)="loadServices()">Retry</button>
+  </div>
+
+  <!-- Services Table -->
+  <div *ngIf="!loading && !error" class="card services-card">
+    <div *ngIf="filteredServices.length === 0" class="no-services">
+      <h3 *ngIf="services.length === 0">No services configured</h3>
+      <h3 *ngIf="services.length > 0">No services match your search</h3>
+      <p *ngIf="services.length === 0">Add your first service to get started with security scanning.</p>
+      <button *ngIf="services.length === 0" class="btn btn-primary" (click)="openAddForm()">Add Service</button>
+    </div>
+
+    <div *ngIf="filteredServices.length > 0" class="services-table-container">
+      <table class="services-table">
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Team</th>
+            <th>Environment</th>
+            <th>Business Criticality</th>
+            <th>Internet Exposed</th>
+            <th>Data Sensitivity</th>
+            <th>Owner</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let service of filteredServices">
+            <td>
+              <div class="service-info">
+                <div class="service-name">{{ service.serviceName }}</div>
+                <div class="service-repo" *ngIf="service.repository">{{ service.repository }}</div>
+              </div>
+            </td>
+            <td>{{ service.teamName || 'N/A' }}</td>
+            <td>
+              <span class="environment-badge" 
+                    [class.env-production]="service.environment === 'PRODUCTION'"
+                    [class.env-staging]="service.environment === 'STAGING'"
+                    [class.env-development]="service.environment === 'DEVELOPMENT'">
+                {{ service.environment }}
+              </span>
+            </td>
+            <td>
+              <span [class]="getBusinessCriticalityClass(service.businessCriticality)" class="criticality-badge">
+                {{ service.businessCriticality }}
+              </span>
+            </td>
+            <td>
+              <span class="exposure-badge" 
+                    [class.exposed]="service.internetExposed"
+                    [class.internal]="!service.internetExposed">
+                {{ service.internetExposed ? 'Yes' : 'No' }}
+              </span>
+            </td>
+            <td>
+              <span [class]="getDataSensitivityClass(service.dataSensitivity)" class="sensitivity-badge">
+                {{ service.dataSensitivity }}
+              </span>
+            </td>
+            <td>{{ service.owner || 'N/A' }}</td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-action btn-edit" (click)="openEditForm(service)" title="Edit">
+                  ✏️
+                </button>
+                <button class="btn-action btn-delete" (click)="deleteService(service)" title="Delete">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Service Form Modal -->
+  <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ isEditMode ? 'Edit Service' : 'Add Service' }}</h2>
+        <button class="modal-close" (click)="closeForm()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <form (ngSubmit)="saveService()" #serviceForm="ngForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="serviceName">Service Name *</label>
+              <input type="text" id="serviceName" [(ngModel)]="currentService.serviceName" 
+                     name="serviceName" required class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="teamName">Team Name</label>
+              <input type="text" id="teamName" [(ngModel)]="currentService.teamName" 
+                     name="teamName" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="environment">Environment *</label>
+              <select id="environment" [(ngModel)]="currentService.environment" 
+                      name="environment" required class="form-control">
+                <option *ngFor="let env of environments" [value]="env">{{ env }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="businessCriticality">Business Criticality</label>
+              <select id="businessCriticality" [(ngModel)]="currentService.businessCriticality" 
+                      name="businessCriticality" class="form-control">
+                <option *ngFor="let crit of businessCriticalities" [value]="crit">{{ crit }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dataSensitivity">Data Sensitivity</label>
+              <select id="dataSensitivity" [(ngModel)]="currentService.dataSensitivity" 
+                      name="dataSensitivity" class="form-control">
+                <option *ngFor="let sens of dataSensitivities" [value]="sens">{{ sens }}</option>
+              </select>
+            </div>
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="currentService.internetExposed" name="internetExposed">
+                <span class="checkmark"></span>
+                Internet Exposed
+              </label>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="repository">Repository</label>
+              <input type="text" id="repository" [(ngModel)]="currentService.repository" 
+                     name="repository" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="deploymentPlatform">Deployment Platform</label>
+              <input type="text" id="deploymentPlatform" [(ngModel)]="currentService.deploymentPlatform" 
+                     name="deploymentPlatform" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="owner">Owner</label>
+            <input type="email" id="owner" [(ngModel)]="currentService.owner" 
+                   name="owner" class="form-control" placeholder="email@company.com">
+          </div>
+
+          <div *ngIf="formError" class="error-message">{{ formError }}</div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeForm()" [disabled]="formLoading">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="formLoading || !serviceForm.form.valid">
+              <span *ngIf="formLoading">{{ isEditMode ? 'Updating...' : 'Creating...' }}</span>
+              <span *ngIf="!formLoading">{{ isEditMode ? 'Update Service' : 'Create Service' }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

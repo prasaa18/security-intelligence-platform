@@ -1,0 +1,49 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: Build Docker image
+      run: |
+        docker build -t order-service:latest .
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'order-service:latest'
+        format: 'json'
+        output: 'trivy-report.json'
+        severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+    
+    - name: Upload security report to Security Intelligence Platform
+      run: |
+        curl -X POST "${{ secrets.SECURITY_INTEL_API_URL }}/api/integrations/scans/github-actions" \
+          -H "Authorization: Bearer ${{ secrets.SCAN_INGESTION_TOKEN }}" \
+          -F "file=@trivy-report.json" \
+          -F "serviceName=${{ secrets.SERVICE_NAME }}" \
+          -F "repository=${{ github.repository }}" \
+          -F "branch=${{ github.ref_name }}" \
+          -F "commitId=${{ github.sha }}" \
+          -F "workflowRunId=${{ github.run_id }}" \
+          -F "tool=TRIVY" \
+          -F "scanType=CONTAINER" \
+          -F "environment=PRODUCTION"
+    
+    - name: Upload Trivy report as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: trivy-report
+        path: trivy-report.json

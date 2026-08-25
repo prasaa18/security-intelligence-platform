@@ -1,0 +1,278 @@
+{
+  "vulnerabilities": [
+    {
+      "id": "SNYK-JS-LODASH-567746",
+      "title": "Prototype Pollution",
+      "type": "vuln",
+      "packageName": "lodash",
+      "version": "4.17.20",
+      "severity": "high",
+      "language": "js",
+      "packageManager": "npm",
+      "semver": {
+        "vulnerable": ["<4.17.21"]
+      },
+      "CVSSv3": 7.3,
+      "cvssScore": 7.3,
+      "patches": [],
+      "upgradePath": ["lodash@4.17.21"],
+      "from": ["payment-service@1.0.0", "lodash@4.17.20"],
+      "isPatchable": false,
+      "isUpgradable": true,
+      "publicationTime": "2021-02-15T11:30:00.000Z",
+      "disclosureTime": "2021-02-12T16:45:00.000Z",
+      "credit": ["Michał Bentkowski"],
+      "description": "Affected versions of `lodash` are vulnerable to prototype pollution. The vulnerability occurs in zipObjectDeep due to an incomplete fix for CVE-2020-8203. An attacker can exploit this to modify the prototype of Object, causing the addition or modification of an existing property on all objects.",
+      "functions": [],
+      "identifiers": {
+        "CVE": ["CVE-2021-23337"],
+        "CWE": ["CWE-1321"]
+      },
+      "references": [
+        {
+          "title": "GitHub Commit",
+          "url": "https://github.com/lodash/lodash/commit/c84fe82760fb2d3e03a63379b297a1cc1a2fce12"
+        },
+        {
+          "title": "Snyk Advisory",
+          "url": "https://snyk.io/vuln/SNYK-JS-LODASH-567746"
+        }
+      ]
+    },
+    {
+      "id": "SNYK-JS-AXIOS-174505",
+      "title": "Server-Side Request Forgery (SSRF)",
+      "type": "vuln", 
+      "packageName": "axios",
+      "version": "0.21.1",
+      "severity": "medium",
+      "language": "js",
+      "packageManager": "npm",
+      "semver": {
+        "vulnerable": ["<0.21.2"]
+      },
+      "CVSSv3": 5.3,
+      "cvssScore": 5.3,
+      "patches": [],
+      "upgradePath": ["axios@0.21.4"],
+      "from": ["payment-service@1.0.0", "axios@0.21.1"],
+      "isPatchable": false,
+      "isUpgradable": true,
+      "publicationTime": "2021-08-31T14:20:00.000Z",
+      "disclosureTime": "2021-08-25T09:15:00.000Z",
+      "credit": ["GitHub Security Lab"],
+      "description": "All versions of axios before 0.21.2 are vulnerable to Server-Side Request Forgery. The axios package follows redirects and forwards authentication headers to the redirected-to host, which could result in sensitive information disclosure.",
+      "functions": [],
+      "identifiers": {
+        "CVE": ["CVE-2021-3749"],
+        "CWE": ["CWE-918"]
+      },
+      "references": [
+        {
+          "title": "GitHub Issue",
+          "url": "https://github.com/axios/axios/issues/3369"
+        },
+        {
+          "title": "Snyk Advisory",
+          "url": "https://snyk.io/vuln/SNYK-JS-AXIOS-174505"
+        }
+      ]
+    },
+    {
+      "id": "SNYK-JS-EXPRESS-542259",
+      "title": "Denial of Service (DoS)",
+      "type": "vuln",
+      "packageName": "express",
+      "version": "4.17.1",
+      "severity": "medium", 
+      "language": "js",
+      "packageManager": "npm",
+      "semver": {
+        "vulnerable": ["<4.17.3"]
+      },
+      "CVSSv3": 5.9,
+      "cvssScore": 5.9,
+      "patches": [],
+      "upgradePath": ["express@4.18.2"],
+      "from": ["payment-service@1.0.0", "express@4.17.1"],
+      "isPatchable": false,
+      "isUpgradable": true,
+      "publicationTime": "2022-03-15T10:45:00.000Z",
+      "disclosureTime": "2022-03-10T13:30:00.000Z",
+      "credit": ["Express.js Team"],
+      "description": "Affected versions of express are vulnerable to a Denial of Service attack. The vulnerability is due to the way express handles query string parsing, which could cause the application to consume excessive CPU resources when processing specially crafted requests.",
+      "functions": [],
+      "identifiers": {
+        "CVE": ["CVE-2022-24999"],
+        "CWE": ["CWE-400"]
+      },
+      "references": [
+        {
+          "title": "Express.js Security Advisory",
+          "url": "https://expressjs.com/en/advanced/security-updates.html"
+        },
+        {
+          "title": "Snyk Advisory", 
+          "url": "https://snyk.io/vuln/SNYK-JS-EXPRESS-542259"
+        }
+      ]
+    },
+    {
+      "id": "SNYK-JAVA-ORGSPRINGFRAMEWORK-31282",
+      "title": "Expression Language Injection",
+      "type": "vuln",
+      "packageName": "org.springframework:spring-expression",
+      "version": "5.3.18",
+      "severity": "high",
+      "language": "java",
+      "packageManager": "maven",
+      "semver": {
+        "vulnerable": ["<5.3.21"]
+      },
+      "CVSSv3": 8.8,
+      "cvssScore": 8.8,
+      "patches": [],
+      "upgradePath": ["org.springframework:spring-expression@5.3.23"],
+      "from": ["com.example:payment-service@1.0.0", "org.springframework:spring-expression@5.3.18"],
+      "isPatchable": false,
+      "isUpgradable": true,
+      "publicationTime": "2022-05-12T09:20:00.000Z",
+      "disclosureTime": "2022-05-05T15:45:00.000Z",
+      "credit": ["Spring Security Team"],
+      "description": "In Spring Framework versions 5.3.0 to 5.3.20 and 5.2.0.RELEASE to 5.2.22.RELEASE, applications vulnerable to RCE via Data Binding on JDK 9+ may be impacted. Specifically, an application is vulnerable if it is using Spring MVC or Spring WebFlux with DataBinder.setDisallowedFields configured.",
+      "functions": [],
+      "identifiers": {
+        "CVE": ["CVE-2022-22965"],
+        "CWE": ["CWE-94"]
+      },
+      "references": [
+        {
+          "title": "Spring Framework Advisory",
+          "url": "https://spring.io/security/cve-2022-22965"
+        },
+        {
+          "title": "Snyk Advisory",
+          "url": "https://snyk.io/vuln/SNYK-JAVA-ORGSPRINGFRAMEWORK-31282"
+        }
+      ]
+    },
+    {
+      "id": "SNYK-JAVA-COMFASTERXMLJACKSONCORE-31573",
+      "title": "Deserialization of Untrusted Data",
+      "type": "vuln",
+      "packageName": "com.fasterxml.jackson.core:jackson-databind",
+      "version": "2.13.3",
+      "severity": "critical",
+      "language": "java",
+      "packageManager": "maven",
+      "semver": {
+        "vulnerable": ["<2.13.4.2"]
+      },
+      "CVSSv3": 9.8,
+      "cvssScore": 9.8,
+      "patches": [],
+      "upgradePath": ["com.fasterxml.jackson.core:jackson-databind@2.14.2"],
+      "from": ["com.example:payment-service@1.0.0", "com.fasterxml.jackson.core:jackson-databind@2.13.3"],
+      "isPatchable": false,
+      "isUpgradable": true,
+      "publicationTime": "2022-10-02T14:30:00.000Z",
+      "disclosureTime": "2022-09-28T11:15:00.000Z",
+      "credit": ["FasterXML Team"],
+      "description": "FasterXML jackson-databind is vulnerable to unsafe deserialization when using the default typing feature. An attacker could exploit this vulnerability by providing a specially crafted JSON payload that when deserialized leads to remote code execution.",
+      "functions": [],
+      "identifiers": {
+        "CVE": ["CVE-2022-42003"],
+        "CWE": ["CWE-502"]
+      },
+      "references": [
+        {
+          "title": "GitHub Security Advisory",
+          "url": "https://github.com/FasterXML/jackson-databind/security/advisories/GHSA-jjjh-jjxp-wpff"
+        },
+        {
+          "title": "Snyk Advisory",
+          "url": "https://snyk.io/vuln/SNYK-JAVA-COMFASTERXMLJACKSONCORE-31573"
+        }
+      ]
+    },
+    {
+      "id": "SNYK-JS-MOMENTJS-817927",
+      "title": "Regular Expression Denial of Service (ReDoS)",
+      "type": "vuln",
+      "packageName": "moment",
+      "version": "2.29.1",
+      "severity": "high",
+      "language": "js",
+      "packageManager": "npm",
+      "semver": {
+        "vulnerable": ["<2.29.4"]
+      },
+      "CVSSv3": 7.5,
+      "cvssScore": 7.5,
+      "patches": [],
+      "upgradePath": ["moment@2.29.4"],
+      "from": ["payment-service@1.0.0", "moment@2.29.1"],
+      "isPatchable": false,
+      "isUpgradable": true,
+      "publicationTime": "2022-04-04T16:20:00.000Z",
+      "disclosureTime": "2022-04-01T12:30:00.000Z",
+      "credit": ["Snyk Security Team"],
+      "description": "moment is vulnerable to Regular Expression Denial of Service (ReDoS). The vulnerability is located in the preprocessing of strings passed into moment() with a specific format string. This could result in a Denial of Service (DoS) attack if an attacker is able to provide a malicious string.",
+      "functions": [],
+      "identifiers": {
+        "CVE": ["CVE-2022-24785"],
+        "CWE": ["CWE-1333"]
+      },
+      "references": [
+        {
+          "title": "GitHub Issue",
+          "url": "https://github.com/moment/moment/issues/6015"
+        },
+        {
+          "title": "Snyk Advisory",
+          "url": "https://snyk.io/vuln/SNYK-JS-MOMENTJS-817927"
+        }
+      ]
+    }
+  ],
+  "ok": false,
+  "dependencyCount": 127,
+  "org": "example-org",
+  "policy": "# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.",
+  "isPrivate": true,
+  "licensesPolicy": null,
+  "packageManager": "npm",
+  "ignoreSettings": null,
+  "summary": "6 vulnerable dependency paths",
+  "remediation": {
+    "unresolved": [
+      {
+        "id": "SNYK-JS-LODASH-567746",
+        "title": "Prototype Pollution",
+        "packageName": "lodash",
+        "version": "4.17.20",
+        "severity": "high"
+      }
+    ],
+    "upgrade": {
+      "lodash@4.17.21": {
+        "upgrades": ["lodash@4.17.20"]
+      },
+      "axios@0.21.4": {
+        "upgrades": ["axios@0.21.1"]
+      }
+    },
+    "patch": {},
+    "ignore": {},
+    "pin": {}
+  },
+  "filesystemPolicy": false,
+  "filtered": {
+    "ignore": [],
+    "patch": []
+  },
+  "uniqueCount": 6,
+  "projectName": "payment-service",
+  "displayTargetFile": "package.json",
+  "path": "/app"
+}

@@ -1,0 +1,192 @@
+<div class="finding-detail-container">
+  <!-- Header with Back Button -->
+  <div class="detail-header">
+    <button class="btn btn-secondary" routerLink="/findings">← Back to Findings</button>
+    <h1 *ngIf="finding">{{ finding.cve || 'Security Finding' }}</h1>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner">Loading finding details...</div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <div class="error-message">{{ error }}</div>
+    <button class="btn btn-primary" (click)="loadFinding()">Retry</button>
+  </div>
+
+  <!-- Finding Details -->
+  <div *ngIf="!loading && !error && finding" class="finding-details">
+    
+    <!-- Basic Information -->
+    <div class="card info-card">
+      <h2>Basic Information</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>CVE:</label>
+          <code class="cve-code">{{ finding.cve || 'N/A' }}</code>
+        </div>
+        <div class="info-item">
+          <label>Title:</label>
+          <span>{{ finding.title || 'No title available' }}</span>
+        </div>
+        <div class="info-item">
+          <label>Scanner:</label>
+          <span [class]="getToolClass(finding.tool)" class="tool-badge">{{ finding.tool }}</span>
+        </div>
+        <div class="info-item">
+          <label>Scan Type:</label>
+          <span class="scan-type">{{ finding.scanType }}</span>
+        </div>
+        <div class="info-item">
+          <label>Service:</label>
+          <span class="service-name">{{ finding.serviceName }}</span>
+        </div>
+        <div class="info-item">
+          <label>Environment:</label>
+          <span class="environment-badge" 
+                [class.env-production]="finding.environment === 'PRODUCTION'"
+                [class.env-staging]="finding.environment === 'STAGING'"
+                [class.env-development]="finding.environment === 'DEVELOPMENT'">
+            {{ finding.environment }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label>Severity:</label>
+          <span [class]="getSeverityClass(finding.severity)" class="severity-badge">{{ finding.severity }}</span>
+        </div>
+        <div class="info-item">
+          <label>CVSS Score:</label>
+          <span class="cvss-score">{{ finding.cvssScore || 'N/A' }}</span>
+        </div>
+        <div class="info-item" *ngIf="finding.cwe">
+          <label>CWE:</label>
+          <code class="cwe-code">{{ finding.cwe }}</code>
+        </div>
+        <div class="info-item">
+          <label>Status:</label>
+          <span class="status-badge" [class.status-open]="finding.status === 'OPEN'"
+                [class.status-resolved]="finding.status === 'RESOLVED'"
+                [class.status-ignored]="finding.status === 'IGNORED'">
+            {{ finding.status }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remediation Priority Section -->
+    <div class="card priority-card">
+      <h2>REMEDIATION PRIORITY</h2>
+      <div class="priority-summary">
+        <div class="priority-score">
+          <div class="score-label">Risk Score</div>
+          <div class="score-value">{{ finding.riskScore || 'N/A' }}</div>
+        </div>
+        <div class="priority-level">
+          <div class="priority-label">Priority</div>
+          <div [class]="getPriorityClass(finding.priority || 'p4')" class="priority-badge-large">
+            {{ finding.priority || 'P4' }}
+          </div>
+        </div>
+      </div>
+      
+      <div *ngIf="finding.priorityReasons && finding.priorityReasons.length > 0" class="priority-reasons">
+        <h3>WHY?</h3>
+        <ul class="reasons-list">
+          <li *ngFor="let reason of finding.priorityReasons">✓ {{ reason }}</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="card description-card" *ngIf="finding.description">
+      <h2>Description</h2>
+      <div class="description-text">{{ finding.description }}</div>
+    </div>
+
+    <!-- Package Information -->
+    <div class="card package-card" *ngIf="finding.packageName">
+      <h2>Package Information</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Package:</label>
+          <code class="package-name">{{ finding.packageName }}</code>
+        </div>
+        <div class="info-item" *ngIf="finding.installedVersion">
+          <label>Current Version:</label>
+          <code class="version">{{ finding.installedVersion }}</code>
+        </div>
+        <div class="info-item" *ngIf="finding.fixedVersion">
+          <label>Fixed Version:</label>
+          <code class="version fixed">{{ finding.fixedVersion }}</code>
+        </div>
+        <div class="info-item" *ngIf="!finding.fixedVersion">
+          <label>Fixed Version:</label>
+          <span class="no-fix">No fixed version was provided by the scanner.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Information -->
+    <div class="card location-card" *ngIf="finding.filePath || finding.containerImage || finding.endpoint">
+      <h2>Location Information</h2>
+      <div class="info-grid">
+        <div class="info-item" *ngIf="finding.filePath">
+          <label>File Path:</label>
+          <code class="file-path">{{ finding.filePath }}</code>
+        </div>
+        <div class="info-item" *ngIf="finding.lineNumber">
+          <label>Line Number:</label>
+          <span class="line-number">{{ finding.lineNumber }}</span>
+        </div>
+        <div class="info-item" *ngIf="finding.containerImage">
+          <label>Container Image:</label>
+          <code class="container-image">{{ finding.containerImage }}</code>
+        </div>
+        <div class="info-item" *ngIf="finding.endpoint">
+          <label>Endpoint:</label>
+          <code class="endpoint">{{ finding.httpMethod || 'GET' }} {{ finding.endpoint }}</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Source Scanners -->
+    <div class="card sources-card" *ngIf="getSourceTools().length > 0">
+      <h2>SOURCE SCANNERS</h2>
+      <div class="source-tools">
+        <span *ngFor="let tool of getSourceTools()" class="source-tool">
+          ✓ {{ tool }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Technical Details -->
+    <div class="card technical-card">
+      <h2>Technical Details</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <label>Finding ID:</label>
+          <code class="finding-id">{{ finding.id }}</code>
+        </div>
+        <div class="info-item">
+          <label>Report ID:</label>
+          <code class="report-id">{{ finding.reportId }}</code>
+        </div>
+        <div class="info-item" *ngIf="finding.repository">
+          <label>Repository:</label>
+          <span>{{ finding.repository }}</span>
+        </div>
+        <div class="info-item">
+          <label>Created:</label>
+          <span>{{ formatDate(finding.createdAt) }}</span>
+        </div>
+        <div class="info-item">
+          <label>Updated:</label>
+          <span>{{ formatDate(finding.updatedAt) }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

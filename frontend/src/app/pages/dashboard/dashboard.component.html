@@ -1,0 +1,133 @@
+<div class="dashboard-container">
+  <h1>Dashboard</h1>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner">Loading dashboard...</div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <div class="error-message">{{ error }}</div>
+    <button class="btn btn-primary" (click)="loadDashboard()">Retry</button>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading && !error && summary" class="dashboard-content">
+    
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <div class="summary-card">
+        <div class="card-header">Total Findings</div>
+        <div class="card-value">{{ summary.totalFindings }}</div>
+      </div>
+      
+      <div class="summary-card">
+        <div class="card-header">Unique Findings</div>
+        <div class="card-value">{{ summary.uniqueFindings }}</div>
+      </div>
+      
+      <div class="summary-card critical">
+        <div class="card-header">Critical</div>
+        <div class="card-value">{{ summary.critical }}</div>
+      </div>
+      
+      <div class="summary-card high">
+        <div class="card-header">High</div>
+        <div class="card-value">{{ summary.high }}</div>
+      </div>
+      
+      <div class="summary-card medium">
+        <div class="card-header">Medium</div>
+        <div class="card-value">{{ summary.medium }}</div>
+      </div>
+      
+      <div class="summary-card low">
+        <div class="card-header">Low</div>
+        <div class="card-value">{{ summary.low }}</div>
+      </div>
+    </div>
+
+    <!-- Priority Cards -->
+    <div class="priority-cards">
+      <div class="summary-card p0">
+        <div class="card-header">P0</div>
+        <div class="card-value">{{ summary.p0 }}</div>
+      </div>
+      
+      <div class="summary-card p1">
+        <div class="card-header">P1</div>
+        <div class="card-value">{{ summary.p1 }}</div>
+      </div>
+      
+      <div class="summary-card p2">
+        <div class="card-header">P2</div>
+        <div class="card-value">{{ summary.p2 }}</div>
+      </div>
+      
+      <div class="summary-card p3">
+        <div class="card-header">P3</div>
+        <div class="card-value">{{ summary.p3 }}</div>
+      </div>
+      
+      <div class="summary-card p4">
+        <div class="card-header">P4</div>
+        <div class="card-value">{{ summary.p4 }}</div>
+      </div>
+    </div>
+
+    <div class="dashboard-sections">
+      <!-- Top Remediation Priorities -->
+      <div class="card top-priorities-section">
+        <h2>TOP REMEDIATION PRIORITIES</h2>
+        
+        <div *ngIf="summary.topPriorities.length === 0" class="no-data">
+          No high-priority findings found
+        </div>
+        
+        <div *ngFor="let finding of summary.topPriorities" class="priority-finding">
+          <div class="finding-header">
+            <span class="finding-cve">{{ finding.cve || 'N/A' }}</span>
+            <span class="finding-service">{{ finding.serviceName }}</span>
+          </div>
+          <div class="finding-details">
+            <span class="finding-label">Severity:</span>
+            <span [class]="getSeverityClass(finding.severity)">{{ finding.severity }}</span>
+            <span class="finding-label">Risk Score:</span>
+            <span class="finding-risk-score">{{ finding.riskScore }}</span>
+            <span class="finding-label">Priority:</span>
+            <span [class]="getPriorityClass(finding.priority)">{{ finding.priority }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scanner Distribution -->
+      <div class="card scanner-distribution-section">
+        <h2>Scanner Distribution</h2>
+        
+        <div *ngIf="getObjectKeys(summary.scannerDistribution).length === 0" class="no-data">
+          No scanner data available
+        </div>
+        
+        <div *ngFor="let scanner of getObjectKeys(summary.scannerDistribution)" class="distribution-item">
+          <div class="distribution-label">{{ scanner }}</div>
+          <div class="distribution-value">{{ summary.scannerDistribution[scanner] }}</div>
+        </div>
+      </div>
+
+      <!-- Scan Type Distribution -->
+      <div class="card scan-type-distribution-section">
+        <h2>Scan Type Distribution</h2>
+        
+        <div *ngIf="getObjectKeys(summary.scanTypeDistribution).length === 0" class="no-data">
+          No scan type data available
+        </div>
+        
+        <div *ngFor="let scanType of getObjectKeys(summary.scanTypeDistribution)" class="distribution-item">
+          <div class="distribution-label">{{ scanType }}</div>
+          <div class="distribution-value">{{ summary.scanTypeDistribution[scanType] }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

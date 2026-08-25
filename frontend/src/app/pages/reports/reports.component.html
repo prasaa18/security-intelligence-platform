@@ -1,0 +1,127 @@
+<div class="reports-container">
+  <div class="reports-header">
+    <h1>Reports</h1>
+    <div class="header-actions">
+      <button class="btn btn-success" (click)="seedSampleData()">Seed Sample Services</button>
+      <button class="btn btn-primary" (click)="openUploadForm()">Upload Security Report</button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner">Loading reports...</div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <div class="error-message">{{ error }}</div>
+    <button class="btn btn-primary" (click)="loadReports()">Retry</button>
+  </div>
+
+  <!-- Reports Table -->
+  <div *ngIf="!loading && !error" class="card reports-card">
+    <div *ngIf="reports.length === 0" class="no-reports">
+      <h3>No reports uploaded yet</h3>
+      <p>Upload a security report to get started</p>
+      <button class="btn btn-primary" (click)="openUploadForm()">Upload Report</button>
+    </div>
+
+    <div *ngIf="reports.length > 0" class="reports-table-container">
+      <table class="reports-table">
+        <thead>
+          <tr>
+            <th>Report ID</th>
+            <th>Tool</th>
+            <th>Scan Type</th>
+            <th>Service</th>
+            <th>Environment</th>
+            <th>Total Findings</th>
+            <th>Status</th>
+            <th>Uploaded At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let report of reports">
+            <td>
+              <code class="report-id">{{ report.id.substring(0, 8) }}...</code>
+            </td>
+            <td>
+              <span [class]="getToolClass(report.tool)" class="tool-badge">{{ report.tool }}</span>
+            </td>
+            <td>
+              <span [class]="getScanTypeClass(report.scanType)" class="scan-type-badge">{{ report.scanType }}</span>
+            </td>
+            <td>{{ report.serviceName }}</td>
+            <td>
+              <span class="environment-badge" [class.env-production]="report.environment === 'PRODUCTION'"
+                    [class.env-staging]="report.environment === 'STAGING'"
+                    [class.env-development]="report.environment === 'DEVELOPMENT'">
+                {{ report.environment }}
+              </span>
+            </td>
+            <td>
+              <span class="findings-count">{{ report.totalFindings }}</span>
+            </td>
+            <td>
+              <span class="status-badge" [class.status-open]="report.status === 'OPEN'"
+                    [class.status-resolved]="report.status === 'RESOLVED'">
+                {{ report.status }}
+              </span>
+            </td>
+            <td>{{ formatDate(report.createdAt) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Upload Form Modal -->
+  <div *ngIf="showUploadForm" class="modal-overlay" (click)="closeUploadForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Upload Security Report</h2>
+        <button class="modal-close" (click)="closeUploadForm()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <form (ngSubmit)="uploadReport()" #uploadForm="ngForm">
+          <div class="form-group">
+            <label for="service">Service:</label>
+            <select id="service" [(ngModel)]="selectedService" name="service" required class="form-control">
+              <option value="">Select a service...</option>
+              <option *ngFor="let service of services" [value]="service.serviceName">
+                {{ service.serviceName }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="environment">Environment:</label>
+            <select id="environment" [(ngModel)]="selectedEnvironment" name="environment" required class="form-control">
+              <option *ngFor="let env of environments" [value]="env">{{ env }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="file">Report File:</label>
+            <input type="file" id="file" (change)="onFileSelected($event)" accept=".json" required class="form-control">
+            <small class="form-text">Supported formats: Trivy JSON, Snyk JSON</small>
+          </div>
+
+          <div *ngIf="uploadError" class="error-message">{{ uploadError }}</div>
+          <div *ngIf="uploadSuccess" class="success-message">{{ uploadSuccess }}</div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeUploadForm()" [disabled]="uploadLoading">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="uploadLoading || !uploadForm.form.valid">
+              <span *ngIf="uploadLoading">Uploading...</span>
+              <span *ngIf="!uploadLoading">Upload Report</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

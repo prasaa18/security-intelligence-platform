@@ -1,0 +1,291 @@
+{
+  "SchemaVersion": 2,
+  "ArtifactName": "payment-service",
+  "ArtifactType": "container",
+  "Metadata": {
+    "OS": {
+      "Family": "ubuntu",
+      "Name": "22.04"
+    },
+    "ImageID": "sha256:abc123def456",
+    "DiffIDs": [
+      "sha256:def456ghi789"
+    ],
+    "RepoTags": [
+      "payment-service:v1.2.3"
+    ],
+    "RepoDigests": [
+      "payment-service@sha256:ghi789jkl012"
+    ],
+    "ImageConfig": {
+      "architecture": "amd64",
+      "created": "2024-01-15T10:30:00Z"
+    }
+  },
+  "Results": [
+    {
+      "Target": "payment-service (ubuntu 22.04)",
+      "Class": "os-pkgs",
+      "Type": "ubuntu",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-1234",
+          "PkgID": "openssl@3.0.2-0ubuntu1.10",
+          "PkgName": "openssl",
+          "InstalledVersion": "3.0.2-0ubuntu1.10",
+          "FixedVersion": "3.0.2-0ubuntu1.12",
+          "Layer": {
+            "Digest": "sha256:layer123",
+            "DiffID": "sha256:layer456"
+          },
+          "SeveritySource": "ubuntu",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-1234",
+          "DataSource": {
+            "ID": "ubuntu",
+            "Name": "Ubuntu CVE Tracker",
+            "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
+          },
+          "Title": "OpenSSL: Buffer overflow in SSL certificate parsing",
+          "Description": "A buffer overflow vulnerability in OpenSSL's certificate parsing functionality could allow remote attackers to execute arbitrary code or cause denial of service. This affects systems processing untrusted SSL certificates.",
+          "Severity": "CRITICAL",
+          "CweIDs": [
+            "CWE-120"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-1234",
+            "https://www.openssl.org/news/secadv/20240115.txt"
+          ],
+          "PublishedDate": "2024-01-15T08:15:00Z",
+          "LastModifiedDate": "2024-01-16T10:30:00Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2024-5678",
+          "PkgID": "curl@7.81.0-1ubuntu1.4",
+          "PkgName": "curl",
+          "InstalledVersion": "7.81.0-1ubuntu1.4",
+          "FixedVersion": "7.81.0-1ubuntu1.6",
+          "Layer": {
+            "Digest": "sha256:layer789",
+            "DiffID": "sha256:layer012"
+          },
+          "SeveritySource": "ubuntu",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-5678",
+          "DataSource": {
+            "ID": "ubuntu",
+            "Name": "Ubuntu CVE Tracker",
+            "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
+          },
+          "Title": "curl: HTTP/2 push headers memory leak",
+          "Description": "A memory leak in curl's HTTP/2 implementation when processing push promise headers could lead to denial of service in long-running applications that process many HTTP/2 connections.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-401"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 7.5
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-5678",
+            "https://curl.se/docs/CVE-2024-5678.html"
+          ],
+          "PublishedDate": "2024-01-10T14:20:00Z",
+          "LastModifiedDate": "2024-01-11T16:45:00Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2023-9876",
+          "PkgID": "libc6@2.35-0ubuntu3.1",
+          "PkgName": "libc6",
+          "InstalledVersion": "2.35-0ubuntu3.1",
+          "FixedVersion": "2.35-0ubuntu3.4",
+          "Layer": {
+            "Digest": "sha256:layer345",
+            "DiffID": "sha256:layer678"
+          },
+          "SeveritySource": "ubuntu",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-9876",
+          "DataSource": {
+            "ID": "ubuntu",
+            "Name": "Ubuntu CVE Tracker",
+            "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
+          },
+          "Title": "glibc: Stack-based buffer overflow in DNS resolver",
+          "Description": "A stack-based buffer overflow vulnerability in the GNU C Library's DNS resolver could be exploited by attackers to execute arbitrary code when applications resolve malicious domain names.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-787"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:H",
+              "V3Score": 7.5
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-9876",
+            "https://sourceware.org/bugzilla/show_bug.cgi?id=30884"
+          ],
+          "PublishedDate": "2023-12-15T09:30:00Z",
+          "LastModifiedDate": "2023-12-20T11:15:00Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2024-2468",
+          "PkgID": "zlib1g@1:1.2.11.dfsg-2ubuntu9.2",
+          "PkgName": "zlib1g",
+          "InstalledVersion": "1:1.2.11.dfsg-2ubuntu9.2",
+          "FixedVersion": "1:1.2.11.dfsg-2ubuntu9.3",
+          "Layer": {
+            "Digest": "sha256:layer567",
+            "DiffID": "sha256:layer890"
+          },
+          "SeveritySource": "ubuntu",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-2468",
+          "DataSource": {
+            "ID": "ubuntu",
+            "Name": "Ubuntu CVE Tracker",
+            "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
+          },
+          "Title": "zlib: Out-of-bounds read in inflate function",
+          "Description": "An out-of-bounds read vulnerability in zlib's inflate function when processing specially crafted compressed data could lead to information disclosure or denial of service.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-125"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:H",
+              "V3Score": 6.1
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-2468",
+            "https://github.com/madler/zlib/issues/843"
+          ],
+          "PublishedDate": "2024-01-22T16:45:00Z",
+          "LastModifiedDate": "2024-01-23T09:20:00Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2024-1357",
+          "PkgID": "libxml2@2.9.13+dfsg-1ubuntu0.3",
+          "PkgName": "libxml2",
+          "InstalledVersion": "2.9.13+dfsg-1ubuntu0.3",
+          "FixedVersion": "2.9.13+dfsg-1ubuntu0.4",
+          "Layer": {
+            "Digest": "sha256:layer234",
+            "DiffID": "sha256:layer567"
+          },
+          "SeveritySource": "ubuntu",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-1357",
+          "DataSource": {
+            "ID": "ubuntu",
+            "Name": "Ubuntu CVE Tracker",
+            "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
+          },
+          "Title": "libxml2: Use-after-free in XML parser",
+          "Description": "A use-after-free vulnerability in libxml2's XML parsing functionality could be exploited by attackers to cause crashes or potentially execute arbitrary code when parsing malicious XML documents.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-416"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+              "V3Score": 8.8
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-1357",
+            "https://gitlab.gnome.org/GNOME/libxml2/-/issues/564"
+          ],
+          "PublishedDate": "2024-01-18T11:30:00Z",
+          "LastModifiedDate": "2024-01-19T14:15:00Z"
+        }
+      ]
+    },
+    {
+      "Target": "Java",
+      "Class": "lang-pkgs",
+      "Type": "jar",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-3691",
+          "PkgID": "com.fasterxml.jackson.core:jackson-databind:2.13.3",
+          "PkgName": "com.fasterxml.jackson.core:jackson-databind",
+          "InstalledVersion": "2.13.3",
+          "FixedVersion": "2.13.5",
+          "PkgPath": "app.jar",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-3691",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Title": "Jackson Databind: Deserialization vulnerability in DefaultTyping",
+          "Description": "A deserialization vulnerability in Jackson Databind when using DefaultTyping could allow attackers to execute arbitrary code by providing malicious JSON payloads that exploit unsafe deserialization patterns.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-502"
+          ],
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 8.8
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-3691",
+            "https://github.com/FasterXML/jackson-databind/issues/3972"
+          ],
+          "PublishedDate": "2024-01-20T13:45:00Z",
+          "LastModifiedDate": "2024-01-21T16:30:00Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2023-5432",
+          "PkgID": "org.apache.commons:commons-text:1.9",
+          "PkgName": "org.apache.commons:commons-text",
+          "InstalledVersion": "1.9",
+          "FixedVersion": "1.10.0",
+          "PkgPath": "app.jar",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2023-5432",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Title": "Apache Commons Text: Variable interpolation RCE",
+          "Description": "Apache Commons Text performs variable interpolation, allowing properties to be dynamically evaluated and expanded. This can lead to remote code execution when untrusted input is used in variable interpolation.",
+          "Severity": "CRITICAL",
+          "CweIDs": [
+            "CWE-94"
+          ],
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2023-5432",
+            "https://issues.apache.org/jira/browse/TEXT-194"
+          ],
+          "PublishedDate": "2023-10-15T20:30:00Z",
+          "LastModifiedDate": "2023-10-20T14:15:00Z"
+        }
+      ]
+    }
+  ]
+}

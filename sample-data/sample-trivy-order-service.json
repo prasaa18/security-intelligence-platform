@@ -1,0 +1,215 @@
+{
+  "SchemaVersion": 2,
+  "ArtifactName": "order-service",
+  "ArtifactType": "container",
+  "Metadata": {
+    "OS": {
+      "Family": "ubuntu",
+      "Name": "22.04"
+    },
+    "ImageID": "sha256:def456ghi789",
+    "DiffIDs": [
+      "sha256:ghi789jkl012"
+    ],
+    "RepoTags": [
+      "order-service:v2.1.0"
+    ],
+    "RepoDigests": [
+      "order-service@sha256:jkl012mno345"
+    ],
+    "ImageConfig": {
+      "architecture": "amd64",
+      "created": "2024-01-18T14:20:00Z"
+    }
+  },
+  "Results": [
+    {
+      "Target": "order-service (ubuntu 22.04)",
+      "Class": "os-pkgs",
+      "Type": "ubuntu",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-1234",
+          "PkgID": "openssl@3.0.2-0ubuntu1.10",
+          "PkgName": "openssl",
+          "InstalledVersion": "3.0.2-0ubuntu1.10",
+          "FixedVersion": "3.0.2-0ubuntu1.12",
+          "Layer": {
+            "Digest": "sha256:layer987",
+            "DiffID": "sha256:layer654"
+          },
+          "SeveritySource": "ubuntu",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-1234",
+          "DataSource": {
+            "ID": "ubuntu",
+            "Name": "Ubuntu CVE Tracker",
+            "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
+          },
+          "Title": "OpenSSL: Buffer overflow in SSL certificate parsing",
+          "Description": "A buffer overflow vulnerability in OpenSSL's certificate parsing functionality could allow remote attackers to execute arbitrary code or cause denial of service. This affects systems processing untrusted SSL certificates.",
+          "Severity": "CRITICAL",
+          "CweIDs": [
+            "CWE-120"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 9.8
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-1234",
+            "https://www.openssl.org/news/secadv/20240115.txt"
+          ],
+          "PublishedDate": "2024-01-15T08:15:00Z",
+          "LastModifiedDate": "2024-01-16T10:30:00Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2024-7890",
+          "PkgID": "nginx@1.18.0-6ubuntu14.4",
+          "PkgName": "nginx",
+          "InstalledVersion": "1.18.0-6ubuntu14.4",
+          "FixedVersion": "1.18.0-6ubuntu14.5",
+          "Layer": {
+            "Digest": "sha256:layer321",
+            "DiffID": "sha256:layer098"
+          },
+          "SeveritySource": "ubuntu",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-7890",
+          "DataSource": {
+            "ID": "ubuntu",
+            "Name": "Ubuntu CVE Tracker",
+            "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
+          },
+          "Title": "nginx: HTTP request smuggling via chunk extensions",
+          "Description": "A vulnerability in nginx's HTTP request processing could allow attackers to perform HTTP request smuggling attacks by exploiting incorrect handling of chunk extensions in chunked transfer encoding.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-444"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N",
+              "V3Score": 7.5
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-7890",
+            "https://nginx.org/en/security_advisories.html"
+          ],
+          "PublishedDate": "2024-01-25T10:15:00Z",
+          "LastModifiedDate": "2024-01-26T12:30:00Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2024-3456",
+          "PkgID": "postgresql-client-14@14.7-0ubuntu0.22.04.1",
+          "PkgName": "postgresql-client-14",
+          "InstalledVersion": "14.7-0ubuntu0.22.04.1",
+          "FixedVersion": "14.9-0ubuntu0.22.04.1",
+          "Layer": {
+            "Digest": "sha256:layer456",
+            "DiffID": "sha256:layer789"
+          },
+          "SeveritySource": "ubuntu",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-3456",
+          "DataSource": {
+            "ID": "ubuntu",
+            "Name": "Ubuntu CVE Tracker",
+            "URL": "https://git.launchpad.net/ubuntu-cve-tracker"
+          },
+          "Title": "PostgreSQL: SQL injection via extension scripts",
+          "Description": "A vulnerability in PostgreSQL's extension loading mechanism could allow authenticated users with sufficient privileges to execute arbitrary SQL commands through malicious extension scripts.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-89"
+          ],
+          "CVSS": {
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.2
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-3456",
+            "https://www.postgresql.org/about/news/postgresql-156-149-1312-1217-and-1122-released-2749/"
+          ],
+          "PublishedDate": "2024-01-30T16:20:00Z",
+          "LastModifiedDate": "2024-01-31T09:45:00Z"
+        }
+      ]
+    },
+    {
+      "Target": "Java",
+      "Class": "lang-pkgs", 
+      "Type": "jar",
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-3691",
+          "PkgID": "com.fasterxml.jackson.core:jackson-databind:2.13.3",
+          "PkgName": "com.fasterxml.jackson.core:jackson-databind",
+          "InstalledVersion": "2.13.3",
+          "FixedVersion": "2.13.5",
+          "PkgPath": "app.jar",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-3691",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Title": "Jackson Databind: Deserialization vulnerability in DefaultTyping",
+          "Description": "A deserialization vulnerability in Jackson Databind when using DefaultTyping could allow attackers to execute arbitrary code by providing malicious JSON payloads that exploit unsafe deserialization patterns.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-502"
+          ],
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 8.8
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-3691",
+            "https://github.com/FasterXML/jackson-databind/issues/3972"
+          ],
+          "PublishedDate": "2024-01-20T13:45:00Z",
+          "LastModifiedDate": "2024-01-21T16:30:00Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2024-1111",
+          "PkgID": "org.springframework:spring-core:5.3.21",
+          "PkgName": "org.springframework:spring-core",
+          "InstalledVersion": "5.3.21",
+          "FixedVersion": "5.3.23",
+          "PkgPath": "app.jar",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-1111",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory Maven",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Amaven"
+          },
+          "Title": "Spring Framework: Path traversal vulnerability in resource handling",
+          "Description": "A path traversal vulnerability in Spring Framework's resource handling could allow attackers to access files outside the intended directory structure by crafting malicious resource paths.",
+          "Severity": "MEDIUM",
+          "CweIDs": [
+            "CWE-22"
+          ],
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N",
+              "V3Score": 6.5
+            }
+          },
+          "References": [
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2024-1111",
+            "https://spring.io/security/cve-2024-1111"
+          ],
+          "PublishedDate": "2024-02-01T11:20:00Z",
+          "LastModifiedDate": "2024-02-02T14:35:00Z"
+        }
+      ]
+    }
+  ]
+}

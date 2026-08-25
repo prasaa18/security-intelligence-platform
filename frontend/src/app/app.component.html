@@ -1,0 +1,18 @@
+<div class="app-container">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <span class="navbar-icon">🛡</span>
+      <span class="navbar-title">Security Intelligence</span>
+    </div>
+    <div class="navbar-nav">
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">Dashboard</a>
+      <a routerLink="/reports" routerLinkActive="active" class="nav-link">Reports</a>
+      <a routerLink="/findings" routerLinkActive="active" class="nav-link">Findings</a>
+      <a routerLink="/services" routerLinkActive="active" class="nav-link">Services</a>
+    </div>
+  </nav>
+  
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

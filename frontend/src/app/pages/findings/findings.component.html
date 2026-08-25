@@ -1,0 +1,138 @@
+<div class="findings-container">
+  <div class="findings-header">
+    <h1>Findings</h1>
+    <div class="findings-stats" *ngIf="!loading">
+      Showing {{ filteredFindings.length }} of {{ findings.length }} findings
+    </div>
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="card filters-card">
+    <div class="search-section">
+      <input type="text" 
+             [(ngModel)]="searchQuery" 
+             (input)="onSearchChange()"
+             placeholder="Search by CVE, title, service, or package..."
+             class="search-input">
+      <button class="btn btn-secondary" (click)="clearFilters()">Clear All</button>
+    </div>
+
+    <div class="filters-section">
+      <div class="filter-group">
+        <label>Severity:</label>
+        <select [(ngModel)]="selectedSeverity" (change)="onFilterChange()" class="filter-select">
+          <option value="">All Severities</option>
+          <option *ngFor="let severity of severities" [value]="severity">{{ severity }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Priority:</label>
+        <select [(ngModel)]="selectedPriority" (change)="onFilterChange()" class="filter-select">
+          <option value="">All Priorities</option>
+          <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Tool:</label>
+        <select [(ngModel)]="selectedTool" (change)="onFilterChange()" class="filter-select">
+          <option value="">All Tools</option>
+          <option *ngFor="let tool of getUniqueValues('tool')" [value]="tool">{{ tool }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Service:</label>
+        <select [(ngModel)]="selectedService" (change)="onFilterChange()" class="filter-select">
+          <option value="">All Services</option>
+          <option *ngFor="let service of getUniqueValues('serviceName')" [value]="service">{{ service }}</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Status:</label>
+        <select [(ngModel)]="selectedStatus" (change)="onFilterChange()" class="filter-select">
+          <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner">Loading findings...</div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-container">
+    <div class="error-message">{{ error }}</div>
+    <button class="btn btn-primary" (click)="loadFindings()">Retry</button>
+  </div>
+
+  <!-- Findings Table -->
+  <div *ngIf="!loading && !error" class="card findings-card">
+    <div *ngIf="filteredFindings.length === 0" class="no-findings">
+      <h3>No findings found</h3>
+      <p *ngIf="findings.length === 0">No security findings have been uploaded yet.</p>
+      <p *ngIf="findings.length > 0">Try adjusting your search or filter criteria.</p>
+    </div>
+
+    <div *ngIf="filteredFindings.length > 0" class="findings-table-container">
+      <table class="findings-table">
+        <thead>
+          <tr>
+            <th>CVE</th>
+            <th>Title</th>
+            <th>Service</th>
+            <th>Tool</th>
+            <th>Severity</th>
+            <th>CVSS</th>
+            <th>Risk Score</th>
+            <th>Priority</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let finding of filteredFindings" [routerLink]="['/findings', finding.id]" class="finding-row">
+            <td>
+              <code class="cve-code">{{ finding.cve || 'N/A' }}</code>
+            </td>
+            <td>
+              <div class="finding-title">{{ finding.title || 'No title' }}</div>
+              <div class="finding-package" *ngIf="finding.packageName">
+                {{ finding.packageName }}
+                <span *ngIf="finding.installedVersion">&#64;{{ finding.installedVersion }}</span>
+              </div>
+            </td>
+            <td>{{ finding.serviceName }}</td>
+            <td>
+              <span [class]="getToolClass(finding.tool)" class="tool-badge">{{ finding.tool }}</span>
+            </td>
+            <td>
+              <span [class]="getSeverityClass(finding.severity)" class="severity-badge">{{ finding.severity }}</span>
+            </td>
+            <td>
+              <span class="cvss-score" *ngIf="finding.cvssScore">{{ finding.cvssScore.toFixed(1) }}</span>
+              <span *ngIf="!finding.cvssScore" class="no-score">N/A</span>
+            </td>
+            <td>
+              <span class="risk-score" *ngIf="finding.riskScore">{{ finding.riskScore }}</span>
+              <span *ngIf="!finding.riskScore" class="no-score">N/A</span>
+            </td>
+            <td>
+              <span [class]="getPriorityClass(finding.priority || 'p4')" class="priority-badge">{{ finding.priority || 'P4' }}</span>
+            </td>
+            <td>
+              <span class="status-badge" [class.status-open]="finding.status === 'OPEN'"
+                    [class.status-resolved]="finding.status === 'RESOLVED'"
+                    [class.status-ignored]="finding.status === 'IGNORED'">
+                {{ finding.status }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

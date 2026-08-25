@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: security-intelligence-platform
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb+srv://admin:admin@cluster0.hs3mybp.mongodb.net/securityintel}
+      database: securityintel
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# Security Integration Configuration
+scan:
+  ingestion:
+    token: ${SCAN_INGESTION_TOKEN:}
+  freshness:
+    production:
+      hours: ${SCAN_FRESHNESS_PRODUCTION_HOURS:24}
+    development:
+      hours: ${SCAN_FRESHNESS_DEVELOPMENT_HOURS:168}
+
+# Gemini AI Configuration
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-1.5-flash}
+
+logging:
+  level:
+    com.securityintel: DEBUG
+    org.springframework.data.mongodb: DEBUG
