@@ -30,7 +30,7 @@ public class SecurityFindingDto {
     private Status status;
     private String fingerprint;
     private List<String> sourceFindings;
-    private Integer riskScore;
+    private Double riskScore;
     private Priority priority;
     private List<String> priorityReasons;
     private LocalDateTime createdAt;
@@ -236,11 +236,11 @@ public class SecurityFindingDto {
         this.sourceFindings = sourceFindings;
     }
 
-    public Integer getRiskScore() {
+    public Double getRiskScore() {
         return riskScore;
     }
 
-    public void setRiskScore(Integer riskScore) {
+    public void setRiskScore(Double riskScore) {
         this.riskScore = riskScore;
     }
 

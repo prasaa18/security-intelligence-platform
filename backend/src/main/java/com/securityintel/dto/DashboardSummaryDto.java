@@ -143,7 +143,7 @@ public class DashboardSummaryDto {
         private String cve;
         private String serviceName;
         private String severity;
-        private Integer riskScore;
+        private Double riskScore;
         private String priority;
 
         public TopPriorityFindingDto() {}
@@ -182,11 +182,11 @@ public class DashboardSummaryDto {
             this.severity = severity;
         }
 
-        public Integer getRiskScore() {
+        public Double getRiskScore() {
             return riskScore;
         }
 
-        public void setRiskScore(Integer riskScore) {
+        public void setRiskScore(Double riskScore) {
             this.riskScore = riskScore;
         }
 

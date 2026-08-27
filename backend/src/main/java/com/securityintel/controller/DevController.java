@@ -267,7 +267,7 @@ public class DevController {
                 // Calculate priority based on service context
                 Priority priority = calculatePriority(service, finding.getSeverity().name());
                 finding.setPriority(priority);
-                finding.setRiskScore(calculateRiskScore(service, finding.getSeverity().name()));
+                finding.setRiskScore((double) calculateRiskScore(service, finding.getSeverity().name()));
                 
                 // Add priority reasons
                 List<String> reasons = new ArrayList<>();

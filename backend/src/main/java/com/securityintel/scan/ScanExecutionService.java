@@ -126,7 +126,7 @@ public class ScanExecutionService {
             Optional<Service> serviceEntity = serviceRepository.findByServiceName(serviceName);
             for (SecurityFinding finding : deduplicationResult.getUniqueFindings()) {
                 PriorityResult priorityResult = prioritizationEngine.calculatePriority(finding, serviceEntity.orElse(null));
-                finding.setRiskScore(priorityResult.getRiskScore());
+                finding.setRiskScore((double) priorityResult.getRiskScore());
                 finding.setPriority(priorityResult.getPriority());
                 finding.setPriorityReasons(priorityResult.getReasons());
             }

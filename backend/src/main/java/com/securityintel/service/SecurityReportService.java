@@ -134,7 +134,7 @@ public class SecurityReportService {
         Optional<Service> serviceEntity = serviceManagementService.findServiceEntityByName(serviceName);
         for (SecurityFinding finding : deduplicationResult.getUniqueFindings()) {
             PriorityResult priorityResult = prioritizationEngine.calculatePriority(finding, serviceEntity.orElse(null));
-            finding.setRiskScore(priorityResult.getRiskScore());
+            finding.setRiskScore((double) priorityResult.getRiskScore());
             finding.setPriority(priorityResult.getPriority());
             finding.setPriorityReasons(priorityResult.getReasons());
         }

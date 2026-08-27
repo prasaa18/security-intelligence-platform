@@ -22,7 +22,7 @@ public class RemediationItem {
     @Indexed
     private Priority priority;
     
-    private Integer riskScore;
+    private Double riskScore;
     
     @Indexed
     private Status status;
@@ -91,11 +91,11 @@ public class RemediationItem {
         this.priority = priority;
     }
 
-    public Integer getRiskScore() {
+    public Double getRiskScore() {
         return riskScore;
     }
 
-    public void setRiskScore(Integer riskScore) {
+    public void setRiskScore(Double riskScore) {
         this.riskScore = riskScore;
     }
 

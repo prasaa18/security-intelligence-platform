@@ -59,7 +59,7 @@ public class SecurityFinding {
     private List<String> sourceFindings;
     
     // Prioritization fields
-    private Integer riskScore;
+    private Double riskScore;
     private Priority priority;
     private List<String> priorityReasons;
     
@@ -274,11 +274,11 @@ public class SecurityFinding {
         this.sourceFindings = sourceFindings;
     }
 
-    public Integer getRiskScore() {
+    public Double getRiskScore() {
         return riskScore;
     }
 
-    public void setRiskScore(Integer riskScore) {
+    public void setRiskScore(Double riskScore) {
         this.riskScore = riskScore;
     }
 
