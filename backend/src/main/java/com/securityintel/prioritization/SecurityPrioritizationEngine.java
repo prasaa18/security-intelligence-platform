@@ -69,6 +69,10 @@ public class SecurityPrioritizationEngine {
 
             // Data sensitivity
             switch (service.getDataSensitivity()) {
+                case HIGHLY_SENSITIVE:
+                    riskScore += 15;
+                    reasons.add("Handles highly sensitive data");
+                    break;
                 case SENSITIVE:
                     riskScore += 10;
                     reasons.add("Handles sensitive data");

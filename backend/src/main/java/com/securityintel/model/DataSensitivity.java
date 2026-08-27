@@ -4,5 +4,6 @@ public enum DataSensitivity {
     PUBLIC,
     INTERNAL,
     CONFIDENTIAL,
-    SENSITIVE
+    SENSITIVE,
+    HIGHLY_SENSITIVE
 }

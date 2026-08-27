@@ -79,6 +79,12 @@ public class Service {
         this.teamName = teamName;
     }
 
+    public void setTeam(String team) {
+        if (this.teamName == null || this.teamName.isBlank()) {
+            this.teamName = team;
+        }
+    }
+
     public Environment getEnvironment() {
         return environment;
     }
