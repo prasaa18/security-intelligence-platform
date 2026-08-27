@@ -1,12 +1,12 @@
 <div class="scan-detail-container">
   <div class="page-header">
     <h1>Scan Execution Details</h1>
-    <button class="back-btn" (click)="router.navigate(['/scans'])">← Back to Scan History</button>
+    <button class="back-btn" (click)="goBack()">← Back to Scan History</button>
   </div>
 
   <div *ngIf="loading" class="loading">Loading scan execution...</div>
 
-  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="error" class="error">{{ error }} <button class="back-btn" (click)="loadScanExecution(route.snapshot.paramMap.get('id') || '')">Retry</button></div>
 
   <div *ngIf="!loading && !error && scanExecution" class="scan-detail">
     <div class="detail-header">

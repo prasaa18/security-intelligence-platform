@@ -1,9 +1,0 @@
-
-spring:
-  data:
-    mongodb:
-      uri: mongodb://admin:admin123@mongodb:27017/securityintel?authSource=admin
-      database: securityintel
-      auto-index-creation: true
-
-

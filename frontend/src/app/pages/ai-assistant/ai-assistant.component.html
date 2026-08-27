@@ -6,40 +6,45 @@
 
   <div *ngIf="loading" class="loading">Checking AI configuration...</div>
 
-  <div *ngIf="!loading && !isConfigured" class="not-configured">
+  <div *ngIf="!loading" class="mode-banner" [class.enhanced]="isConfigured">
     <div class="config-warning">
-      <h2>⚠️ AI Not Configured</h2>
-      <p>The Gemini AI integration is not configured. To enable AI features:</p>
-      <ol>
-        <li>Set the <code>GEMINI_API_KEY</code> environment variable in your backend</li>
-        <li>Restart the backend server</li>
-        <li>Refresh this page</li>
-      </ol>
-      <p class="note">Note: AI features require a valid Google Gemini API key.</p>
+      <h2>{{ isConfigured ? 'AI-enhanced security analyst' : 'Security analyst mode' }}</h2>
+      <p>{{ isConfigured ? 'Gemini adds contextual explanations to scanner facts.' : 'Grounded guidance is available from your scanner data. Add Gemini later for richer explanations.' }}</p>
+      <span class="mode-label">{{ aiMode }}<span *ngIf="aiModel"> · {{ aiModel }}</span></span>
     </div>
   </div>
 
-  <div *ngIf="!loading && isConfigured" class="ai-interface">
+  <div *ngIf="!loading" class="ai-interface">
     <div class="context-section">
       <h3>Context Selection</h3>
       <div class="context-inputs">
         <div class="input-group">
-          <label>Finding ID:</label>
-          <input 
-            type="text" 
+          <label>Finding:</label>
+          <select 
             [(ngModel)]="selectedFindingId" 
-            placeholder="Enter finding ID for context-specific guidance"
             class="context-input"
+            [disabled]="loadingData"
           >
+            <option value="">Select a finding...</option>
+            <option *ngFor="let finding of availableFindings" [value]="finding.id">
+              {{ getFindingLabel(finding) }}
+            </option>
+          </select>
+          <small *ngIf="loadingData">Loading findings...</small>
         </div>
         <div class="input-group">
-          <label>Service ID:</label>
-          <input 
-            type="text" 
+          <label>Service:</label>
+          <select 
             [(ngModel)]="selectedServiceId" 
-            placeholder="Enter service ID for service-specific analysis"
             class="context-input"
+            [disabled]="loadingData"
           >
+            <option value="">Select a service...</option>
+            <option *ngFor="let service of availableServices" [value]="service.id">
+              {{ getServiceLabel(service) }}
+            </option>
+          </select>
+          <small *ngIf="loadingData">Loading services...</small>
         </div>
       </div>
     </div>
@@ -69,7 +74,7 @@
               <span class="message-time">{{ formatTime(msg.timestamp) }}</span>
             </div>
             <div class="message-content">
-              <div [innerHTML]="msg.message"></div>
+              <div [innerHTML]="msg.message" class="markdown-content"></div>
             </div>
           </div>
           <div *ngIf="chatHistory.length === 0" class="no-messages">

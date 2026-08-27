@@ -24,8 +24,11 @@ public class GeminiAiService {
     @Value("${gemini.api.key:}")
     private String geminiApiKey;
     
-    @Value("${gemini.model:gemini-1.5-flash}")
+    @Value("${gemini.api.model:gemini-3.6-flash}")
     private String geminiModel;
+    
+    @Value("${gemini.api.endpoint:https://generativelanguage.googleapis.com/v1beta/interactions}")
+    private String geminiEndpoint;
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
@@ -52,9 +55,13 @@ public class GeminiAiService {
         return geminiApiKey != null && !geminiApiKey.isEmpty();
     }
 
+    public String getMode() { return isConfigured() ? "AI_ENHANCED" : "SECURITY_ANALYST"; }
+    public String getModel() { return geminiModel; }
+
     public String explainPriority(String findingId) {
         if (!isConfigured()) {
-            return "Gemini AI is not configured. Please set GEMINI_API_KEY environment variable.";
+            SecurityFinding finding = securityFindingRepository.findById(findingId).orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Finding not found: " + findingId));
+            return localPriorityExplanation(finding);
         }
 
         SecurityFinding finding = securityFindingRepository.findById(findingId)
@@ -68,7 +75,8 @@ public class GeminiAiService {
 
     public String generateRemediationGuidance(String findingId) {
         if (!isConfigured()) {
-            return "Gemini AI is not configured. Please set GEMINI_API_KEY environment variable.";
+            SecurityFinding finding = securityFindingRepository.findById(findingId).orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Finding not found: " + findingId));
+            return localRemediationGuidance(finding);
         }
 
         SecurityFinding finding = securityFindingRepository.findById(findingId)
@@ -82,7 +90,8 @@ public class GeminiAiService {
 
     public String summarizeServiceRisk(String serviceId) {
         if (!isConfigured()) {
-            return "Gemini AI is not configured. Please set GEMINI_API_KEY environment variable.";
+            Service service = serviceRepository.findById(serviceId).orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Service not found: " + serviceId));
+            return localServiceSummary(service);
         }
 
         Service service = serviceRepository.findById(serviceId)
@@ -96,12 +105,30 @@ public class GeminiAiService {
 
     public String generateDailySecurityBrief() {
         if (!isConfigured()) {
-            return "Gemini AI is not configured. Please set GEMINI_API_KEY environment variable.";
+            return localDailyBrief();
         }
 
         String context = buildDailySecurityContext();
         String prompt = buildDailySecurityBriefPrompt(context);
 
+        return callGeminiApi(prompt);
+    }
+
+    public String answerQuestion(String question, String serviceId, String findingId) {
+        if (!isConfigured()) {
+            return localQuestionAnswer(question, serviceId, findingId);
+        }
+        StringBuilder context = new StringBuilder();
+        if (serviceId != null && !serviceId.isBlank()) {
+            serviceRepository.findById(serviceId).ifPresent(service -> context.append(buildServiceContext(service)));
+        }
+        if (findingId != null && !findingId.isBlank()) {
+            securityFindingRepository.findById(findingId).ifPresent(finding -> context.append("\n").append(buildFindingContext(finding)));
+        }
+        String prompt = "Answer the security team's question using only the supplied facts. " +
+            "Lead with a direct answer, then give at most three actionable bullets. " +
+            "Say when the facts are insufficient. Do not return JSON or metadata.\n\n" +
+            "QUESTION: " + question + "\n\nFACTS:\n" + context;
         return callGeminiApi(prompt);
     }
 
@@ -215,65 +242,81 @@ public class GeminiAiService {
         return context.toString();
     }
 
+    private String localPriorityExplanation(SecurityFinding finding) {
+        return "Priority " + finding.getPriority() + " is based on " + finding.getSeverity() + " scanner severity, CVSS " + (finding.getCvssScore() == null ? "not provided" : finding.getCvssScore()) + ", and the business context of " + finding.getServiceName() + ".";
+    }
+
+    private String localRemediationGuidance(SecurityFinding finding) {
+        String fix = finding.getFixedVersion() == null ? "the first patched version provided by the scanner" : finding.getFixedVersion();
+        return "Update " + (finding.getPackageName() == null ? "the affected dependency" : finding.getPackageName()) + " from " + (finding.getInstalledVersion() == null ? "the installed version" : finding.getInstalledVersion()) + " to " + fix + ". Rebuild the service, rerun the same scanner, and confirm the finding is no longer detected.";
+    }
+
+    private String localServiceSummary(Service service) {
+        List<SecurityFinding> findings = securityFindingRepository.findActiveFindingsByService(service.getServiceName());
+        long p0 = findings.stream().filter(f -> f.getPriority() == Priority.P0).count();
+        long p1 = findings.stream().filter(f -> f.getPriority() == Priority.P1).count();
+        return service.getServiceName() + " has " + findings.size() + " active findings, including " + p0 + " P0 and " + p1 + " P1 items. Review the highest-priority fixes first; the service is " + service.getBusinessCriticality() + " criticality and runs in " + service.getEnvironment() + ".";
+    }
+
+    private String localDailyBrief() {
+        long p0 = securityFindingRepository.countByPriorityAndStatus(Priority.P0, Status.OPEN);
+        long p1 = securityFindingRepository.countByPriorityAndStatus(Priority.P1, Status.OPEN);
+        return "Today's Security Brief\n\n- " + p0 + " open P0 findings require immediate action.\n- " + p1 + " open P1 findings should be planned this week.\n- Use the Security Hub service matrix to identify owners, stale scans, and the next remediation queue.\n- AI enrichment is unavailable; these facts come directly from scanner-derived platform data.";
+    }
+
+    private String localQuestionAnswer(String question, String serviceId, String findingId) {
+        if (findingId != null && !findingId.isBlank()) return localRemediationGuidance(securityFindingRepository.findById(findingId).orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Finding not found: " + findingId)));
+        if (serviceId != null && !serviceId.isBlank()) return localServiceSummary(serviceRepository.findById(serviceId).orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Service not found: " + serviceId)));
+        return "I can answer questions about active priorities, scanner findings, remediation, service owners, and scan freshness. Select a service or finding for a grounded answer. Your question was: " + question;
+    }
+
     private String buildExplainPriorityPrompt(String context) {
-        return "You are a security expert. Based on the following FACTS from the security scanning system, explain why this vulnerability received its priority level.\n\n" +
+        return "Explain why this vulnerability received its priority level. Be concise and clear.\n\n" +
                context + "\n\n" +
-               "IMPORTANT: Your response must clearly distinguish between FACTS from the scanner/system and your AI GUIDANCE.\n\n" +
-               "Provide:\n" +
-               "1. A simple explanation suitable for non-technical stakeholders\n" +
-               "2. A technical explanation for developers\n" +
-               "3. Why the priority level is appropriate based on the context\n\n" +
-               "Do not invent facts. Only use the information provided above.";
+               "Provide a brief explanation in 2-3 sentences. Focus on the key risk factors.";
     }
 
     private String buildRemediationGuidancePrompt(String context) {
-        return "You are a security expert. Based on the following FACTS from the security scanning system, provide remediation guidance.\n\n" +
+        return "Provide brief remediation guidance for this vulnerability.\n\n" +
                context + "\n\n" +
-               "IMPORTANT: Your response must clearly distinguish between FACTS from the scanner/system and your AI GUIDANCE.\n\n" +
-               "Provide:\n" +
-               "1. Step-by-step remediation instructions\n" +
-               "2. How to verify the fix\n" +
-               "3. Potential risks or assumptions\n" +
-               "4. Additional security considerations\n\n" +
-               "Do not invent facts. Only use the information provided above.";
+               "Give 2-3 specific steps to fix this issue. Keep it actionable and concise.";
     }
 
     private String buildServiceRiskSummaryPrompt(String context) {
-        return "You are a security expert. Based on the following FACTS about a service, summarize its security risk profile.\n\n" +
+        return "Summarize the security risk profile of this service.\n\n" +
                context + "\n\n" +
-               "IMPORTANT: Your response must clearly distinguish between FACTS from the scanner/system and your AI GUIDANCE.\n\n" +
-               "Provide:\n" +
-               "1. Overall security assessment\n" +
-               "2. Top risks that need attention\n" +
-               "3. Recommended actions for the service team\n\n" +
-               "Do not invent facts. Only use the information provided above.";
+               "Give a 2-3 sentence assessment focusing on the top risks and recommended actions.";
     }
 
     private String buildDailySecurityBriefPrompt(String context) {
-        return "You are a security expert. Based on the following FACTS about the current security state, generate a daily security brief.\n\n" +
+        return "Generate a brief daily security summary.\n\n" +
                context + "\n\n" +
-               "IMPORTANT: Your response must clearly distinguish between FACTS from the scanner/system and your AI GUIDANCE.\n\n" +
-               "Provide:\n" +
-               "1. What requires attention today\n" +
-               "2. Which services need focus\n" +
-               "3. Summary of recent security changes\n" +
-               "4. Recommended priorities for engineering teams\n\n" +
-               "Do not invent facts. Only use the information provided above.";
+               "Provide 3-4 bullet points on what needs attention today and which services need focus.";
     }
 
+    // Simple cache for AI responses to improve performance
+    private final java.util.Map<String, String> responseCache = new java.util.concurrent.ConcurrentHashMap<>();
+    
     private String callGeminiApi(String prompt) {
         try {
-            String url = "https://generativelanguage.googleapis.com/v1beta/models/" + geminiModel + ":generateContent?key=" + geminiApiKey;
+            // Check cache first using simple hash of prompt
+            String cacheKey = String.valueOf(prompt.hashCode());
+            
+            if (responseCache.containsKey(cacheKey)) {
+                return responseCache.get(cacheKey);
+            }
+            
+            String url = geminiEndpoint + "?key=" + geminiApiKey;
             
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("Api-Revision", "2026-05-20");
             
+            // Simplified request for faster response
             Map<String, Object> requestBody = Map.of(
-                "contents", List.of(
-                    Map.of("parts", List.of(
-                        Map.of("text", prompt)
-                    ))
-                )
+                "model", geminiModel,
+                "input", prompt,
+                "store", false
             );
             
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
@@ -282,17 +325,55 @@ public class GeminiAiService {
             
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 JsonNode root = objectMapper.readTree(response.getBody());
-                JsonNode candidates = root.path("candidates");
-                if (candidates.isArray() && candidates.size() > 0) {
-                    JsonNode content = candidates.get(0).path("content");
-                    JsonNode parts = content.path("parts");
-                    if (parts.isArray() && parts.size() > 0) {
-                        return parts.get(0).path("text").asText();
+                
+                // Try to extract content from the new Gemini response format with steps
+                if (root.has("steps") && root.path("steps").isArray()) {
+                    for (JsonNode step : root.path("steps")) {
+                        if (step.has("type") && step.path("type").asText().equals("model_output")) {
+                            if (step.has("content") && step.path("content").isArray()) {
+                                JsonNode contentArray = step.path("content");
+                                if (contentArray.size() > 0 && contentArray.get(0).has("text")) {
+                                    String result = contentArray.get(0).path("text").asText();
+                                    responseCache.put(cacheKey, result);
+                                    return result;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Fallback to legacy response format parsing
+                JsonNode reply = root.path("reply");
+                if (reply.has("content")) {
+                    String result = reply.path("content").asText();
+                    responseCache.put(cacheKey, result);
+                    return result;
+                } else if (reply.has("text")) {
+                    String result = reply.path("text").asText();
+                    responseCache.put(cacheKey, result);
+                    return result;
+                } else if (root.has("reply") && root.path("reply").isArray() && root.path("reply").size() > 0) {
+                    JsonNode firstReply = root.path("reply").get(0);
+                    if (firstReply.has("content")) {
+                        String result = firstReply.path("content").asText();
+                        responseCache.put(cacheKey, result);
+                        return result;
+                    } else if (firstReply.has("text")) {
+                        String result = firstReply.path("text").asText();
+                        responseCache.put(cacheKey, result);
+                        return result;
+                    }
+                } else {
+                    // Try to get any text content from the response
+                    String responseText = response.getBody();
+                    if (responseText != null && !responseText.trim().isEmpty()) {
+                        responseCache.put(cacheKey, responseText);
+                        return responseText;
                     }
                 }
             }
             
-            return "Failed to parse Gemini response";
+            return "Failed to parse Gemini response. Status: " + response.getStatusCode();
             
         } catch (Exception e) {
             return "Error calling Gemini API: " + e.getMessage();

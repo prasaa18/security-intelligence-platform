@@ -4,3 +4,20 @@ spring:
       uri: mongodb://admin:admin123@mongodb:27017/securityintel?authSource=admin
       database: securityintel
       auto-index-creation: true
+
+# Gemini AI Configuration
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:}
+    model: ${GEMINI_MODEL:gemini-3.6-flash}
+    endpoint: ${GEMINI_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/interactions}
+
+# Security Integration Configuration
+scan:
+  ingestion:
+    token: ${SCAN_INGESTION_TOKEN:test-token-123}
+  freshness:
+    production:
+      hours: ${SCAN_FRESHNESS_PRODUCTION_HOURS:24}
+    development:
+      hours: ${SCAN_FRESHNESS_DEVELOPMENT_HOURS:168}

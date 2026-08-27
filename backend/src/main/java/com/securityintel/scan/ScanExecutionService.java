@@ -188,7 +188,7 @@ public class ScanExecutionService {
     public List<ScanExecution> getRecentScanExecutions(int hours) {
         try {
             LocalDateTime cutoff = LocalDateTime.now().minusHours(hours);
-            return scanExecutionRepository.findByReceivedAtAfterOrderByCreatedAtDesc(cutoff);
+            return scanExecutionRepository.findByCreatedAtAfterOrderByCreatedAtDesc(cutoff);
         } catch (Exception e) {
             throw new DatabaseException("Failed to retrieve recent scan executions", e);
         }

@@ -35,6 +35,10 @@ public class SecurityFindingDto {
     private List<String> priorityReasons;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime firstDetectedAt;
+    private LocalDateTime lastDetectedAt;
+    private String latestScanId;
+    private DetectionState detectionState;
 
     // Constructors
     public SecurityFindingDto() {}
@@ -271,4 +275,13 @@ public class SecurityFindingDto {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public LocalDateTime getFirstDetectedAt() { return firstDetectedAt; }
+    public void setFirstDetectedAt(LocalDateTime firstDetectedAt) { this.firstDetectedAt = firstDetectedAt; }
+    public LocalDateTime getLastDetectedAt() { return lastDetectedAt; }
+    public void setLastDetectedAt(LocalDateTime lastDetectedAt) { this.lastDetectedAt = lastDetectedAt; }
+    public String getLatestScanId() { return latestScanId; }
+    public void setLatestScanId(String latestScanId) { this.latestScanId = latestScanId; }
+    public DetectionState getDetectionState() { return detectionState; }
+    public void setDetectionState(DetectionState detectionState) { this.detectionState = detectionState; }
 }

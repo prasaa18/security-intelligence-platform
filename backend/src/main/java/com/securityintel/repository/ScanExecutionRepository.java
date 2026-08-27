@@ -24,6 +24,8 @@ public interface ScanExecutionRepository extends MongoRepository<ScanExecution, 
     
     List<ScanExecution> findByReceivedAtAfterOrderByCreatedAtDesc(LocalDateTime dateTime);
     
+    List<ScanExecution> findByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime dateTime);
+    
     @Query("{ 'serviceName': ?0, 'status': 'SUCCESS' }")
     List<ScanExecution> findSuccessfulScansByService(String serviceName);
     

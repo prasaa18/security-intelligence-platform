@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map, catchError } from 'rxjs';
 import { DashboardSummary, SecurityFinding, ScanReport, ServiceModel } from '../models/dashboard.model';
 
 @Injectable({
@@ -17,7 +17,26 @@ export class ApiService {
   }
 
   getActionCenterDashboard(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/dashboard/action-center`);
+    return this.http.get<any>(`${this.baseUrl}/dashboard/action-center`).pipe(
+      // Handle empty responses or malformed data
+      map(response => {
+        if (!response) {
+          return this.getDefaultActionCenter();
+        }
+        return response;
+      })
+    );
+  }
+
+  private getDefaultActionCenter() {
+    return {
+      immediateActions: 0,
+      dueThisWeek: 0,
+      staleServices: 0,
+      recentlyResolved: 0,
+      topRemediationItems: [],
+      recentScanActivity: []
+    };
   }
 
   // Findings
@@ -56,12 +75,24 @@ export class ApiService {
     return this.http.get<ScanReport>(`${this.baseUrl}/reports/${id}`);
   }
 
+  downloadReport(id: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/reports/${id}/download`, { responseType: 'blob' });
+  }
+
   uploadReport(file: File, serviceName: string, environment: string): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('serviceName', serviceName);
     formData.append('environment', environment);
-    return this.http.post(`${this.baseUrl}/reports/upload`, formData);
+    return this.http.post(`${this.baseUrl}/reports/upload`, formData).pipe(
+      map(response => {
+        // Normalize response format
+        if (response) {
+          return response;
+        }
+        return { success: false, message: 'Unknown response from server' };
+      })
+    );
   }
 
   // Scan Executions
@@ -125,20 +156,28 @@ export class ApiService {
     return this.http.get<boolean>(`${this.baseUrl}/ai-assistant/configured`);
   }
 
-  explainPriority(findingId: string): Observable<string> {
-    return this.http.post<string>(`${this.baseUrl}/ai-assistant/explain-priority`, { findingId });
+  getAiStatus(): Observable<{ configured: boolean; mode: string; model: string }> {
+    return this.http.get<{ configured: boolean; mode: string; model: string }>(`${this.baseUrl}/ai-assistant/status`);
   }
 
-  generateRemediationGuidance(findingId: string): Observable<string> {
-    return this.http.post<string>(`${this.baseUrl}/ai-assistant/remediation-guidance`, { findingId });
+  explainPriority(findingId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/ai-assistant/explain-priority`, { findingId }, { responseType: 'text' });
   }
 
-  generateServiceRiskSummary(serviceId: string): Observable<string> {
-    return this.http.post<string>(`${this.baseUrl}/ai-assistant/service-risk-summary`, { serviceId });
+  generateRemediationGuidance(findingId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/ai-assistant/remediation-guidance`, { findingId }, { responseType: 'text' });
   }
 
-  generateDailySecurityBrief(): Observable<string> {
-    return this.http.post<string>(`${this.baseUrl}/ai-assistant/daily-security-brief`, {});
+  generateServiceRiskSummary(serviceId: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/ai-assistant/service-risk-summary`, { serviceId }, { responseType: 'text' });
+  }
+
+  generateDailySecurityBrief(): Observable<any> {
+    return this.http.post(`${this.baseUrl}/ai-assistant/daily-security-brief`, {}, { responseType: 'text' });
+  }
+
+  askAi(question: string, serviceId?: string, findingId?: string): Observable<string> {
+    return this.http.post(`${this.baseUrl}/ai-assistant/chat`, { message: question, serviceId, findingId }, { responseType: 'text' });
   }
 
   // Services
@@ -167,8 +206,40 @@ export class ApiService {
     return this.http.get<ServiceModel[]>(`${this.baseUrl}/services/search`, { params });
   }
 
+  getServiceSecuritySummary(serviceName: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/services/${serviceName}/security-summary`);
+  }
+
+  getServiceSecurityReport(serviceName: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/services/${serviceName}/security-report`);
+  }
+
+  downloadServiceSecurityReportCsv(serviceName: string): Observable<string> {
+    return this.http.get(`${this.baseUrl}/services/${serviceName}/security-report/csv`, { responseType: 'text' });
+  }
+
+  emailServiceSecurityReport(serviceName: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/services/${serviceName}/security-report/email`, {});
+  }
+
+  downloadAllFindingsCsv(): Observable<string> {
+    return this.http.get(`${this.baseUrl}/findings/export/csv`, { responseType: 'text' });
+  }
+
+  downloadScanFindingsCsv(scanId: string): Observable<string> {
+    return this.http.get(`${this.baseUrl}/scans/${scanId}/findings/csv`, { responseType: 'text' });
+  }
+
+  sendDailyBrief(): Observable<any> {
+    return this.http.post(`${this.baseUrl}/notifications/daily-brief`, {});
+  }
+
   // Development
   seedSampleServices(): Observable<any> {
+    return this.http.post(`${this.baseUrl}/dev/seed`, {});
+  }
+
+  seedSampleData(): Observable<any> {
     return this.http.post(`${this.baseUrl}/dev/seed`, {});
   }
 }

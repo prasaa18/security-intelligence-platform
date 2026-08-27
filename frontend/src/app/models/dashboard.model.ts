@@ -53,10 +53,10 @@ export interface SecurityFinding {
   priorityReasons?: string[];
   createdAt: string;
   updatedAt: string;
-  firstDetectedAt?: string;
-  lastDetectedAt?: string;
   latestScanId?: string;
   detectionState?: string;
+  firstDetectedAt?: string;
+  lastDetectedAt?: string;
 }
 
 export interface ScanReport {
@@ -106,11 +106,19 @@ export interface RemediationItem {
   resolvedAt?: string;
   createdAt: string;
   updatedAt: string;
+  // Finding display fields (populated from linked finding)
+  cve?: string;
+  title?: string;
+  packageName?: string;
+  installedVersion?: string;
+  fixedVersion?: string;
 }
+
 
 export interface ScanExecution {
   id: string;
   serviceName: string;
+  environment: string;
   repository?: string;
   branch?: string;
   commitId?: string;

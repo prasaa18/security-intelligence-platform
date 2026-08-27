@@ -15,6 +15,8 @@ import java.util.Optional;
 public interface RemediationItemRepository extends MongoRepository<RemediationItem, String> {
     
     List<RemediationItem> findByServiceNameOrderByPriorityDesc(String serviceName);
+
+    List<RemediationItem> findByServiceName(String serviceName);
     
     List<RemediationItem> findByPriorityOrderByRiskScoreDesc(Priority priority);
     

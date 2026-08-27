@@ -354,7 +354,21 @@ Generates an executive summary of security priorities:
 ```bash
 # In backend/.env
 GEMINI_API_KEY=your-gemini-api-key-here
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-3.6-flash
+GEMINI_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/interactions
+```
+
+### Testing Your API Key
+Test your Gemini API key works with this curl command:
+```bash
+curl -X POST "https://generativelanguage.googleapis.com/v1beta/interactions" \
+  -H "x-goog-api-key: YOUR_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -H "Api-Revision: 2026-05-20" \
+  -d '{
+    "model": "gemini-3.6-flash",
+    "input": "Explain how AI works in a few words"
+  }'
 ```
 
 ### API Endpoints
@@ -514,7 +528,8 @@ SCAN_INGESTION_TOKEN=your-secret-token-here
 ```bash
 # Gemini AI Configuration
 GEMINI_API_KEY=your-gemini-api-key-here
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-3.6-flash
+GEMINI_ENDPOINT=https://generativelanguage.googleapis.com/v1beta/interactions
 
 # Scan Freshness Configuration
 SCAN_FRESHNESS_PRODUCTION_HOURS=24
@@ -569,10 +584,19 @@ curl -X POST http://localhost:8080/api/reports/upload \
 - Review findings and priorities
 
 ### Step 5: Try AI Features (Optional)
-- Configure `GEMINI_API_KEY` in `backend/.env`
+- Get a Gemini API key from https://aistudio.google.com/app/apikey
+- Configure `GEMINI_API_KEY` in `backend/.env` or set as environment variable
 - Restart the backend
 - Use "Ask Gemini" features in finding details
 - Generate a Daily Security Brief
+
+### Troubleshooting AI Features
+If AI features are not working:
+1. Check that GEMINI_API_KEY is set and valid
+2. Test your API key with the curl command in the Gemini AI Integration section
+3. Backend logs will show configuration status at startup
+4. Frontend AI Assistant page shows configuration status
+5. Test with: `GET http://localhost:8080/api/ai-assistant/configured`
 
 ### Step 6: Set Up GitHub Actions Integration
 - Follow instructions in `demo-services/README.md`

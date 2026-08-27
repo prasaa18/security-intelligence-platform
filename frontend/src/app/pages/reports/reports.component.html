@@ -2,6 +2,7 @@
   <div class="reports-header">
     <h1>Reports</h1>
     <div class="header-actions">
+      <button class="btn btn-secondary" (click)="exportConsolidatedReport()">Export All Data</button>
       <button class="btn btn-success" (click)="seedSampleData()">Seed Sample Services</button>
       <button class="btn btn-primary" (click)="openUploadForm()">Upload Security Report</button>
     </div>
@@ -17,6 +18,7 @@
     <div class="error-message">{{ error }}</div>
     <button class="btn btn-primary" (click)="loadReports()">Retry</button>
   </div>
+  <div *ngIf="actionError" class="error-container action-error">{{ actionError }}</div>
 
   <!-- Reports Table -->
   <div *ngIf="!loading && !error" class="card reports-card">
@@ -38,6 +40,7 @@
             <th>Total Findings</th>
             <th>Status</th>
             <th>Uploaded At</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -69,9 +72,33 @@
               </span>
             </td>
             <td>{{ formatDate(report.createdAt) }}</td>
+            <td class="report-actions">
+              <button class="btn btn-secondary btn-small" (click)="downloadReport(report)" title="Download original report">Download</button>
+              <button class="btn btn-primary btn-small" (click)="openShareForm(report)" title="Send report to a developer">Send</button>
+            </td>
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <div *ngIf="reportBeingShared" class="modal-overlay" (click)="closeShareForm()">
+    <div class="modal-content share-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Send report to developer</h2>
+        <button class="modal-close" (click)="closeShareForm()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>{{ reportBeingShared.serviceName }} · {{ reportBeingShared.tool }} · {{ reportBeingShared.totalFindings }} findings</p>
+        <div class="form-group">
+          <label for="developer-email">Developer email</label>
+          <input id="developer-email" type="email" [(ngModel)]="developerEmail" class="form-control" placeholder="developer@company.com">
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="closeShareForm()">Cancel</button>
+          <button class="btn btn-primary" (click)="sendToDeveloper()" [disabled]="!developerEmail.trim()">Open email draft</button>
+        </div>
+      </div>
     </div>
   </div>
 

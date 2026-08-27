@@ -1,42 +1,32 @@
-<div class="remediation-container">
+<div class="remediation-page">
   <div class="page-header">
-    <h1>Remediation Plan</h1>
-    <p class="subtitle">Track and manage security remediation items</p>
+    <div>
+      <h1 class="page-title">Remediation Plan</h1>
+      <p class="page-subtitle">Prioritized by business risk — fix what matters most first</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary" (click)="exportCsv()">⬇ Export CSV</button>
+      <button class="btn btn-secondary" (click)="loadRemediationItems()">⟳ Refresh</button>
+    </div>
   </div>
 
-  <div class="filters-section">
-    <div class="filter-group">
-      <label>Priority:</label>
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="filter-item">
+      <label>Priority</label>
       <select [(ngModel)]="priorityFilter" (change)="onFilterChange()">
-        <option value="">All Priorities</option>
-        <option value="P0">P0 - Critical</option>
-        <option value="P1">P1 - High</option>
-        <option value="P2">P2 - Medium</option>
-        <option value="P3">P3 - Low</option>
-        <option value="P4">P4 - Minimal</option>
+        <option value="">All priorities</option>
+        <option value="P0">P0 — Fix Today</option>
+        <option value="P1">P1 — This Week</option>
+        <option value="P2">P2 — This Sprint</option>
+        <option value="P3">P3 — Planned</option>
+        <option value="P4">P4 — Backlog</option>
       </select>
     </div>
-
-    <div class="filter-group">
-      <label>Team:</label>
-      <select [(ngModel)]="teamFilter" (change)="onFilterChange()">
-        <option value="">All Teams</option>
-        <option *ngFor="let team of getUniqueTeams()" [value]="team">{{ team }}</option>
-      </select>
-    </div>
-
-    <div class="filter-group">
-      <label>Service:</label>
-      <select [(ngModel)]="serviceFilter" (change)="onFilterChange()">
-        <option value="">All Services</option>
-        <option *ngFor="let service of getUniqueServices()" [value]="service">{{ service }}</option>
-      </select>
-    </div>
-
-    <div class="filter-group">
-      <label>Status:</label>
+    <div class="filter-item">
+      <label>Status</label>
       <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
-        <option value="">All Statuses</option>
+        <option value="">All statuses</option>
         <option value="NEW">New</option>
         <option value="OPEN">Open</option>
         <option value="IN_PROGRESS">In Progress</option>
@@ -44,103 +34,121 @@
         <option value="ACCEPTED_RISK">Accepted Risk</option>
       </select>
     </div>
-
-    <button class="refresh-btn" (click)="loadRemediationItems()">Refresh</button>
-  </div>
-
-  <div *ngIf="loading" class="loading">Loading remediation items...</div>
-
-  <div *ngIf="error" class="error">{{ error }}</div>
-
-  <div *ngIf="!loading && !error" class="remediation-table-container">
-    <table class="remediation-table">
-      <thead>
-        <tr>
-          <th>Priority</th>
-          <th>Finding</th>
-          <th>Service</th>
-          <th>Owner Team</th>
-          <th>Risk</th>
-          <th>Status</th>
-          <th>First Detected</th>
-          <th>Last Seen</th>
-          <th>Recommended Action</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let item of filteredItems" [class]="getPriorityClass(item.priority)">
-          <td>
-            <span class="priority-badge" [class]="getPriorityClass(item.priority)">
-              {{ item.priority }}
-            </span>
-          </td>
-          <td>
-            <div class="finding-info">
-              <div *ngIf="item.findingId" class="finding-id">{{ item.findingId.substring(0, 8) }}...</div>
-              <div *ngIf="item.recommendedAction" class="action-preview">{{ item.recommendedAction.substring(0, 50) }}...</div>
-            </div>
-          </td>
-          <td>{{ item.serviceName }}</td>
-          <td>{{ item.teamName || 'Unassigned' }}</td>
-          <td>
-            <span class="risk-score" [ngClass]="getRiskClass(item.riskScore)">
-              {{ item.riskScore || 'N/A' }}
-            </span>
-          </td>
-          <td>
-            <span class="status-badge" [class]="getStatusClass(item.remediationStatus)">
-              {{ item.remediationStatus }}
-            </span>
-          </td>
-          <td>{{ formatDate(item.firstDetectedAt) }}</td>
-          <td>{{ formatDate(item.lastDetectedAt) }}</td>
-          <td>
-            <div class="recommended-action" [title]="item.recommendedAction">
-              {{ item.recommendedAction || 'No action specified' }}
-            </div>
-          </td>
-          <td>
-            <select 
-              [value]="item.remediationStatus" 
-              (change)="updateStatus(item.id, $event)"
-              class="status-select"
-              [disabled]="item.remediationStatus === 'RESOLVED' || item.remediationStatus === 'ACCEPTED_RISK'">
-              <option value="NEW">New</option>
-              <option value="OPEN">Open</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="RESOLVED">Resolved</option>
-              <option value="ACCEPTED_RISK">Accept Risk</option>
-            </select>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div *ngIf="filteredItems.length === 0" class="no-results">
-      No remediation items match the current filters.
+    <div class="filter-item">
+      <label>Team</label>
+      <select [(ngModel)]="teamFilter" (change)="onFilterChange()">
+        <option value="">All teams</option>
+        <option *ngFor="let t of getUniqueTeams()" [value]="t">{{ t }}</option>
+      </select>
+    </div>
+    <div class="filter-item">
+      <label>Service</label>
+      <select [(ngModel)]="serviceFilter" (change)="onFilterChange()">
+        <option value="">All services</option>
+        <option *ngFor="let s of getUniqueServices()" [value]="s">{{ s }}</option>
+      </select>
+    </div>
+    <div class="filter-item" style="padding-top:18px">
+      <button class="btn btn-sm btn-secondary" (click)="clearFilters()">Clear</button>
     </div>
   </div>
 
-  <div class="summary-section">
-    <h3>Summary</h3>
-    <div class="summary-stats">
-      <div class="stat-item">
-        <span class="stat-label">Total Items:</span>
-        <span class="stat-value">{{ filteredItems.length }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">P0 Items:</span>
-        <span class="stat-value">{{ getP0Count() }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">P1 Items:</span>
-        <span class="stat-value">{{ getP1Count() }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">In Progress:</span>
-        <span class="stat-value">{{ getInProgressCount() }}</span>
-      </div>
+  <!-- Stats -->
+  <div class="rem-stats" *ngIf="!loading">
+    <span class="rem-stat rem-stat-total">{{ filteredItems.length }} items</span>
+    <span class="rem-stat rem-stat-p0" *ngIf="getP0Count() > 0">🔴 {{ getP0Count() }} P0</span>
+    <span class="rem-stat rem-stat-p1" *ngIf="getP1Count() > 0">🟠 {{ getP1Count() }} P1</span>
+    <span class="rem-stat rem-stat-progress" *ngIf="getInProgressCount() > 0">🔵 {{ getInProgressCount() }} In Progress</span>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner"></div><p>Loading remediation plan…</p>
+  </div>
+
+  <div *ngIf="error && !loading" class="error-state">
+    <div class="error-icon">⚠</div><p class="error-title">{{ error }}</p>
+    <button class="btn btn-primary" (click)="loadRemediationItems()">Retry</button>
+  </div>
+
+  <div *ngIf="!loading && !error" class="card" style="padding:0;overflow:hidden">
+
+    <div *ngIf="filteredItems.length === 0" class="empty-state">
+      <div class="empty-icon">🎉</div>
+      <p class="empty-title">No remediation items</p>
+      <p class="empty-desc">Upload a scanner report to generate remediation items.</p>
+    </div>
+
+    <div *ngIf="filteredItems.length > 0" class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:60px">Priority</th>
+            <th>Finding</th>
+            <th>Service</th>
+            <th>Team</th>
+            <th style="width:70px">Risk</th>
+            <th>Fix Action</th>
+            <th>First Seen</th>
+            <th>Last Seen</th>
+            <th>Status</th>
+            <th style="width:50px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of filteredItems">
+            <!-- Priority -->
+            <td><span class="badge" [ngClass]="'badge-' + (item.priority || 'p4').toLowerCase()">{{ item.priority }}</span></td>
+            <!-- Finding: CVE + title -->
+            <td style="max-width:280px">
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <code class="cve-code" *ngIf="item.cve">{{ item.cve }}</code>
+                <span class="fw-600" style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" [title]="item.title">
+                  {{ item.title || ('Finding ' + (item.findingId ? item.findingId.substring(0,8) : '—')) }}
+                </span>
+                <span *ngIf="item.packageName" class="version-arrow">
+                  <span class="text-mono text-small">{{ item.packageName }}</span>
+                  <span *ngIf="item.installedVersion" class="version-old">{{ item.installedVersion }}</span>
+                  <span *ngIf="item.fixedVersion"> → </span>
+                  <span *ngIf="item.fixedVersion" class="version-new">{{ item.fixedVersion }}</span>
+                </span>
+              </div>
+            </td>
+            <!-- Service -->
+            <td>{{ item.serviceName }}</td>
+            <!-- Team -->
+            <td>{{ item.teamName || '—' }}</td>
+            <!-- Risk Score -->
+            <td>
+              <span *ngIf="item.riskScore" class="risk-score-badge" [ngClass]="getRiskBadgeClass(item.riskScore)">{{ item.riskScore }}</span>
+              <span *ngIf="!item.riskScore" class="text-muted">—</span>
+            </td>
+            <!-- Recommended Action -->
+            <td style="max-width:200px">
+              <span class="rec-action" [title]="item.recommendedAction">
+                {{ item.recommendedAction ? (item.recommendedAction.length > 60 ? (item.recommendedAction | slice:0:60) + '…' : item.recommendedAction) : '—' }}
+              </span>
+            </td>
+            <!-- First/Last seen -->
+            <td class="text-small text-muted">{{ formatDate(item.firstDetectedAt) }}</td>
+            <td class="text-small text-muted">{{ formatDate(item.lastDetectedAt) }}</td>
+            <!-- Status -->
+            <td>
+              <select class="status-select"
+                [value]="item.remediationStatus"
+                (change)="updateStatus(item.id, $event)"
+                [disabled]="item.remediationStatus === 'RESOLVED' || item.remediationStatus === 'ACCEPTED_RISK'">
+                <option value="NEW">New</option>
+                <option value="OPEN">Open</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="ACCEPTED_RISK">Accept Risk</option>
+              </select>
+            </td>
+            <!-- Detail -->
+            <td><a class="btn btn-sm btn-secondary" [routerLink]="['/remediation', item.id]">→</a></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

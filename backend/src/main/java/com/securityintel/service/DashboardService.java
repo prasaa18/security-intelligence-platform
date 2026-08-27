@@ -101,31 +101,45 @@ public class DashboardService {
     }
 
     public ActionCenterDashboardDto getActionCenterDashboard() {
+        ActionCenterDashboardDto dashboard = new ActionCenterDashboardDto();
+        
         try {
-            ActionCenterDashboardDto dashboard = new ActionCenterDashboardDto();
-            
             // Get action center summary
             RemediationService.ActionCenterSummary actionSummary = remediationService.getActionCenterSummary();
             dashboard.setImmediateActions(actionSummary.getImmediateActions());
             dashboard.setDueThisWeek(actionSummary.getDueThisWeek());
             dashboard.setRecentlyResolved(actionSummary.getRecentlyResolved());
-            
+        } catch (Exception e) {
+            dashboard.setImmediateActions(0);
+            dashboard.setDueThisWeek(0);
+            dashboard.setRecentlyResolved(0);
+        }
+        
+        try {
             // Get stale services summary
             ScanExecutionService.StaleServicesSummary staleSummary = scanExecutionService.getStaleServicesSummary();
             dashboard.setStaleServices(staleSummary.getStaleCount());
-            
+        } catch (Exception e) {
+            dashboard.setStaleServices(0);
+        }
+        
+        try {
             // Get top remediation items
             List<RemediationItem> topItems = remediationService.getTopRemediationItems(10);
             dashboard.setTopRemediationItems(topItems);
-            
+        } catch (Exception e) {
+            dashboard.setTopRemediationItems(new java.util.ArrayList<>());
+        }
+        
+        try {
             // Get recent scan activity
             List<ScanExecution> recentScans = scanExecutionService.getRecentScanExecutions(24);
             dashboard.setRecentScanActivity(recentScans);
-            
-            return dashboard;
         } catch (Exception e) {
-            throw new DatabaseException("Failed to generate action center dashboard", e);
+            dashboard.setRecentScanActivity(new java.util.ArrayList<>());
         }
+        
+        return dashboard;
     }
 
     public static class ActionCenterDashboardDto {

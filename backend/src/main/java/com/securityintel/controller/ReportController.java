@@ -4,6 +4,8 @@ import com.securityintel.dto.ScanReportDto;
 import com.securityintel.model.Environment;
 import com.securityintel.service.SecurityReportService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -60,6 +62,17 @@ public class ReportController {
     public ResponseEntity<ScanReportDto> getReportById(@PathVariable String id) {
         ScanReportDto report = securityReportService.getReportById(id);
         return ResponseEntity.ok(report);
+    }
+
+    @GetMapping("/{id}/download")
+    public ResponseEntity<byte[]> downloadReport(@PathVariable String id) {
+        SecurityReportService.ScanReportDownload report = securityReportService.getReportDownload(id);
+        String fileName = report.fileName() == null || report.fileName().isBlank()
+            ? "security-report.json" : report.fileName();
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName.replace("\"", "") + "\"")
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(report.content().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     @GetMapping("/service/{serviceName}")

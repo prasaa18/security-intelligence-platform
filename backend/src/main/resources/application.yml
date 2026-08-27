@@ -3,8 +3,8 @@ spring:
     name: security-intelligence-platform
   data:
     mongodb:
-      uri: mongodb://localhost:27017/securityintel
-      database: securityintel
+      uri: ${MONGODB_URI:mongodb+srv://admin:admin@cluster0.hs3mybp.mongodb.net/}
+      database: ${MONGODB_DATABASE:securityintel}
       auto-index-creation: false
   servlet:
     multipart:
@@ -19,20 +19,25 @@ server:
 # Security Integration Configuration
 scan:
   ingestion:
-    token: test-token-123
+    token: ${SCAN_INGESTION_TOKEN:test-token-123}
   freshness:
     production:
-      hours: 24
+      hours: ${SCAN_FRESHNESS_PRODUCTION_HOURS:24}
     development:
-      hours: 168
+      hours: ${SCAN_FRESHNESS_DEVELOPMENT_HOURS:168}
 
 # Gemini AI Configuration
 gemini:
   api:
-    key: AQ.Ab8RN6IWwkgoeWu8kZbavbdGdjhj5MtrrCPBDeDLSiIPCoHBow
-    model: gemini-1.5-flash
+    key: ${GEMINI_API_KEY:}
+    model: gemini-3.6-flash
+    endpoint: https://generativelanguage.googleapis.com/v1beta/interactions
 
 logging:
   level:
     com.securityintel: DEBUG
     org.springframework.data.mongodb: DEBUG
+
+mail:
+  enabled: ${MAIL_ENABLED:false}
+  from: ${MAIL_FROM:security-platform@localhost}

@@ -1,12 +1,17 @@
 <div class="service-security-container">
   <div class="page-header">
     <h1>Service Security View</h1>
-    <button class="back-btn" (click)="router.navigate(['/services'])">← Back to Services</button>
+    <div class="page-actions">
+      <button class="back-btn" (click)="goBack()">← Back</button>
+      <button class="back-btn" (click)="downloadServiceReport()">Download Service Report</button>
+      <button class="back-btn" (click)="sendReportToOwner()" [disabled]="sendingReport || !service.owner">{{ sendingReport ? 'Sending...' : 'Send to Owner' }}</button>
+    </div>
   </div>
 
   <div *ngIf="loading" class="loading">Loading service security data...</div>
 
   <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="notificationMessage" class="notification-message">{{ notificationMessage }}</div>
 
   <div *ngIf="!loading && !error && service" class="service-security">
     <div class="security-overview">
@@ -32,7 +37,7 @@
           No scan executions found for this service
         </div>
         <div class="scan-list">
-          <div *ngFor="let scan of scanExecutions" class="scan-item">
+          <a *ngFor="let scan of scanExecutions" class="scan-item" [routerLink]="['/scans', scan.id]">
             <div class="scan-header">
               <span class="scan-tool">{{ scan.tool }}</span>
               <span class="scan-status" [class]="getStatusClass(scan.status)">{{ scan.status }}</span>
@@ -41,7 +46,7 @@
               <span class="scan-time">{{ formatDate(scan.completedAt || scan.createdAt) }}</span>
               <span class="scan-results">{{ scan.totalUniqueFindings }} findings</span>
             </div>
-          </div>
+          </a>
         </div>
       </div>
 

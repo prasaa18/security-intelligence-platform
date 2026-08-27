@@ -1,7 +1,7 @@
 <div class="finding-detail-container">
   <!-- Header with Back Button -->
   <div class="detail-header">
-    <button class="btn btn-secondary" routerLink="/findings">← Back to Findings</button>
+    <button class="btn btn-secondary" (click)="goBack()">← Back to Findings</button>
     <h1 *ngIf="finding">{{ finding.cve || 'Security Finding' }}</h1>
   </div>
 
@@ -97,6 +97,7 @@
           <li *ngFor="let reason of finding.priorityReasons">✓ {{ reason }}</li>
         </ul>
       </div>
+      <a class="btn btn-primary" routerLink="/remediation" [queryParams]="{findingId: finding.id}">Open remediation item</a>
     </div>
 
     <!-- Description -->

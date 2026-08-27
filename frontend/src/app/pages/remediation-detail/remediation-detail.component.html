@@ -1,12 +1,12 @@
 <div class="remediation-detail-container">
   <div class="page-header">
     <h1>Remediation Item Details</h1>
-    <button class="back-btn" (click)="router.navigate(['/remediation'])">← Back to Remediation Plan</button>
+    <button class="back-btn" (click)="goBack()">← Back to Remediation Plan</button>
   </div>
 
   <div *ngIf="loading" class="loading">Loading remediation item...</div>
 
-  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="error" class="error">{{ error }} <button class="back-btn" (click)="loadRemediationItem(route.snapshot.paramMap.get('id') || '')">Retry</button></div>
 
   <div *ngIf="!loading && !error && remediationItem" class="remediation-detail">
     <div class="detail-header">
@@ -108,10 +108,10 @@
     <div class="detail-section">
       <h2>AI Assistance</h2>
       <div class="ai-actions">
-        <button class="ai-btn" [routerLink]="['/ai-assistant']" [queryParams]="{findingId: remediationItem.findingId}">
+        <button class="ai-btn" [routerLink]="['/ai-assistant']" [queryParams]="{findingId: remediationItem.findingId, action: 'priority'}">
           🤖 Ask AI for Priority Explanation
         </button>
-        <button class="ai-btn" [routerLink]="['/ai-assistant']" [queryParams]="{findingId: remediationItem.findingId}">
+        <button class="ai-btn" [routerLink]="['/ai-assistant']" [queryParams]="{findingId: remediationItem.findingId, action: 'remediation'}">
           🛠️ Get Remediation Guidance
         </button>
       </div>

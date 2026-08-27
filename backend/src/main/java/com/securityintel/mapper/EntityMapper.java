@@ -90,6 +90,10 @@ public class EntityMapper {
         dto.setPriorityReasons(finding.getPriorityReasons());
         dto.setCreatedAt(finding.getCreatedAt());
         dto.setUpdatedAt(finding.getUpdatedAt());
+        dto.setFirstDetectedAt(finding.getFirstDetectedAt());
+        dto.setLastDetectedAt(finding.getLastDetectedAt());
+        dto.setLatestScanId(finding.getLatestScanId());
+        dto.setDetectionState(finding.getDetectionState());
         return dto;
     }
 

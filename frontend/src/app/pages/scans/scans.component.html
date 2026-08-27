@@ -1,169 +1,167 @@
-<div class="scans-container">
+<div class="scans-page">
   <div class="page-header">
-    <h1>Scan History</h1>
-    <p class="subtitle">Track security scan executions and comparison results</p>
+    <div>
+      <h1 class="page-title">Scan History</h1>
+      <p class="page-subtitle">All scanner report executions — upload reports, track changes, download findings</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" (click)="openUploadPanel()">⬆ Upload Report</button>
+      <button class="btn btn-secondary" (click)="loadScanExecutions()">⟳ Refresh</button>
+    </div>
   </div>
 
-  <div class="filters-section">
-    <div class="filter-group">
-      <label>Service:</label>
-      <input 
-        type="text" 
-        [(ngModel)]="serviceFilter" 
-        (input)="onFilterChange()"
-        placeholder="Filter by service name"
-        class="filter-input"
-      >
+  <!-- Upload Panel -->
+  <div *ngIf="showUpload" class="upload-panel card">
+    <div class="upload-header">
+      <h3 style="margin:0">Upload Scanner Report</h3>
+      <button class="btn btn-sm btn-secondary" (click)="closeUpload()">✕ Close</button>
     </div>
+    <div class="upload-form">
+      <div class="filter-item">
+        <label>Service Name *</label>
+        <input type="text" [(ngModel)]="uploadServiceName" placeholder="e.g. payment-service" class="form-control">
+      </div>
+      <div class="filter-item">
+        <label>Environment *</label>
+        <select [(ngModel)]="uploadEnvironment" class="form-control">
+          <option value="PRODUCTION">PRODUCTION</option>
+          <option value="STAGING">STAGING</option>
+          <option value="DEVELOPMENT">DEVELOPMENT</option>
+          <option value="TESTING">TESTING</option>
+        </select>
+      </div>
+      <div class="filter-item" style="flex:1">
+        <label>Scanner Report File (JSON) *</label>
+        <input type="file" accept=".json" (change)="onFileSelected($event)" class="form-control">
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-end;padding-top:18px">
+        <button class="btn btn-primary" (click)="uploadReport()" [disabled]="uploading || !uploadFile || !uploadServiceName">
+          {{ uploading ? '⏳ Uploading…' : 'Upload Report' }}
+        </button>
+      </div>
+    </div>
+    <div *ngIf="uploadMessage" class="upload-message" [class.upload-error]="uploadError">
+      {{ uploadMessage }}
+    </div>
+  </div>
 
-    <div class="filter-group">
-      <label>Tool:</label>
-      <select [(ngModel)]="toolFilter" (change)="onFilterChange()" class="filter-select">
-        <option value="">All Tools</option>
-        <option *ngFor="let tool of getUniqueTools()" [value]="tool">{{ tool }}</option>
+  <!-- Filters -->
+  <div class="filters-bar">
+    <div class="filter-item">
+      <label>Service</label>
+      <input type="text" [(ngModel)]="serviceFilter" (input)="onFilterChange()" placeholder="Filter…" style="min-width:140px">
+    </div>
+    <div class="filter-item">
+      <label>Tool</label>
+      <select [(ngModel)]="toolFilter" (change)="onFilterChange()">
+        <option value="">All tools</option>
+        <option *ngFor="let t of getUniqueTools()" [value]="t">{{ t }}</option>
       </select>
     </div>
-
-    <div class="filter-group">
-      <label>Status:</label>
-      <select [(ngModel)]="statusFilter" (change)="onFilterChange()" class="filter-select">
-        <option value="">All Statuses</option>
-        <option *ngFor="let status of getUniqueStatuses()" [value]="status">{{ status }}</option>
+    <div class="filter-item">
+      <label>Environment</label>
+      <select [(ngModel)]="environmentFilter" (change)="onFilterChange()">
+        <option value="">All envs</option>
+        <option value="PRODUCTION">Production</option>
+        <option value="STAGING">Staging</option>
+        <option value="DEVELOPMENT">Development</option>
       </select>
     </div>
-
-    <button class="refresh-btn" (click)="loadScanExecutions()">Refresh</button>
+    <div class="filter-item">
+      <label>Status</label>
+      <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
+        <option value="">All statuses</option>
+        <option *ngFor="let s of getUniqueStatuses()" [value]="s">{{ s }}</option>
+      </select>
+    </div>
+    <div class="filter-item" style="padding-top:18px">
+      <button class="btn btn-sm btn-secondary" (click)="clearFilters()">Clear</button>
+    </div>
+    <div class="spacer"></div>
+    <div style="padding-top:18px;font-size:13px;color:var(--muted)">{{ filteredScans.length }} scans</div>
   </div>
 
-  <div *ngIf="loading" class="loading">Loading scan executions...</div>
-
-  <div *ngIf="error" class="error">{{ error }}</div>
-
-  <div *ngIf="!loading && !error" class="scans-grid">
-    <div *ngFor="let scan of filteredScans" class="scan-card" [class]="getStatusClass(scan.status)">
-      <div class="scan-header">
-        <div class="scan-service">{{ scan.serviceName }}</div>
-        <div class="scan-status">
-          <span class="status-badge" [class]="getStatusClass(scan.status)">
-            {{ scan.status }}
-          </span>
-        </div>
-      </div>
-
-      <div class="scan-info">
-        <div class="info-row">
-          <span class="label">Tool:</span>
-          <span class="value">{{ scan.tool }}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Type:</span>
-          <span class="value">{{ scan.scanType }}</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Trigger:</span>
-          <span class="value trigger-badge" [class]="getTriggerTypeClass(scan.triggerType)">
-            {{ scan.triggerType.replace('_', ' ') }}
-          </span>
-        </div>
-        <div class="info-row">
-          <span class="label">Received:</span>
-          <span class="value">{{ formatScanTime(scan.receivedAt) }}</span>
-        </div>
-        <div *ngIf="scan.completedAt" class="info-row">
-          <span class="label">Completed:</span>
-          <span class="value">{{ formatScanTime(scan.completedAt) }}</span>
-        </div>
-      </div>
-
-      <div class="scan-results">
-        <div class="results-header">Results</div>
-        <div class="results-grid">
-          <div class="result-item">
-            <span class="result-label">Total:</span>
-            <span class="result-value">{{ scan.totalUniqueFindings }}</span>
-          </div>
-          <div class="result-item critical">
-            <span class="result-label">Critical:</span>
-            <span class="result-value">{{ scan.criticalCount }}</span>
-          </div>
-          <div class="result-item high">
-            <span class="result-label">High:</span>
-            <span class="result-value">{{ scan.highCount }}</span>
-          </div>
-          <div class="result-item medium">
-            <span class="result-label">Medium:</span>
-            <span class="result-value">{{ scan.mediumCount }}</span>
-          </div>
-          <div class="result-item low">
-            <span class="result-label">Low:</span>
-            <span class="result-value">{{ scan.lowCount }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="scan-comparison" *ngIf="scan.status === 'SUCCESS'">
-        <div class="comparison-header">Comparison</div>
-        <div class="comparison-grid">
-          <div class="comparison-item new">
-            <span class="comparison-label">NEW:</span>
-            <span class="comparison-value">{{ scan.newFindings }}</span>
-          </div>
-          <div class="comparison-item unchanged">
-            <span class="comparison-label">UNCHANGED:</span>
-            <span class="comparison-value">{{ scan.unchangedFindings }}</span>
-          </div>
-          <div class="comparison-item resolved">
-            <span class="comparison-label">NOT DETECTED:</span>
-            <span class="comparison-value">{{ scan.resolvedFindings }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="scan-metadata" *ngIf="scan.repository || scan.branch || scan.commitId">
-        <div class="metadata-header">Metadata</div>
-        <div *ngIf="scan.repository" class="metadata-item">
-          <span class="metadata-label">Repository:</span>
-          <span class="metadata-value">{{ scan.repository }}</span>
-        </div>
-        <div *ngIf="scan.branch" class="metadata-item">
-          <span class="metadata-label">Branch:</span>
-          <span class="metadata-value">{{ scan.branch }}</span>
-        </div>
-        <div *ngIf="scan.commitId" class="metadata-item">
-          <span class="metadata-label">Commit:</span>
-          <span class="metadata-value">{{ scan.commitId.substring(0, 8) }}...</span>
-        </div>
-      </div>
-
-      <div class="scan-actions">
-        <button class="action-btn" [routerLink]="['/scans', scan.id]">View Details</button>
-      </div>
-    </div>
-
-    <div *ngIf="filteredScans.length === 0" class="no-results">
-      No scan executions match the current filters.
-    </div>
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner"></div><p>Loading scans…</p>
+  </div>
+  <div *ngIf="error && !loading" class="error-state">
+    <div class="error-icon">⚠</div><p class="error-title">{{ error }}</p>
+    <button class="btn btn-primary" (click)="loadScanExecutions()">Retry</button>
   </div>
 
-  <div class="summary-section">
-    <h3>Summary</h3>
-    <div class="summary-stats">
-      <div class="stat-item">
-        <span class="stat-label">Total Scans:</span>
-        <span class="stat-value">{{ filteredScans.length }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Successful:</span>
-        <span class="stat-value">{{ getSuccessfulScansCount() }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Failed:</span>
-        <span class="stat-value">{{ getFailedScansCount() }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Total Findings:</span>
-        <span class="stat-value">{{ getTotalFindingsCount() }}</span>
-      </div>
+  <!-- Scans Table -->
+  <div *ngIf="!loading && !error" class="card" style="padding:0;overflow:hidden">
+    <div *ngIf="filteredScans.length === 0" class="empty-state">
+      <div class="empty-icon">📡</div>
+      <p class="empty-title">No scans yet</p>
+      <p class="empty-desc">Upload a Trivy or Snyk JSON report to get started.</p>
+      <button class="btn btn-primary" (click)="openUploadPanel()">⬆ Upload Report</button>
+    </div>
+
+    <div *ngIf="filteredScans.length > 0" class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Tool</th>
+            <th>Type</th>
+            <th>Env</th>
+            <th>Trigger</th>
+            <th>Status</th>
+            <th>Findings</th>
+            <th>Changes</th>
+            <th>Received</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let scan of filteredScans" [routerLink]="['/scans', scan.id]">
+            <!-- Service -->
+            <td>
+              <div class="fw-600">{{ scan.serviceName }}</div>
+              <div *ngIf="scan.branch" class="text-small text-muted">{{ scan.branch }}</div>
+            </td>
+            <!-- Tool -->
+            <td><span class="badge" [ngClass]="getToolBadgeClass(scan.tool)">{{ scan.tool }}</span></td>
+            <!-- Type -->
+            <td><span class="badge badge-p4">{{ scan.scanType }}</span></td>
+            <!-- Env -->
+            <td><span class="badge" [ngClass]="getEnvBadgeClass(scan.environment)">{{ scan.environment }}</span></td>
+            <!-- Trigger -->
+            <td><span class="badge" [ngClass]="getTriggerBadgeClass(scan.triggerType)">{{ formatTrigger(scan.triggerType) }}</span></td>
+            <!-- Status -->
+            <td><span class="badge" [ngClass]="getStatusBadgeClass(scan.status)">{{ scan.status }}</span></td>
+            <!-- Findings breakdown -->
+            <td>
+              <div class="finding-chips">
+                <span class="badge badge-critical" *ngIf="scan.criticalCount > 0">C{{ scan.criticalCount }}</span>
+                <span class="badge badge-high"     *ngIf="scan.highCount > 0">H{{ scan.highCount }}</span>
+                <span class="badge badge-medium"   *ngIf="scan.mediumCount > 0">M{{ scan.mediumCount }}</span>
+                <span class="badge badge-low"      *ngIf="scan.lowCount > 0">L{{ scan.lowCount }}</span>
+                <span class="text-small text-muted" *ngIf="scan.totalUniqueFindings > 0">{{ scan.totalUniqueFindings }} total</span>
+              </div>
+            </td>
+            <!-- Comparison -->
+            <td>
+              <div *ngIf="scan.status === 'SUCCESS'" class="change-chips">
+                <span class="change-chip chip-new">+{{ scan.newFindings }}</span>
+                <span class="change-chip chip-gone">-{{ scan.resolvedFindings }}</span>
+                <span class="change-chip chip-same">{{ scan.unchangedFindings }}</span>
+              </div>
+              <span *ngIf="scan.status !== 'SUCCESS'" class="text-muted text-small">—</span>
+            </td>
+            <!-- Time -->
+            <td class="text-small text-muted">{{ formatDate(scan.completedAt || scan.receivedAt) }}</td>
+            <!-- Actions -->
+            <td (click)="$event.stopPropagation()">
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-sm btn-secondary" (click)="downloadScanFindings(scan)">⬇ CSV</button>
+                <a class="btn btn-sm btn-secondary" [routerLink]="['/scans', scan.id]">→</a>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

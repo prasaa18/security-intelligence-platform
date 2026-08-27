@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 
@@ -18,6 +18,7 @@ export class ScanDetailComponent implements OnInit {
   constructor(
     public route: ActivatedRoute,
     public router: Router,
+    private location: Location,
     private apiService: ApiService
   ) {}
 
@@ -30,6 +31,8 @@ export class ScanDetailComponent implements OnInit {
       this.loading = false;
     }
   }
+
+  goBack(): void { this.location.back(); }
 
   loadScanExecution(id: string): void {
     this.loading = true;

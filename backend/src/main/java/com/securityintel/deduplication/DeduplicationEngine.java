@@ -53,6 +53,8 @@ public class DeduplicationEngine {
                 
             } else {
                 // No duplicates found - it's unique
+                String sourceReference = newFinding.getTool().name() + ":" + newFinding.getReportId();
+                newFinding.setSourceFindings(new ArrayList<>(List.of(sourceReference)));
                 uniqueFindings.add(newFinding);
             }
         }

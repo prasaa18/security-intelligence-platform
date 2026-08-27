@@ -28,6 +28,7 @@ public class ScanReport {
     private Environment environment;
     
     private String uploadedFileName;
+    private String rawReportContent;
     private int totalFindings;
     
     @Indexed
@@ -123,6 +124,14 @@ public class ScanReport {
 
     public void setUploadedFileName(String uploadedFileName) {
         this.uploadedFileName = uploadedFileName;
+    }
+
+    public String getRawReportContent() {
+        return rawReportContent;
+    }
+
+    public void setRawReportContent(String rawReportContent) {
+        this.rawReportContent = rawReportContent;
     }
 
     public int getTotalFindings() {

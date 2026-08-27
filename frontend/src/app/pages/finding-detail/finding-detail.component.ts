@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { SecurityFinding } from '../../models/dashboard.model';
@@ -19,10 +19,13 @@ export class FindingDetailComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private location: Location
   ) {
     this.findingId = this.route.snapshot.params['id'];
   }
+
+  goBack(): void { this.location.back(); }
 
   ngOnInit() {
     this.loadFinding();

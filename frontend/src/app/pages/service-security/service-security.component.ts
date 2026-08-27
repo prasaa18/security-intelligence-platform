@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 
 @Component({
@@ -17,10 +18,13 @@ export class ServiceSecurityComponent implements OnInit {
   securityState: string = 'UNKNOWN';
   loading = true;
   error: string | null = null;
+  notificationMessage: string | null = null;
+  sendingReport = false;
 
   constructor(
     public route: ActivatedRoute,
     public router: Router,
+    private location: Location,
     private apiService: ApiService
   ) {}
 
@@ -55,9 +59,8 @@ export class ServiceSecurityComponent implements OnInit {
   loadServiceScans(serviceName: string): void {
     this.apiService.getScanExecutionsByService(serviceName).subscribe({
       next: (scans) => {
-        this.scanExecutions = scans;
+        this.scanExecutions = (scans || []).sort((a, b) => new Date(b.completedAt || b.createdAt).getTime() - new Date(a.completedAt || a.createdAt).getTime());
         this.calculateSecurityState();
-        this.loading = false;
       },
       error: (err) => {
         console.error('Error loading scans:', err);
@@ -69,12 +72,43 @@ export class ServiceSecurityComponent implements OnInit {
   loadServiceRemediation(serviceName: string): void {
     this.apiService.getRemediationItemsByService(serviceName).subscribe({
       next: (items) => {
-        this.remediationItems = items;
+        this.remediationItems = items || [];
+        this.calculateSecurityState();
+        this.loading = false;
       },
       error: (err) => {
         console.error('Error loading remediation items:', err);
+        this.loading = false;
       }
     });
+  }
+
+  downloadServiceReport(): void {
+    if (!this.service) return;
+    this.apiService.downloadServiceSecurityReportCsv(this.service.serviceName).subscribe({
+      next: content => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8' }));
+        link.download = `${this.service.serviceName}-security-report.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      },
+      error: err => this.error = err.error?.message || 'Unable to download the service report.'
+    });
+  }
+
+  sendReportToOwner(): void {
+    if (!this.service) return;
+    this.sendingReport = true;
+    this.notificationMessage = null;
+    this.apiService.emailServiceSecurityReport(this.service.serviceName).subscribe({
+      next: response => { this.notificationMessage = response.message || 'Report sent to the service owner.'; this.sendingReport = false; },
+      error: err => { this.notificationMessage = err.error?.message || 'Email delivery is not configured.'; this.sendingReport = false; }
+    });
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 
   calculateSecurityState(): void {
@@ -96,8 +130,8 @@ export class ServiceSecurityComponent implements OnInit {
       return;
     }
 
-    const openP0 = this.remediationItems.filter(i => i.priority === 'P0' && i.status === 'OPEN').length;
-    const openP1 = this.remediationItems.filter(i => i.priority === 'P1' && i.status === 'OPEN').length;
+    const openP0 = this.remediationItems.filter(i => i.priority === 'P0' && i.remediationStatus !== 'RESOLVED').length;
+    const openP1 = this.remediationItems.filter(i => i.priority === 'P1' && i.remediationStatus !== 'RESOLVED').length;
     
     if (openP0 > 0) {
       this.securityState = 'CRITICAL';

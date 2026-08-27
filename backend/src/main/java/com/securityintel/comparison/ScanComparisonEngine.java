@@ -85,6 +85,7 @@ public class ScanComparisonEngine {
             if (!currentFingerprints.containsKey(fingerprint)) {
                 // Finding existed before but not in current scan - NOT_DETECTED_IN_LATEST_SCAN
                 previousFinding.setDetectionState(DetectionState.NOT_DETECTED_IN_LATEST_SCAN);
+                previousFinding.setStatus(com.securityintel.model.Status.RESOLVED);
                 previousFinding.setLastDetectedAt(LocalDateTime.now());
                 resolvedFindings.add(previousFinding);
             }

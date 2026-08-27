@@ -37,6 +37,10 @@ services:
       SERVER_PORT: 8080
       LOGGING_LEVEL_ROOT: INFO
       LOGGING_LEVEL_COM_SECURITYINTEL: DEBUG
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.6-flash}
+      GEMINI_ENDPOINT: ${GEMINI_ENDPOINT:-https://generativelanguage.googleapis.com/v1beta/interactions}
+      SCAN_INGESTION_TOKEN: ${SCAN_INGESTION_TOKEN:-test-token-123}
     depends_on:
       mongodb:
         condition: service_healthy

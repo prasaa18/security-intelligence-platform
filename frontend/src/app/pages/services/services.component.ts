@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { ServiceModel } from '../../models/dashboard.model';
 
 @Component({
   selector: 'app-services',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './services.component.html',
   styleUrls: ['./services.component.css']
 })
@@ -30,6 +31,8 @@ export class ServicesComponent implements OnInit {
   environments = ['DEVELOPMENT', 'STAGING', 'PRODUCTION'];
   businessCriticalities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
   dataSensitivities = ['PUBLIC', 'INTERNAL', 'CONFIDENTIAL', 'SENSITIVE'];
+  sortField: 'serviceName' | 'environment' | 'businessCriticality' | 'teamName' = 'serviceName';
+  sortDirection: 'asc' | 'desc' = 'asc';
 
   constructor(private apiService: ApiService) {}
 
@@ -43,7 +46,7 @@ export class ServicesComponent implements OnInit {
     
     this.apiService.getAllServices().subscribe({
       next: (data) => {
-        this.services = data.sort((a, b) => a.serviceName.localeCompare(b.serviceName));
+        this.services = data || [];
         this.applySearch();
         this.loading = false;
       },
@@ -51,6 +54,7 @@ export class ServicesComponent implements OnInit {
         this.error = 'Failed to load services';
         this.loading = false;
         console.error('Services error:', err);
+        this.services = [];
       }
     });
   }
@@ -58,18 +62,28 @@ export class ServicesComponent implements OnInit {
   applySearch() {
     if (!this.searchQuery.trim()) {
       this.filteredServices = [...this.services];
-      return;
+    } else {
+      const query = this.searchQuery.toLowerCase();
+      this.filteredServices = this.services.filter(service => 
+        service.serviceName.toLowerCase().includes(query) ||
+        (service.teamName && service.teamName.toLowerCase().includes(query)) ||
+        (service.owner && service.owner.toLowerCase().includes(query))
+      );
     }
-
-    const query = this.searchQuery.toLowerCase();
-    this.filteredServices = this.services.filter(service => 
-      service.serviceName.toLowerCase().includes(query) ||
-      (service.teamName && service.teamName.toLowerCase().includes(query)) ||
-      (service.owner && service.owner.toLowerCase().includes(query))
-    );
+    this.filteredServices.sort((left, right) => {
+      const first = String(left[this.sortField] || '');
+      const second = String(right[this.sortField] || '');
+      return (this.sortDirection === 'asc' ? 1 : -1) * first.localeCompare(second);
+    });
   }
 
   onSearchChange() {
+    this.applySearch();
+  }
+
+  sortBy(field: typeof this.sortField): void {
+    if (this.sortField === field) this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    else { this.sortField = field; this.sortDirection = 'asc'; }
     this.applySearch();
   }
 
@@ -159,5 +173,68 @@ export class ServicesComponent implements OnInit {
 
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString();
+  }
+
+  // Service security functionality
+  selectedServiceForSecurity: ServiceModel | null = null;
+  showSecurityDetails = false;
+  securitySummary: any = null;
+  loadingSecuritySummary = false;
+
+  viewServiceSecurity(service: ServiceModel) {
+    this.selectedServiceForSecurity = service;
+    this.showSecurityDetails = true;
+    this.loadServiceSecuritySummary(service.serviceName);
+  }
+
+  loadServiceSecuritySummary(serviceName: string) {
+    this.loadingSecuritySummary = true;
+    this.apiService.getServiceSecuritySummary(serviceName).subscribe({
+      next: (data) => {
+        this.securitySummary = data;
+        this.loadingSecuritySummary = false;
+      },
+      error: (err) => {
+        console.error('Failed to load security summary:', err);
+        this.loadingSecuritySummary = false;
+        this.securitySummary = null;
+      }
+    });
+  }
+
+  closeSecurityDetails() {
+    this.showSecurityDetails = false;
+    this.selectedServiceForSecurity = null;
+    this.securitySummary = null;
+  }
+
+  downloadServiceReport(serviceName: string) {
+    this.apiService.downloadServiceSecurityReportCsv(serviceName).subscribe({
+      next: (data) => {
+        const blob = new Blob([data], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${serviceName}-security-report.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error('Failed to download report:', err);
+        alert('Failed to download security report');
+      }
+    });
+  }
+
+  getPriorityCount(priority: string): number {
+    if (!this.securitySummary?.priorityBreakdown) return 0;
+    return this.securitySummary.priorityBreakdown[priority] || 0;
+  }
+
+  getSeverityCount(severity: string): number {
+    if (!this.securitySummary?.severityBreakdown) return 0;
+    return this.securitySummary.severityBreakdown[severity] || 0;
   }
 }

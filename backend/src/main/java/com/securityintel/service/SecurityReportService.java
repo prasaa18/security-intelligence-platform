@@ -14,9 +14,12 @@ import com.securityintel.parser.SecurityReportParseException;
 import com.securityintel.parser.SecurityReportParserFactory;
 import com.securityintel.prioritization.PriorityResult;
 import com.securityintel.prioritization.SecurityPrioritizationEngine;
+import com.securityintel.remediation.RemediationService;
 import com.securityintel.repository.ScanReportRepository;
+import com.securityintel.repository.ScanExecutionRepository;
 import com.securityintel.repository.SecurityFindingRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -35,6 +38,31 @@ public class SecurityReportService {
     private final SecurityPrioritizationEngine prioritizationEngine;
     private final ServiceManagementService serviceManagementService;
     private final EntityMapper entityMapper;
+    private final ScanExecutionRepository scanExecutionRepository;
+    private final RemediationService remediationService;
+
+    @Autowired
+    public SecurityReportService(ScanReportRepository scanReportRepository,
+                               SecurityFindingRepository securityFindingRepository,
+                               SecurityReportParserFactory parserFactory,
+                               FindingNormalizer findingNormalizer,
+                               DeduplicationEngine deduplicationEngine,
+                               SecurityPrioritizationEngine prioritizationEngine,
+                               ServiceManagementService serviceManagementService,
+                               EntityMapper entityMapper,
+                               ScanExecutionRepository scanExecutionRepository,
+                               RemediationService remediationService) {
+        this.scanReportRepository = scanReportRepository;
+        this.securityFindingRepository = securityFindingRepository;
+        this.parserFactory = parserFactory;
+        this.findingNormalizer = findingNormalizer;
+        this.deduplicationEngine = deduplicationEngine;
+        this.prioritizationEngine = prioritizationEngine;
+        this.serviceManagementService = serviceManagementService;
+        this.entityMapper = entityMapper;
+        this.scanExecutionRepository = scanExecutionRepository;
+        this.remediationService = remediationService;
+    }
 
     public SecurityReportService(ScanReportRepository scanReportRepository,
                                SecurityFindingRepository securityFindingRepository,
@@ -44,14 +72,8 @@ public class SecurityReportService {
                                SecurityPrioritizationEngine prioritizationEngine,
                                ServiceManagementService serviceManagementService,
                                EntityMapper entityMapper) {
-        this.scanReportRepository = scanReportRepository;
-        this.securityFindingRepository = securityFindingRepository;
-        this.parserFactory = parserFactory;
-        this.findingNormalizer = findingNormalizer;
-        this.deduplicationEngine = deduplicationEngine;
-        this.prioritizationEngine = prioritizationEngine;
-        this.serviceManagementService = serviceManagementService;
-        this.entityMapper = entityMapper;
+        this(scanReportRepository, securityFindingRepository, parserFactory, findingNormalizer,
+            deduplicationEngine, prioritizationEngine, serviceManagementService, entityMapper, null, null);
     }
 
     public ReportProcessingResult processSecurityReport(MultipartFile file, String serviceName, Environment environment) 
@@ -81,6 +103,7 @@ public class SecurityReportService {
         scanReport.setRepository(parsedReport.getRepository());
         scanReport.setBranch(parsedReport.getBranch());
         scanReport.setCommitId(parsedReport.getCommitId());
+        scanReport.setRawReportContent(reportContent);
         
         try {
             scanReport = scanReportRepository.save(scanReport);
@@ -88,8 +111,21 @@ public class SecurityReportService {
             throw new DatabaseException("Failed to save scan report", e);
         }
 
+        ScanExecution scanExecution = new ScanExecution();
+        scanExecution.setServiceName(serviceName);
+        scanExecution.setEnvironment(environment);
+        scanExecution.setTriggerType(TriggerType.MANUAL_UPLOAD);
+        scanExecution.setTool(parsedReport.getTool());
+        scanExecution.setScanType(parsedReport.getScanType());
+        scanExecution.setRepository(parsedReport.getRepository());
+        scanExecution.setBranch(parsedReport.getBranch());
+        scanExecution.setCommitId(parsedReport.getCommitId());
+        scanExecution.setStartedAt(LocalDateTime.now());
+        scanExecution.setStatus(Status.PROCESSING);
+        scanExecution = scanExecutionRepository.save(scanExecution);
+
         // Normalize findings
-        List<SecurityFinding> normalizedFindings = findingNormalizer.normalize(parsedReport, scanReport.getId());
+        List<SecurityFinding> normalizedFindings = findingNormalizer.normalize(parsedReport, scanExecution.getId());
 
         // Deduplicate findings
         DeduplicationResult deduplicationResult = deduplicationEngine.processFindings(normalizedFindings);
@@ -109,6 +145,25 @@ public class SecurityReportService {
         } catch (Exception e) {
             throw new DatabaseException("Failed to save security findings", e);
         }
+
+        for (SecurityFinding finding : deduplicationResult.getUniqueFindings()) {
+            if (finding.getDetectionState() == null) finding.setDetectionState(DetectionState.NEW);
+            if (finding.getFirstDetectedAt() == null) finding.setFirstDetectedAt(LocalDateTime.now());
+            finding.setLastDetectedAt(LocalDateTime.now());
+            finding.setLatestScanId(scanExecution.getId());
+            if (finding.getStatus() == Status.OPEN) remediationService.createOrUpdateRemediationItem(finding);
+        }
+
+        scanExecution.setTotalRawFindings(deduplicationResult.getTotalRawFindings());
+        scanExecution.setTotalUniqueFindings(deduplicationResult.getUniqueCount());
+        scanExecution.setNewFindings(deduplicationResult.getUniqueCount());
+        scanExecution.setCriticalCount((int) deduplicationResult.getUniqueFindings().stream().filter(f -> f.getSeverity() == Severity.CRITICAL).count());
+        scanExecution.setHighCount((int) deduplicationResult.getUniqueFindings().stream().filter(f -> f.getSeverity() == Severity.HIGH).count());
+        scanExecution.setMediumCount((int) deduplicationResult.getUniqueFindings().stream().filter(f -> f.getSeverity() == Severity.MEDIUM).count());
+        scanExecution.setLowCount((int) deduplicationResult.getUniqueFindings().stream().filter(f -> f.getSeverity() == Severity.LOW).count());
+        scanExecution.setStatus(Status.SUCCESS);
+        scanExecution.setCompletedAt(LocalDateTime.now());
+        scanExecutionRepository.save(scanExecution);
 
         return new ReportProcessingResult(
             entityMapper.toDto(scanReport),
@@ -132,6 +187,17 @@ public class SecurityReportService {
             .orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Report not found with id: " + id));
         return entityMapper.toDto(report);
     }
+
+    public ScanReportDownload getReportDownload(String id) {
+        ScanReport report = scanReportRepository.findById(id)
+            .orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Report not found with id: " + id));
+        if (report.getRawReportContent() == null || report.getRawReportContent().isBlank()) {
+            throw new com.securityintel.exception.ResourceNotFoundException("Original report content is unavailable");
+        }
+        return new ScanReportDownload(report.getUploadedFileName(), report.getRawReportContent());
+    }
+
+    public record ScanReportDownload(String fileName, String content) {}
 
     public List<ScanReportDto> getReportsByService(String serviceName) {
         try {

@@ -42,10 +42,10 @@
       <table class="services-table">
         <thead>
           <tr>
-            <th>Service</th>
-            <th>Team</th>
-            <th>Environment</th>
-            <th>Business Criticality</th>
+            <th><button class="sort-heading" (click)="sortBy('serviceName')">Service ↕</button></th>
+            <th><button class="sort-heading" (click)="sortBy('teamName')">Team ↕</button></th>
+            <th><button class="sort-heading" (click)="sortBy('environment')">Environment ↕</button></th>
+            <th><button class="sort-heading" (click)="sortBy('businessCriticality')">Business Criticality ↕</button></th>
             <th>Internet Exposed</th>
             <th>Data Sensitivity</th>
             <th>Owner</th>
@@ -89,6 +89,9 @@
             <td>{{ service.owner || 'N/A' }}</td>
             <td>
               <div class="action-buttons">
+                <button class="btn-action btn-security" (click)="viewServiceSecurity(service)" title="View Security">
+                  🔒
+                </button>
                 <button class="btn-action btn-edit" (click)="openEditForm(service)" title="Edit">
                   ✏️
                 </button>
@@ -191,6 +194,128 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Service Security Details Modal -->
+  <div *ngIf="showSecurityDetails" class="modal-overlay" (click)="closeSecurityDetails()">
+    <div class="modal-content security-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>🔒 Security Details: {{ selectedServiceForSecurity?.serviceName }}</h2>
+        <button class="modal-close" (click)="closeSecurityDetails()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div *ngIf="loadingSecuritySummary" class="loading-container">
+          <div class="loading-spinner">Loading security data...</div>
+        </div>
+
+        <div *ngIf="!loadingSecuritySummary && securitySummary" class="security-details">
+          <!-- Quick Stats -->
+          <div class="security-stats-grid">
+            <div class="stat-card critical-stat">
+              <div class="stat-label">P0 Findings</div>
+              <div class="stat-value">{{ securitySummary.p0Count }}</div>
+              <div class="stat-description">Fix immediately</div>
+            </div>
+            <div class="stat-card high-stat">
+              <div class="stat-label">P1 Findings</div>
+              <div class="stat-value">{{ securitySummary.p1Count }}</div>
+              <div class="stat-description">Fix this week</div>
+            </div>
+            <div class="stat-card warning-stat">
+              <div class="stat-label">P2 Findings</div>
+              <div class="stat-value">{{ securitySummary.p2Count }}</div>
+              <div class="stat-description">Plan remediation</div>
+            </div>
+            <div class="stat-card info-stat">
+              <div class="stat-label">Total Findings</div>
+              <div class="stat-value">{{ securitySummary.totalFindings }}</div>
+              <div class="stat-description">All vulnerabilities</div>
+            </div>
+          </div>
+
+          <!-- Severity Breakdown -->
+          <div class="security-section">
+            <h3>Severity Breakdown</h3>
+            <div class="severity-bars">
+              <div class="severity-bar">
+                <div class="bar-label">Critical</div>
+                <div class="bar-track">
+                  <div class="bar-fill critical" [style.width.%]="getSeverityCount('CRITICAL') > 0 ? (getSeverityCount('CRITICAL') / securitySummary.totalFindings * 100) : 0"></div>
+                </div>
+                <div class="bar-value">{{ getSeverityCount('CRITICAL') }}</div>
+              </div>
+              <div class="severity-bar">
+                <div class="bar-label">High</div>
+                <div class="bar-track">
+                  <div class="bar-fill high" [style.width.%]="getSeverityCount('HIGH') > 0 ? (getSeverityCount('HIGH') / securitySummary.totalFindings * 100) : 0"></div>
+                </div>
+                <div class="bar-value">{{ getSeverityCount('HIGH') }}</div>
+              </div>
+              <div class="severity-bar">
+                <div class="bar-label">Medium</div>
+                <div class="bar-track">
+                  <div class="bar-fill medium" [style.width.%]="getSeverityCount('MEDIUM') > 0 ? (getSeverityCount('MEDIUM') / securitySummary.totalFindings * 100) : 0"></div>
+                </div>
+                <div class="bar-value">{{ getSeverityCount('MEDIUM') }}</div>
+              </div>
+              <div class="severity-bar">
+                <div class="bar-label">Low</div>
+                <div class="bar-track">
+                  <div class="bar-fill low" [style.width.%]="getSeverityCount('LOW') > 0 ? (getSeverityCount('LOW') / securitySummary.totalFindings * 100) : 0"></div>
+                </div>
+                <div class="bar-value">{{ getSeverityCount('LOW') }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Priority Breakdown -->
+          <div class="security-section">
+            <h3>Priority Breakdown</h3>
+            <div class="priority-summary">
+              <div class="priority-item p0">
+                <span class="priority-label">P0 (Critical)</span>
+                <span class="priority-count">{{ getPriorityCount('P0') }}</span>
+              </div>
+              <div class="priority-item p1">
+                <span class="priority-label">P1 (High)</span>
+                <span class="priority-count">{{ getPriorityCount('P1') }}</span>
+              </div>
+              <div class="priority-item p2">
+                <span class="priority-label">P2 (Medium)</span>
+                <span class="priority-count">{{ getPriorityCount('P2') }}</span>
+              </div>
+              <div class="priority-item p3">
+                <span class="priority-label">P3 (Low)</span>
+                <span class="priority-count">{{ getPriorityCount('P3') }}</span>
+              </div>
+              <div class="priority-item p4">
+                <span class="priority-label">P4 (Info)</span>
+                <span class="priority-count">{{ getPriorityCount('P4') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="security-actions">
+            <button class="btn btn-primary" (click)="downloadServiceReport(selectedServiceForSecurity!.serviceName)">
+              📥 Download Security Report (CSV)
+            </button>
+            <button class="btn btn-secondary" routerLink="/findings" [queryParams]="{service: selectedServiceForSecurity?.serviceName}">
+              🔍 View All Findings
+            </button>
+            <button class="btn btn-secondary" routerLink="/remediation" [queryParams]="{service: selectedServiceForSecurity?.serviceName}">
+              🛠️ View Remediation Items
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="!loadingSecuritySummary && !securitySummary" class="no-security-data">
+          <p>No security data available for this service yet.</p>
+          <p class="hint">Upload a security scan report to see vulnerability details.</p>
+        </div>
       </div>
     </div>
   </div>

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 
@@ -18,8 +18,11 @@ export class RemediationDetailComponent implements OnInit {
   constructor(
     public route: ActivatedRoute,
     public router: Router,
+    private location: Location,
     private apiService: ApiService
   ) {}
+
+  goBack(): void { this.location.back(); }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');

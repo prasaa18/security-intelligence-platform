@@ -1,219 +1,259 @@
-<div class="dashboard-container">
-  <h1>Security Action Center</h1>
-  <p class="dashboard-subtitle">What needs attention today?</p>
+<div class="dashboard-page">
 
-  <!-- Loading State -->
-  <div *ngIf="loading" class="loading-container">
-    <div class="loading-spinner">Loading dashboard...</div>
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Loading security data…</p>
   </div>
 
-  <!-- Error State -->
-  <div *ngIf="error" class="error-container">
-    <div class="error-message">{{ error }}</div>
-    <button class="btn btn-primary" (click)="loadDashboard()">Retry</button>
+  <!-- Error -->
+  <div *ngIf="error && !loading" class="error-banner">
+    <span>⚠ {{ error }}</span>
+    <button class="btn btn-sm btn-secondary" (click)="loadDashboard()">Retry</button>
   </div>
 
-  <!-- Dashboard Content -->
-  <div *ngIf="!loading && !error && actionCenter" class="dashboard-content">
-    
-    <!-- Security Action Center -->
-    <div class="action-center-section">
-      <h2>SECURITY ACTION CENTER</h2>
-      <div class="action-center-grid">
-        <div class="action-card immediate">
-          <div class="action-icon">🔴</div>
-          <div class="action-label">Immediate Actions</div>
-          <div class="action-value">{{ actionCenter.immediateActions }}</div>
-          <div class="action-description">Open P0 findings</div>
-        </div>
-        
-        <div class="action-card due-week">
-          <div class="action-icon">🟠</div>
-          <div class="action-label">Due This Week</div>
-          <div class="action-value">{{ actionCenter.dueThisWeek }}</div>
-          <div class="action-description">Open P1 findings</div>
-        </div>
-        
-        <div class="action-card stale">
-          <div class="action-icon">⚠</div>
-          <div class="action-label">Stale Services</div>
-          <div class="action-value">{{ actionCenter.staleServices }}</div>
-          <div class="action-description">Services with old scans</div>
-        </div>
-        
-        <div class="action-card resolved">
-          <div class="action-icon">✓</div>
-          <div class="action-label">Recently Resolved</div>
-          <div class="action-value">{{ actionCenter.recentlyResolved }}</div>
-          <div class="action-description">Remediated items</div>
-        </div>
+  <!-- Content -->
+  <div *ngIf="!loading">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Security Action Center</h1>
+        <p class="page-subtitle">What needs attention right now?</p>
       </div>
-      
-      <div class="last-updated">
-        Last security data received: Just now
-        <button class="refresh-btn" (click)="loadDashboard()">Refresh Dashboard</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="persona-switch" role="group" aria-label="View for">
+          <span class="persona-label">View for</span>
+          <button [class.active]="persona==='SECURITY_HEAD'"    (click)="setPersona('SECURITY_HEAD')">Security Head</button>
+          <button [class.active]="persona==='SECURITY_ENGINEER'" (click)="setPersona('SECURITY_ENGINEER')">Sec Engineer</button>
+          <button [class.active]="persona==='DEVELOPER'"         (click)="setPersona('DEVELOPER')">Developer</button>
+        </div>
+        <button class="btn btn-sm btn-secondary" (click)="loadDashboard()">⟳ Refresh</button>
       </div>
     </div>
 
-    <!-- Today's Security Brief -->
-    <div class="ai-brief-section">
-      <div class="brief-header">
-        <h2>TODAY'S SECURITY BRIEF</h2>
-        <button 
-          class="generate-brief-btn" 
-          (click)="generateSecurityBrief()"
-          [disabled]="generatingBrief"
-        >
-          {{ generatingBrief ? 'Generating...' : 'Generate Security Brief' }}
-        </button>
-      </div>
-      
-      <div *ngIf="showAiBrief && aiBrief" class="ai-brief-content">
-        <div class="brief-text" [innerHTML]="aiBrief"></div>
-      </div>
-      
-      <div *ngIf="!showAiBrief" class="brief-placeholder">
-        Click "Generate Security Brief" to get AI-powered security insights for today.
-      </div>
+    <!-- ── HERO KPI TILES ── -->
+    <div class="kpi-grid" *ngIf="actionCenter">
+      <a class="kpi-tile kpi-critical" routerLink="/findings" [queryParams]="{priority:'P0',status:'OPEN'}">
+        <div class="kpi-icon">🔴</div>
+        <div class="kpi-value">{{ actionCenter.immediateActions }}</div>
+        <div class="kpi-label">P0 — Fix Today</div>
+        <div class="kpi-hint">Immediate action required</div>
+      </a>
+      <a class="kpi-tile kpi-high" routerLink="/findings" [queryParams]="{priority:'P1',status:'OPEN'}">
+        <div class="kpi-icon">🟠</div>
+        <div class="kpi-value">{{ actionCenter.dueThisWeek }}</div>
+        <div class="kpi-label">P1 — Fix This Week</div>
+        <div class="kpi-hint">High priority findings</div>
+      </a>
+      <a class="kpi-tile kpi-stale" routerLink="/scans">
+        <div class="kpi-icon">⏱</div>
+        <div class="kpi-value">{{ actionCenter.staleServices }}</div>
+        <div class="kpi-label">Stale Services</div>
+        <div class="kpi-hint">Scan coverage gap</div>
+      </a>
+      <a class="kpi-tile kpi-resolved" routerLink="/remediation" [queryParams]="{status:'RESOLVED'}">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-value">{{ actionCenter.recentlyResolved }}</div>
+        <div class="kpi-label">Recently Resolved</div>
+        <div class="kpi-hint">Great progress!</div>
+      </a>
     </div>
 
-    <!-- Top Remediation Plan -->
-    <div class="top-remediation-section">
-      <h2>TOP REMEDIATION PLAN</h2>
-      
-      <div *ngIf="actionCenter.topRemediationItems.length === 0" class="no-data">
-        No remediation items found
-      </div>
-      
-      <div class="remediation-cards">
-        <div *ngFor="let item of actionCenter.topRemediationItems" class="remediation-card" [class]="getPriorityClass(item.priority)">
-          <div class="remediation-header">
-            <span class="remediation-priority">{{ item.priority }}</span>
-            <span class="remediation-service">{{ item.serviceName }}</span>
+    <!-- ── MAIN GRID (2 cols) ── -->
+    <div class="main-grid">
+
+      <!-- LEFT COLUMN -->
+      <div class="left-col">
+
+        <!-- Service Security Health -->
+        <section class="section-card">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Service Security Health</h2>
+              <p class="section-desc">Business risk, scan coverage and open findings at a glance.</p>
+            </div>
+            <a class="btn btn-sm btn-secondary" routerLink="/services">Manage →</a>
           </div>
-          
-          <div class="remediation-details">
-            <div *ngIf="item.findingId" class="detail-row">
-              <span class="detail-label">Finding ID:</span>
-              <span class="detail-value">{{ item.findingId.substring(0, 12) }}...</span>
-            </div>
-            <div *ngIf="item.teamName" class="detail-row">
-              <span class="detail-label">Owner:</span>
-              <span class="detail-value">{{ item.teamName }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Risk Score:</span>
-              <span class="detail-value risk-score">{{ item.riskScore || 'N/A' }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Status:</span>
-              <span class="detail-value">{{ item.remediationStatus }}</span>
+
+          <div *ngIf="serviceOverview.length === 0" class="empty-state" style="padding:32px 0">
+            <div class="empty-icon">🏢</div>
+            <p class="empty-title">No services yet</p>
+            <p class="empty-desc">Add services to start tracking security state.</p>
+          </div>
+
+          <div *ngIf="serviceOverview.length > 0" class="service-health-grid">
+            <div *ngFor="let row of serviceOverview"
+                 class="service-health-tile"
+                 [class.tile-critical]="row.p0 > 0 || row.critical > 0"
+                 [class.tile-high]="row.p0 === 0 && row.critical === 0 && (row.p1 > 0 || row.high > 0)"
+                 [class.tile-healthy]="row.p0 === 0 && row.critical === 0 && row.p1 === 0 && row.high === 0 && row.open > 0"
+                 [class.tile-ok]="row.open === 0">
+              <div class="tile-name">{{ row.service.serviceName }}</div>
+              <div class="tile-team text-muted text-small">{{ row.service.teamName || 'No team' }}</div>
+              <div class="tile-risk-pills">
+                <span *ngIf="row.p0 > 0" class="badge badge-p0">P0 {{ row.p0 }}</span>
+                <span *ngIf="row.p1 > 0" class="badge badge-p1">P1 {{ row.p1 }}</span>
+                <span *ngIf="row.p0 === 0 && row.p1 === 0 && row.open > 0" class="badge badge-p2">P2+ {{ row.open }}</span>
+                <span *ngIf="row.open === 0" class="badge badge-low">Clean ✓</span>
+              </div>
+              <div class="tile-meta text-small text-muted">
+                Last scan: {{ row.latestScan ? formatDate(row.latestScan.completedAt || row.latestScan.receivedAt) : 'Never' }}
+              </div>
+              <a class="tile-link" routerLink="/findings" [queryParams]="{service: row.service.serviceName, status: 'OPEN'}">
+                {{ row.open }} open →
+              </a>
             </div>
           </div>
-          
-          <div *ngIf="item.recommendedAction" class="remediation-action">
-            <strong>Recommended Action:</strong> {{ item.recommendedAction }}
-          </div>
-          
-          <div class="remediation-footer">
-            <span class="last-seen">Latest scan: {{ formatDate(item.latestScanAt) }}</span>
-            <button class="view-btn" [routerLink]="['/remediation', item.id]">View Details</button>
-          </div>
-        </div>
-      </div>
-    </div>
+        </section>
 
-    <!-- Recent Scan Activity -->
-    <div class="recent-scans-section">
-      <h2>RECENT SCAN ACTIVITY</h2>
-      
-      <div *ngIf="actionCenter.recentScanActivity.length === 0" class="no-data">
-        No recent scan activity
-      </div>
-      
-      <div class="scan-activity-list">
-        <div *ngFor="let scan of actionCenter.recentScanActivity" class="scan-activity-item">
-          <div class="scan-info">
-            <span class="scan-service">{{ scan.serviceName }}</span>
-            <span class="scan-tool">{{ scan.tool }}</span>
-            <span class="scan-status" [class]="getStatusClass(scan.status)">{{ scan.status }}</span>
+        <!-- Today's Security Brief -->
+        <section class="section-card">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Today's Security Brief</h2>
+              <p class="section-desc">AI-powered analysis of current security posture.</p>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-sm btn-primary" (click)="generateSecurityBrief()" [disabled]="generatingBrief">
+                {{ generatingBrief ? '⏳ Generating…' : '✨ Generate Brief' }}
+              </button>
+              <button class="btn btn-sm btn-secondary" (click)="sendDailyBriefToOwners()" [disabled]="sendingDailyBrief">
+                {{ sendingDailyBrief ? 'Sending…' : '📧 Send to Owners' }}
+              </button>
+            </div>
           </div>
-          <div class="scan-time">{{ formatDate(scan.completedAt || scan.createdAt) }}</div>
-          <div class="scan-changes">
-            <span class="change-item new">+{{ scan.newFindings }} NEW</span>
-            <span class="change-item resolved">-{{ scan.resolvedFindings }} NOT DETECTED</span>
-            <span class="change-item unchanged">{{ scan.unchangedFindings }} UNCHANGED</span>
+          <p *ngIf="dailyBriefMessage" class="brief-status-msg">{{ dailyBriefMessage }}</p>
+          <div *ngIf="showAiBrief && aiBrief" class="brief-body markdown-content" [innerHTML]="aiBrief"></div>
+          <div *ngIf="!showAiBrief" class="brief-placeholder">
+            <span>🤖</span>
+            <p>Click <strong>Generate Brief</strong> to get an AI-powered summary of your current security posture. Falls back to your live scanner data if AI is unavailable.</p>
           </div>
-        </div>
-      </div>
-    </div>
+        </section>
 
-    <!-- Traditional Metrics (Secondary) -->
-    <div class="metrics-section">
-      <h2>SECURITY METRICS</h2>
-      
-      <div *ngIf="summary" class="metrics-grid">
-        <!-- Summary Cards -->
-        <div class="summary-cards">
-          <div class="summary-card">
-            <div class="card-header">Total Findings</div>
-            <div class="card-value">{{ summary.totalFindings }}</div>
-          </div>
-          
-          <div class="summary-card">
-            <div class="card-header">Unique Findings</div>
-            <div class="card-value">{{ summary.uniqueFindings }}</div>
-          </div>
-          
-          <div class="summary-card critical">
-            <div class="card-header">Critical</div>
-            <div class="card-value">{{ summary.critical }}</div>
-          </div>
-          
-          <div class="summary-card high">
-            <div class="card-header">High</div>
-            <div class="card-value">{{ summary.high }}</div>
-          </div>
-          
-          <div class="summary-card medium">
-            <div class="card-header">Medium</div>
-            <div class="card-value">{{ summary.medium }}</div>
-          </div>
-          
-          <div class="summary-card low">
-            <div class="card-header">Low</div>
-            <div class="card-value">{{ summary.low }}</div>
-          </div>
-        </div>
+      </div><!-- /left-col -->
 
-        <!-- Priority Cards -->
-        <div class="priority-cards">
-          <div class="summary-card p0">
-            <div class="card-header">P0</div>
-            <div class="card-value">{{ summary.p0 }}</div>
+      <!-- RIGHT COLUMN -->
+      <div class="right-col">
+
+        <!-- Top Remediation Plan -->
+        <section class="section-card" *ngIf="actionCenter">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Top Remediation Items</h2>
+              <p class="section-desc">Highest risk — fix these first.</p>
+            </div>
+            <a class="btn btn-sm btn-secondary" routerLink="/remediation">Full plan →</a>
           </div>
-          
-          <div class="summary-card p1">
-            <div class="card-header">P1</div>
-            <div class="card-value">{{ summary.p1 }}</div>
+
+          <div *ngIf="actionCenter.topRemediationItems.length === 0" class="empty-state" style="padding:24px 0">
+            <div class="empty-icon">🎉</div>
+            <p class="empty-title">No open remediation items</p>
           </div>
-          
-          <div class="summary-card p2">
-            <div class="card-header">P2</div>
-            <div class="card-value">{{ summary.p2 }}</div>
+
+          <div class="remediation-list">
+            <div *ngFor="let item of actionCenter.topRemediationItems" class="rem-item">
+              <div class="rem-left">
+                <span class="badge" [ngClass]="'badge-' + (item.priority || 'p4').toLowerCase()">{{ item.priority }}</span>
+              </div>
+              <div class="rem-body">
+                <div class="rem-service fw-600">{{ item.serviceName }}</div>
+                <div class="rem-action text-small text-muted" *ngIf="item.recommendedAction">
+                  {{ item.recommendedAction.length > 80 ? (item.recommendedAction | slice:0:80) + '…' : item.recommendedAction }}
+                </div>
+                <div class="rem-meta text-small text-muted">
+                  <span *ngIf="item.teamName">{{ item.teamName }}</span>
+                  <span *ngIf="item.riskScore"> · Risk {{ item.riskScore }}/100</span>
+                </div>
+              </div>
+              <div class="rem-right">
+                <span class="badge" [ngClass]="getStatusBadgeClass(item.remediationStatus)">{{ item.remediationStatus }}</span>
+                <a class="btn btn-sm btn-primary" [routerLink]="['/remediation', item.id]">Fix →</a>
+              </div>
+            </div>
           </div>
-          
-          <div class="summary-card p3">
-            <div class="card-header">P3</div>
-            <div class="card-value">{{ summary.p3 }}</div>
+        </section>
+
+        <!-- Recent Scan Activity -->
+        <section class="section-card" *ngIf="actionCenter">
+          <div class="section-header">
+            <h2 class="section-title">Recent Scan Activity</h2>
+            <a class="btn btn-sm btn-secondary" routerLink="/scans">All scans →</a>
           </div>
-          
-          <div class="summary-card p4">
-            <div class="card-header">P4</div>
-            <div class="card-value">{{ summary.p4 }}</div>
+
+          <div *ngIf="actionCenter.recentScanActivity.length === 0" class="empty-state" style="padding:24px 0">
+            <div class="empty-icon">📡</div>
+            <p class="empty-title">No recent scans</p>
+            <a class="btn btn-sm btn-primary" routerLink="/scans">Upload first scan →</a>
           </div>
+
+          <div class="scan-feed">
+            <div *ngFor="let scan of actionCenter.recentScanActivity" class="scan-feed-item">
+              <div class="scan-feed-left">
+                <span class="badge" [ngClass]="getScanStatusBadgeClass(scan.status)">{{ scan.status }}</span>
+              </div>
+              <div class="scan-feed-body">
+                <div class="fw-600">{{ scan.serviceName }}</div>
+                <div class="text-small text-muted">{{ scan.tool }} · {{ formatDate(scan.completedAt || scan.createdAt) }}</div>
+              </div>
+              <div class="scan-feed-changes">
+                <span class="change-chip chip-new">+{{ scan.newFindings }} NEW</span>
+                <span class="change-chip chip-gone">-{{ scan.resolvedFindings }} GONE</span>
+                <span class="change-chip chip-same">{{ scan.unchangedFindings }} SAME</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /right-col -->
+    </div><!-- /main-grid -->
+
+    <!-- ── METRICS (secondary, at bottom) ── -->
+    <section class="section-card" *ngIf="summary">
+      <div class="section-header">
+        <h2 class="section-title">Security Metrics</h2>
+        <span class="text-small text-muted">{{ summary.uniqueFindings }} deduplicated · {{ summary.totalFindings }} raw findings</span>
+      </div>
+      <div class="metrics-row">
+        <div class="metric-chip metric-critical">
+          <div class="metric-num">{{ summary.critical }}</div>
+          <div class="metric-lab">Critical</div>
+        </div>
+        <div class="metric-chip metric-high">
+          <div class="metric-num">{{ summary.high }}</div>
+          <div class="metric-lab">High</div>
+        </div>
+        <div class="metric-chip metric-medium">
+          <div class="metric-num">{{ summary.medium }}</div>
+          <div class="metric-lab">Medium</div>
+        </div>
+        <div class="metric-chip metric-low">
+          <div class="metric-num">{{ summary.low }}</div>
+          <div class="metric-lab">Low</div>
+        </div>
+        <div class="metric-divider"></div>
+        <div class="metric-chip metric-p0">
+          <div class="metric-num">{{ summary.p0 }}</div>
+          <div class="metric-lab">P0</div>
+        </div>
+        <div class="metric-chip metric-p1">
+          <div class="metric-num">{{ summary.p1 }}</div>
+          <div class="metric-lab">P1</div>
+        </div>
+        <div class="metric-chip metric-p2">
+          <div class="metric-num">{{ summary.p2 }}</div>
+          <div class="metric-lab">P2</div>
+        </div>
+        <div class="metric-chip metric-p3">
+          <div class="metric-num">{{ summary.p3 }}</div>
+          <div class="metric-lab">P3</div>
+        </div>
+        <div class="metric-chip metric-p4">
+          <div class="metric-num">{{ summary.p4 }}</div>
+          <div class="metric-lab">P4</div>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
+
+  </div><!-- /!loading -->
 </div>

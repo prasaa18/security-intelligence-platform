@@ -1,21 +1,60 @@
-<div class="app-container">
-  <nav class="navbar">
-    <div class="navbar-brand">
-      <span class="navbar-icon">🛡</span>
-      <span class="navbar-title">Security Remediation Intelligence</span>
+<div class="app-shell">
+  <!-- Sidebar Navigation -->
+  <nav class="sidebar" aria-label="Primary navigation">
+    <div class="sidebar-brand">
+      <span class="brand-icon">🛡</span>
+      <div class="brand-text">
+        <span class="brand-name">Security Intel</span>
+        <span class="brand-tagline">Remediation Platform</span>
+      </div>
     </div>
-    <div class="navbar-nav">
-      <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">Action Center</a>
-      <a routerLink="/remediation" routerLinkActive="active" class="nav-link">Remediation Plan</a>
-      <a routerLink="/scans" routerLinkActive="active" class="nav-link">Scans</a>
-      <a routerLink="/ai-assistant" routerLinkActive="active" class="nav-link">AI Assistant</a>
-      <a routerLink="/reports" routerLinkActive="active" class="nav-link">Reports</a>
-      <a routerLink="/findings" routerLinkActive="active" class="nav-link">Findings</a>
-      <a routerLink="/services" routerLinkActive="active" class="nav-link">Services</a>
+
+    <ul class="sidebar-nav" role="list">
+      <li>
+        <a routerLink="/dashboard" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
+          <span class="nav-icon">🎯</span>
+          <span class="nav-label">Action Center</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/remediation" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
+          <span class="nav-icon">🔧</span>
+          <span class="nav-label">Remediation Plan</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/findings" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
+          <span class="nav-icon">🔍</span>
+          <span class="nav-label">Findings</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/services" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
+          <span class="nav-icon">🏢</span>
+          <span class="nav-label">Services</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/scans" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
+          <span class="nav-icon">📡</span>
+          <span class="nav-label">Scans</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/ai-assistant" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
+          <span class="nav-icon">🤖</span>
+          <span class="nav-label">AI Assistant</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <span class="sidebar-version">Security Intelligence v2</span>
     </div>
   </nav>
-  
-  <main class="main-content">
+
+  <!-- Main Content Area -->
+  <main class="main-content" id="main-content">
     <router-outlet></router-outlet>
   </main>
 </div>

@@ -161,6 +161,18 @@
   border-left: 4px solid #dee2e6;
 }
 
+a.scan-item {
+  color: inherit;
+  display: block;
+  text-decoration: none;
+}
+
+a.scan-item:hover,
+a.scan-item:focus-visible {
+  outline: 2px solid #2b7a9a;
+  outline-offset: 2px;
+}
+
 .remediation-item.priority-p0 {
   border-left-color: #dc3545;
 }
