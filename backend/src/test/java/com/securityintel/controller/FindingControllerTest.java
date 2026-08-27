@@ -44,7 +44,7 @@ class FindingControllerTest {
         findingDto.setServiceName("payment-service");
         findingDto.setSeverity(Severity.CRITICAL);
         findingDto.setPriority(Priority.P0);
-        findingDto.setRiskScore(96);
+        findingDto.setRiskScore(96.0);
     }
 
     @Test

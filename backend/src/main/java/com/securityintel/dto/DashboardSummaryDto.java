@@ -149,7 +149,7 @@ public class DashboardSummaryDto {
         public TopPriorityFindingDto() {}
 
         public TopPriorityFindingDto(String cve, String serviceName, String severity, 
-                                   Integer riskScore, String priority) {
+                                   Double riskScore, String priority) {
             this.cve = cve;
             this.serviceName = serviceName;
             this.severity = severity;
