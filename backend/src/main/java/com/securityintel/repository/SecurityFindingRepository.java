@@ -117,4 +117,6 @@ public interface SecurityFindingRepository extends MongoRepository<SecurityFindi
     
     @Query("{ 'serviceName': ?0, 'priority': ?1, 'status': ?2 }")
     List<SecurityFinding> findByServiceNameAndPriorityAndStatus(String serviceName, Priority priority, Status status);
+    
+    List<SecurityFinding> findByScanExecutionId(String scanExecutionId);
 }

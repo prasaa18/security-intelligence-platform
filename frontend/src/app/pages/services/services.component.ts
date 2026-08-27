@@ -2,8 +2,18 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { ApiService } from '../../services/api.service';
-import { ServiceModel } from '../../models/dashboard.model';
+import { ServiceModel, ScanExecution, SecurityFinding } from '../../models/dashboard.model';
+
+interface ServiceRow {
+  service: ServiceModel;
+  p0Count: number;
+  p1Count: number;
+  totalFindings: number;
+  latestScanTime?: string;
+  securityState: 'CRITICAL' | 'ATTENTION' | 'HEALTHY' | 'STALE' | 'UNKNOWN';
+}
 
 @Component({
   selector: 'app-services',
@@ -14,7 +24,8 @@ import { ServiceModel } from '../../models/dashboard.model';
 })
 export class ServicesComponent implements OnInit {
   services: ServiceModel[] = [];
-  filteredServices: ServiceModel[] = [];
+  serviceRows: ServiceRow[] = [];
+  filteredServiceRows: ServiceRow[] = [];
   loading = true;
   error: string | null = null;
   
@@ -37,43 +48,91 @@ export class ServicesComponent implements OnInit {
   constructor(private apiService: ApiService) {}
 
   ngOnInit() {
-    this.loadServices();
+    this.loadData();
   }
 
-  loadServices() {
+  loadData() {
     this.loading = true;
     this.error = null;
-    
-    this.apiService.getAllServices().subscribe({
-      next: (data) => {
-        this.services = data || [];
+
+    forkJoin({
+      services: this.apiService.getAllServices(),
+      scans: this.apiService.getAllScanExecutions(),
+      findings: this.apiService.getAllFindings()
+    }).subscribe({
+      next: ({ services, scans, findings }) => {
+        this.services = services || [];
+        this.buildServiceRows(this.services, scans || [], findings || []);
         this.applySearch();
         this.loading = false;
       },
       error: (err) => {
-        this.error = 'Failed to load services';
+        this.error = 'Failed to load services data';
         this.loading = false;
         console.error('Services error:', err);
-        this.services = [];
       }
+    });
+  }
+
+  private buildServiceRows(services: ServiceModel[], scans: ScanExecution[], findings: SecurityFinding[]) {
+    this.serviceRows = services.map(svc => {
+      const svcFindings = findings.filter(f => f.serviceName === svc.serviceName && f.status === 'OPEN');
+      const p0 = svcFindings.filter(f => f.priority === 'P0').length;
+      const p1 = svcFindings.filter(f => f.priority === 'P1').length;
+      const total = svcFindings.length;
+
+      const svcScans = scans.filter(s => s.serviceName === svc.serviceName)
+        .sort((a, b) => new Date(b.completedAt || b.receivedAt || b.createdAt).getTime() - new Date(a.completedAt || a.receivedAt || a.createdAt).getTime());
+      
+      const latestScan = svcScans[0];
+      const latestScanTime = latestScan ? (latestScan.completedAt || latestScan.receivedAt || latestScan.createdAt) : undefined;
+
+      let securityState: 'CRITICAL' | 'ATTENTION' | 'HEALTHY' | 'STALE' | 'UNKNOWN' = 'UNKNOWN';
+      if (!latestScan) {
+        securityState = 'UNKNOWN';
+      } else {
+        const scanAgeHours = (Date.now() - new Date(latestScanTime!).getTime()) / (1000 * 60 * 60);
+        const staleLimit = svc.environment === 'PRODUCTION' ? 24 : 168; // 24h prod, 7d dev
+
+        if (p0 > 0) {
+          securityState = 'CRITICAL';
+        } else if (p1 > 0) {
+          securityState = 'ATTENTION';
+        } else if (scanAgeHours > staleLimit) {
+          securityState = 'STALE';
+        } else {
+          securityState = 'HEALTHY';
+        }
+      }
+
+      return {
+        service: svc,
+        p0Count: p0,
+        p1Count: p1,
+        totalFindings: total,
+        latestScanTime,
+        securityState
+      };
     });
   }
 
   applySearch() {
     if (!this.searchQuery.trim()) {
-      this.filteredServices = [...this.services];
+      this.filteredServiceRows = [...this.serviceRows];
     } else {
-      const query = this.searchQuery.toLowerCase();
-      this.filteredServices = this.services.filter(service => 
-        service.serviceName.toLowerCase().includes(query) ||
-        (service.teamName && service.teamName.toLowerCase().includes(query)) ||
-        (service.owner && service.owner.toLowerCase().includes(query))
+      const q = this.searchQuery.toLowerCase();
+      this.filteredServiceRows = this.serviceRows.filter(r => 
+        r.service.serviceName.toLowerCase().includes(q) ||
+        (r.service.teamName && r.service.teamName.toLowerCase().includes(q)) ||
+        (r.service.owner && r.service.owner.toLowerCase().includes(q)) ||
+        r.service.environment.toLowerCase().includes(q)
       );
     }
-    this.filteredServices.sort((left, right) => {
-      const first = String(left[this.sortField] || '');
-      const second = String(right[this.sortField] || '');
-      return (this.sortDirection === 'asc' ? 1 : -1) * first.localeCompare(second);
+
+    this.filteredServiceRows.sort((a, b) => {
+      const valA = String(a.service[this.sortField] || '');
+      const valB = String(b.service[this.sortField] || '');
+      return (this.sortDirection === 'asc' ? 1 : -1) * valA.localeCompare(valB);
     });
   }
 
@@ -82,8 +141,12 @@ export class ServicesComponent implements OnInit {
   }
 
   sortBy(field: typeof this.sortField): void {
-    if (this.sortField === field) this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    else { this.sortField = field; this.sortDirection = 'asc'; }
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
     this.applySearch();
   }
 
@@ -134,7 +197,7 @@ export class ServicesComponent implements OnInit {
       next: () => {
         this.formLoading = false;
         this.closeForm();
-        this.loadServices();
+        this.loadData();
       },
       error: (err) => {
         this.formLoading = false;
@@ -151,7 +214,7 @@ export class ServicesComponent implements OnInit {
 
     this.apiService.deleteService(service.id).subscribe({
       next: () => {
-        this.loadServices();
+        this.loadData();
       },
       error: (err) => {
         this.error = 'Failed to delete service';
@@ -161,80 +224,60 @@ export class ServicesComponent implements OnInit {
     });
   }
 
-  getBusinessCriticalityClass(criticality: string | undefined): string {
-    if (!criticality) return '';
-    return `criticality-${criticality.toLowerCase()}`;
-  }
-
-  getDataSensitivityClass(sensitivity: string | undefined): string {
-    if (!sensitivity) return '';
-    return `sensitivity-${sensitivity.toLowerCase()}`;
-  }
-
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString();
-  }
-
-  // Service security functionality
-  selectedServiceForSecurity: ServiceModel | null = null;
-  showSecurityDetails = false;
-  securitySummary: any = null;
-  loadingSecuritySummary = false;
-
-  viewServiceSecurity(service: ServiceModel) {
-    this.selectedServiceForSecurity = service;
-    this.showSecurityDetails = true;
-    this.loadServiceSecuritySummary(service.serviceName);
-  }
-
-  loadServiceSecuritySummary(serviceName: string) {
-    this.loadingSecuritySummary = true;
-    this.apiService.getServiceSecuritySummary(serviceName).subscribe({
-      next: (data) => {
-        this.securitySummary = data;
-        this.loadingSecuritySummary = false;
-      },
-      error: (err) => {
-        console.error('Failed to load security summary:', err);
-        this.loadingSecuritySummary = false;
-        this.securitySummary = null;
-      }
-    });
-  }
-
-  closeSecurityDetails() {
-    this.showSecurityDetails = false;
-    this.selectedServiceForSecurity = null;
-    this.securitySummary = null;
-  }
-
-  downloadServiceReport(serviceName: string) {
-    this.apiService.downloadServiceSecurityReportCsv(serviceName).subscribe({
-      next: (data) => {
-        const blob = new Blob([data], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
+  downloadServiceCsv(serviceName: string) {
+    this.apiService.getFindingsByService(serviceName).subscribe({
+      next: (findings) => {
+        const headers = ['CVE', 'Title', 'Service', 'Tool', 'Severity', 'CVSS', 'Risk Score', 'Priority', 'Status', 'Package', 'Installed Version', 'Fixed Version'];
+        const rows = (findings || []).map(f => [
+          f.cve || '',
+          `"${(f.title || '').replace(/"/g, '""')}"`,
+          f.serviceName || '',
+          f.tool || '',
+          f.severity || '',
+          f.cvssScore || '',
+          f.riskScore || '',
+          f.priority || '',
+          f.status || '',
+          f.packageName || '',
+          f.installedVersion || '',
+          f.fixedVersion || ''
+        ].join(','));
+        const csv = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${serviceName}-security-report.csv`;
-        document.body.appendChild(a);
+        a.download = `service-${serviceName}-findings.csv`;
         a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        URL.revokeObjectURL(url);
       },
-      error: (err) => {
-        console.error('Failed to download report:', err);
-        alert('Failed to download security report');
+      error: () => {
+        alert('Could not download report for ' + serviceName);
       }
     });
   }
 
-  getPriorityCount(priority: string): number {
-    if (!this.securitySummary?.priorityBreakdown) return 0;
-    return this.securitySummary.priorityBreakdown[priority] || 0;
+  getStateBadgeClass(state: string): string {
+    switch (state) {
+      case 'CRITICAL':  return 'state-critical';
+      case 'ATTENTION': return 'state-attention';
+      case 'HEALTHY':   return 'state-healthy';
+      case 'STALE':     return 'state-stale';
+      default:          return 'state-unknown';
+    }
   }
 
-  getSeverityCount(severity: string): number {
-    if (!this.securitySummary?.severityBreakdown) return 0;
-    return this.securitySummary.severityBreakdown[severity] || 0;
+  getEnvBadgeClass(env: string): string {
+    switch (env) {
+      case 'PRODUCTION':  return 'badge-env-production';
+      case 'STAGING':     return 'badge-env-staging';
+      case 'DEVELOPMENT': return 'badge-env-development';
+      default:            return '';
+    }
+  }
+
+  formatDate(dateString: string | undefined): string {
+    if (!dateString) return 'Never scanned';
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   }
 }

@@ -5,6 +5,8 @@ import com.securityintel.comparison.ScanComparisonEngine.ScanComparisonResult;
 import com.securityintel.deduplication.DeduplicationEngine;
 import com.securityintel.deduplication.DeduplicationResult;
 import com.securityintel.exception.DatabaseException;
+import com.securityintel.exception.ResourceNotFoundException;
+import com.securityintel.mapper.EntityMapper;
 import com.securityintel.model.*;
 import com.securityintel.normalization.FindingNormalizer;
 import com.securityintel.parser.ParsedSecurityReport;
@@ -39,6 +41,7 @@ public class ScanExecutionService {
     private final ScanComparisonEngine scanComparisonEngine;
     private final RemediationService remediationService;
     private final SecurityStateCalculator securityStateCalculator;
+    private final EntityMapper entityMapper;
 
     public ScanExecutionService(ScanExecutionRepository scanExecutionRepository,
                                SecurityFindingRepository securityFindingRepository,
@@ -49,7 +52,8 @@ public class ScanExecutionService {
                                SecurityPrioritizationEngine prioritizationEngine,
                                ScanComparisonEngine scanComparisonEngine,
                                RemediationService remediationService,
-                               SecurityStateCalculator securityStateCalculator) {
+                               SecurityStateCalculator securityStateCalculator,
+                               EntityMapper entityMapper) {
         this.scanExecutionRepository = scanExecutionRepository;
         this.securityFindingRepository = securityFindingRepository;
         this.serviceRepository = serviceRepository;
@@ -60,6 +64,7 @@ public class ScanExecutionService {
         this.scanComparisonEngine = scanComparisonEngine;
         this.remediationService = remediationService;
         this.securityStateCalculator = securityStateCalculator;
+        this.entityMapper = entityMapper;
     }
 
     public ScanExecution processScanExecution(MultipartFile file, String serviceName, Environment environment,
@@ -104,6 +109,11 @@ public class ScanExecutionService {
             
             // Normalize findings
             List<SecurityFinding> normalizedFindings = findingNormalizer.normalize(parsedReport, scanExecution.getId());
+            
+            // Set scan execution ID in findings
+            for (SecurityFinding finding : normalizedFindings) {
+                finding.setScanExecutionId(scanExecution.getId());
+            }
 
             // Compare with previous scan
             ScanComparisonResult comparisonResult = scanComparisonEngine.compareWithPreviousScan(
@@ -233,6 +243,41 @@ public class ScanExecutionService {
 
         public long getTotalServices() {
             return totalServices;
+        }
+    }
+
+    public String exportScanFindingsCsv(String scanId) {
+        try {
+            ScanExecution scan = getScanExecutionById(scanId);
+            List<SecurityFinding> findings = securityFindingRepository.findByScanExecutionId(scanId);
+            
+            StringBuilder csv = new StringBuilder();
+            csv.append("CVE,Title,Service,Environment,Tool,Severity,CVSS,Risk Score,Priority,Status,Package,Installed Version,Fixed Version,First Detected At,Last Detected At\n");
+            
+            for (SecurityFinding finding : findings) {
+                var findingDto = entityMapper.toDto(finding);
+                csv.append(findingDto.getCve() != null ? findingDto.getCve() : "").append(",");
+                csv.append(findingDto.getTitle() != null ? ("\"" + findingDto.getTitle().replace("\"", "\"\"") + "\"") : "").append(",");
+                csv.append(findingDto.getServiceName() != null ? findingDto.getServiceName() : "").append(",");
+                csv.append(findingDto.getEnvironment() != null ? findingDto.getEnvironment() : "").append(",");
+                csv.append(findingDto.getTool() != null ? findingDto.getTool() : "").append(",");
+                csv.append(findingDto.getSeverity() != null ? findingDto.getSeverity() : "").append(",");
+                csv.append(findingDto.getCvssScore() != null ? findingDto.getCvssScore() : "").append(",");
+                csv.append(findingDto.getRiskScore() != null ? findingDto.getRiskScore() : "").append(",");
+                csv.append(findingDto.getPriority() != null ? findingDto.getPriority() : "").append(",");
+                csv.append(findingDto.getStatus() != null ? findingDto.getStatus() : "").append(",");
+                csv.append(findingDto.getPackageName() != null ? findingDto.getPackageName() : "").append(",");
+                csv.append(findingDto.getInstalledVersion() != null ? findingDto.getInstalledVersion() : "").append(",");
+                csv.append(findingDto.getFixedVersion() != null ? findingDto.getFixedVersion() : "").append(",");
+                csv.append(findingDto.getFirstDetectedAt() != null ? findingDto.getFirstDetectedAt() : "").append(",");
+                csv.append(findingDto.getLastDetectedAt() != null ? findingDto.getLastDetectedAt() : "").append("\n");
+            }
+            
+            return csv.toString();
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DatabaseException("Failed to export scan findings as CSV", e);
         }
     }
 }

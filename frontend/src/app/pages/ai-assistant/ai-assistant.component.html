@@ -1,140 +1,189 @@
-<div class="ai-assistant-container">
+<div class="ai-assistant-page">
+  <!-- Page Header -->
   <div class="page-header">
-    <h1>AI Security Assistant</h1>
-    <p class="subtitle">Context-aware security guidance powered by Gemini AI</p>
-  </div>
-
-  <div *ngIf="loading" class="loading">Checking AI configuration...</div>
-
-  <div *ngIf="!loading" class="mode-banner" [class.enhanced]="isConfigured">
-    <div class="config-warning">
-      <h2>{{ isConfigured ? 'AI-enhanced security analyst' : 'Security analyst mode' }}</h2>
-      <p>{{ isConfigured ? 'Gemini adds contextual explanations to scanner facts.' : 'Grounded guidance is available from your scanner data. Add Gemini later for richer explanations.' }}</p>
-      <span class="mode-label">{{ aiMode }}<span *ngIf="aiModel"> · {{ aiModel }}</span></span>
+    <div>
+      <h1 class="page-title">AI Security Assistant</h1>
+      <p class="page-subtitle">Security intelligence, root cause explanation & remediation guidance</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="badge" [ngClass]="isConfigured ? 'badge-scan-success' : 'badge-p4'">
+        {{ isConfigured ? '⚡ Gemini AI Active' : '🛡 Deterministic Mode' }}
+      </span>
     </div>
   </div>
 
-  <div *ngIf="!loading" class="ai-interface">
-    <div class="context-section">
-      <h3>Context Selection</h3>
-      <div class="context-inputs">
-        <div class="input-group">
-          <label>Finding:</label>
-          <select 
-            [(ngModel)]="selectedFindingId" 
-            class="context-input"
-            [disabled]="loadingData"
-          >
-            <option value="">Select a finding...</option>
-            <option *ngFor="let finding of availableFindings" [value]="finding.id">
-              {{ getFindingLabel(finding) }}
-            </option>
-          </select>
-          <small *ngIf="loadingData">Loading findings...</small>
-        </div>
-        <div class="input-group">
-          <label>Service:</label>
-          <select 
-            [(ngModel)]="selectedServiceId" 
-            class="context-input"
-            [disabled]="loadingData"
-          >
-            <option value="">Select a service...</option>
-            <option *ngFor="let service of availableServices" [value]="service.id">
-              {{ getServiceLabel(service) }}
-            </option>
-          </select>
-          <small *ngIf="loadingData">Loading services...</small>
-        </div>
+  <!-- Mode Banner -->
+  <div class="banner-card" [class.banner-active]="isConfigured">
+    <div class="banner-icon">{{ isConfigured ? '✨' : '🛡' }}</div>
+    <div class="banner-content">
+      <div class="banner-title">{{ isConfigured ? 'AI-Augmented Security Analyst' : 'Deterministic Security Intelligence Mode' }}</div>
+      <div class="banner-desc">
+        {{ isConfigured 
+          ? 'Gemini delivers contextual code explanations and remediation advice using your live scanner data.' 
+          : 'Scanner data and deterministic scoring are active. (When GEMINI_API_KEY is configured, generative AI explanations are enabled).' }}
       </div>
     </div>
+  </div>
 
-    <div class="quick-actions-section">
-      <h3>Quick Actions</h3>
-      <div class="quick-actions-grid">
-        <button 
-          *ngFor="let action of quickActions"
-          class="quick-action-btn"
-          (click)="executeQuickAction(action.action)"
-          [disabled]="isProcessing"
-        >
-          <span class="action-icon">{{ action.icon }}</span>
-          <span class="action-label">{{ action.label }}</span>
-        </button>
-      </div>
-    </div>
+  <div class="assistant-grid">
 
-    <div class="chat-section">
-      <h3>AI Chat</h3>
-      <div class="chat-container">
-        <div class="chat-messages" id="chatMessages">
-          <div *ngFor="let msg of chatHistory" class="chat-message" [class]="msg.role">
-            <div class="message-header">
-              <span class="message-role">{{ msg.role === 'user' ? 'You' : msg.role === 'assistant' ? 'AI Assistant' : 'System' }}</span>
-              <span class="message-time">{{ formatTime(msg.timestamp) }}</span>
-            </div>
-            <div class="message-content">
-              <div [innerHTML]="msg.message" class="markdown-content"></div>
-            </div>
+    <!-- LEFT COLUMN: CONTEXT SELECTION & SECURITY PROMPTS -->
+    <div class="left-panel">
+
+      <!-- Context Target Card -->
+      <div class="card">
+        <h3 class="card-title">Target Context</h3>
+        <p class="text-small text-muted" style="margin:0 0 12px">Select a finding or service to ground the assistant.</p>
+        
+        <div class="context-form">
+          <div class="form-group">
+            <label class="form-label">Security Finding</label>
+            <select [(ngModel)]="selectedFindingId" class="form-control" [disabled]="loadingData">
+              <option value="">-- All / General Context --</option>
+              <option *ngFor="let f of availableFindings" [value]="f.id">
+                {{ getFindingLabel(f) }}
+              </option>
+            </select>
           </div>
-          <div *ngIf="chatHistory.length === 0" class="no-messages">
-            Start a conversation by using quick actions or typing a message below.
+
+          <div class="form-group">
+            <label class="form-label">Service Asset</label>
+            <select [(ngModel)]="selectedServiceId" class="form-control" [disabled]="loadingData">
+              <option value="">-- All Services --</option>
+              <option *ngFor="let s of availableServices" [value]="s.id">
+                {{ getServiceLabel(s) }}
+              </option>
+            </select>
           </div>
         </div>
+      </div>
 
-        <div class="chat-input-section">
-          <div class="input-wrapper">
-            <input 
-              type="text" 
-              [(ngModel)]="chatMessage" 
-              placeholder="Ask about security priorities, remediation, or risk analysis..."
-              (keyup.enter)="sendChatMessage()"
-              [disabled]="isProcessing"
-              class="chat-input"
-            >
-            <button 
-              (click)="sendChatMessage()" 
-              [disabled]="!chatMessage.trim() || isProcessing"
-              class="send-btn"
-            >
-              {{ isProcessing ? 'Processing...' : 'Send' }}
-            </button>
+      <!-- Quick Action Workflows -->
+      <div class="card">
+        <h3 class="card-title">Security Workflows</h3>
+        <div class="action-buttons-list">
+          <button class="workflow-btn" (click)="executeQuickAction('explain_priority')" [disabled]="isProcessing">
+            <span class="workflow-icon">🔍</span>
+            <div class="workflow-text">
+              <div class="workflow-title">Explain Finding Priority</div>
+              <div class="workflow-subtitle">Break down risk scoring & business context</div>
+            </div>
+          </button>
+
+          <button class="workflow-btn" (click)="executeQuickAction('remediation_guidance')" [disabled]="isProcessing">
+            <span class="workflow-icon">🛠</span>
+            <div class="workflow-text">
+              <div class="workflow-title">Remediation Steps</div>
+              <div class="workflow-subtitle">Upgrade commands, patched versions & verify steps</div>
+            </div>
+          </button>
+
+          <button class="workflow-btn" (click)="executeQuickAction('service_risk')" [disabled]="isProcessing">
+            <span class="workflow-icon">🏢</span>
+            <div class="workflow-text">
+              <div class="workflow-title">Service Risk Assessment</div>
+              <div class="workflow-subtitle">Overall posture, exposure & scanner summary</div>
+            </div>
+          </button>
+
+          <button class="workflow-btn" (click)="executeQuickAction('daily_brief')" [disabled]="isProcessing">
+            <span class="workflow-icon">📋</span>
+            <div class="workflow-text">
+              <div class="workflow-title">Daily Security Brief</div>
+              <div class="workflow-subtitle">Executive summary of immediate P0 actions</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Principles Card -->
+      <div class="card" style="background:var(--canvas)">
+        <h3 class="card-title">Intelligence Principles</h3>
+        <ul style="margin:0;padding-left:18px;font-size:12px;color:var(--ink-2);line-height:1.6">
+          <li><strong>Deterministic Authoritative:</strong> Risk scores and P0–P4 priorities come strictly from deterministic rules, not hallucinated by AI.</li>
+          <li><strong>Grounded Facts:</strong> AI contextualizes scanner evidence from Trivy, Snyk, etc.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: INTERACTIVE SECURITY CHAT -->
+    <div class="right-panel">
+      <div class="card chat-card">
+        <div class="chat-card-header">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:20px">💬</span>
+            <div>
+              <h3 style="margin:0;font-size:14px;font-weight:700">Security Intelligence Conversation</h3>
+              <span class="text-small text-muted">Ask questions about vulnerabilities, fix methods, or business risk</span>
+            </div>
           </div>
-          <button 
-            (click)="clearChat()" 
-            class="clear-btn"
-            [disabled]="chatHistory.length === 0"
-          >
+          <button class="btn btn-sm btn-secondary" (click)="clearChat()" [disabled]="chatHistory.length === 0">
             Clear Chat
+          </button>
+        </div>
+
+        <!-- Chat Feed -->
+        <div class="chat-feed" id="chatFeed">
+          <div *ngIf="chatHistory.length === 0" class="chat-empty">
+            <span style="font-size:36px">🛡</span>
+            <h4>How can I help with security today?</h4>
+            <p>Select a quick workflow on the left or type a custom security query below.</p>
+            <div class="prompt-chips">
+              <button class="prompt-chip" (click)="askSamplePrompt('What are our top P0 vulnerabilities and why are they urgent?')">
+                "What are our top P0 vulnerabilities?"
+              </button>
+              <button class="prompt-chip" (click)="askSamplePrompt('How do we verify a Trivy vulnerability is fixed after updating dependencies?')">
+                "How to verify Trivy fix?"
+              </button>
+              <button class="prompt-chip" (click)="askSamplePrompt('Explain the difference between CVSS score and Business Risk Score.')">
+                "CVSS vs Business Risk Score"
+              </button>
+            </div>
+          </div>
+
+          <div *ngFor="let msg of chatHistory" class="chat-message-row" [class.msg-user]="msg.role === 'user'" [class.msg-assistant]="msg.role === 'assistant'" [class.msg-system]="msg.role === 'system'">
+            <div class="msg-avatar">{{ msg.role === 'user' ? '👤' : msg.role === 'assistant' ? '🤖' : '⚙' }}</div>
+            <div class="msg-bubble">
+              <div class="msg-header">
+                <span class="msg-sender">{{ msg.role === 'user' ? 'You' : msg.role === 'assistant' ? 'Security Assistant' : 'System' }}</span>
+                <span class="msg-time">{{ formatTime(msg.timestamp) }}</span>
+              </div>
+              <div class="msg-body markdown-content" [innerHTML]="msg.message"></div>
+            </div>
+          </div>
+
+          <div *ngIf="isProcessing" class="chat-message-row msg-assistant">
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-bubble">
+              <div class="loading-state" style="padding:10px 0">
+                <div class="loading-spinner"></div>
+                <span style="font-size:12px;color:var(--muted)">Analyzing security context…</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div class="chat-input-bar">
+          <input 
+            type="text" 
+            [(ngModel)]="chatMessage" 
+            placeholder="Ask about vulnerabilities, remediation, packages, or risk scoring…"
+            (keyup.enter)="sendChatMessage()"
+            [disabled]="isProcessing"
+            class="form-control"
+          >
+          <button 
+            class="btn btn-primary" 
+            (click)="sendChatMessage()" 
+            [disabled]="!chatMessage.trim() || isProcessing"
+          >
+            {{ isProcessing ? '…' : 'Send' }}
           </button>
         </div>
       </div>
     </div>
 
-    <div class="info-section">
-      <h3>AI Principles</h3>
-      <div class="principles-grid">
-        <div class="principle-card">
-          <div class="principle-icon">🎯</div>
-          <div class="principle-title">Deterministic First</div>
-          <div class="principle-description">Risk scores and priorities come from the scanner/system, not AI</div>
-        </div>
-        <div class="principle-card">
-          <div class="principle-icon">🧠</div>
-          <div class="principle-title">AI Explains Context</div>
-          <div class="principle-description">AI provides explanations and guidance based on system facts</div>
-        </div>
-        <div class="principle-card">
-          <div class="principle-icon">🔍</div>
-          <div class="principle-title">Clear Separation</div>
-          <div class="principle-description">UI clearly distinguishes between facts and AI guidance</div>
-        </div>
-        <div class="principle-card">
-          <div class="principle-icon">🚫</div>
-          <div class="principle-title">No Invention</div>
-          <div class="principle-description">AI cannot invent facts - only explains provided data</div>
-        </div>
-      </div>
-    </div>
   </div>
 </div>

@@ -1,103 +1,119 @@
-<div class="services-container">
-  <div class="services-header">
-    <h1>Services</h1>
-    <button class="btn btn-primary" (click)="openAddForm()">Add Service</button>
+<div class="services-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Services & Assets</h1>
+      <p class="page-subtitle">Manage service business context, ownership, and track continuous security posture</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" (click)="openAddForm()">＋ Add Service</button>
+      <button class="btn btn-secondary" (click)="loadData()">⟳ Refresh</button>
+    </div>
   </div>
 
-  <!-- Search -->
-  <div class="card search-card">
-    <div class="search-section">
-      <input type="text" 
-             [(ngModel)]="searchQuery" 
-             (input)="onSearchChange()"
-             placeholder="Search services by name, team, or owner..."
-             class="search-input">
-      <div class="search-stats" *ngIf="!loading">
-        Showing {{ filteredServices.length }} of {{ services.length }} services
-      </div>
+  <!-- Search & Stats -->
+  <div class="filters-bar">
+    <div class="filter-item" style="flex:1;min-width:240px">
+      <label>Search Services</label>
+      <input type="text" [(ngModel)]="searchQuery" (input)="onSearchChange()" 
+             placeholder="Search by name, team, owner, environment…" class="search-input">
+    </div>
+    <div class="filter-item" style="padding-top:18px">
+      <span class="text-small text-muted">{{ filteredServiceRows.length }} services registered</span>
     </div>
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="loading" class="loading-container">
-    <div class="loading-spinner">Loading services...</div>
+  <div *ngIf="loading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Loading services…</p>
   </div>
 
   <!-- Error State -->
-  <div *ngIf="error" class="error-container">
-    <div class="error-message">{{ error }}</div>
-    <button class="btn btn-primary" (click)="loadServices()">Retry</button>
+  <div *ngIf="error && !loading" class="error-state">
+    <div class="error-icon">⚠</div>
+    <p class="error-title">{{ error }}</p>
+    <button class="btn btn-primary" (click)="loadData()">Retry</button>
   </div>
 
   <!-- Services Table -->
-  <div *ngIf="!loading && !error" class="card services-card">
-    <div *ngIf="filteredServices.length === 0" class="no-services">
-      <h3 *ngIf="services.length === 0">No services configured</h3>
-      <h3 *ngIf="services.length > 0">No services match your search</h3>
-      <p *ngIf="services.length === 0">Add your first service to get started with security scanning.</p>
-      <button *ngIf="services.length === 0" class="btn btn-primary" (click)="openAddForm()">Add Service</button>
+  <div *ngIf="!loading && !error" class="card" style="padding:0;overflow:hidden">
+    <div *ngIf="filteredServiceRows.length === 0" class="empty-state">
+      <div class="empty-icon">🏢</div>
+      <p class="empty-title">No services found</p>
+      <p class="empty-desc">Add a service to define its business criticality and risk context.</p>
+      <button class="btn btn-primary" (click)="openAddForm()">Add Service</button>
     </div>
 
-    <div *ngIf="filteredServices.length > 0" class="services-table-container">
-      <table class="services-table">
+    <div *ngIf="filteredServiceRows.length > 0" class="table-wrap">
+      <table class="data-table">
         <thead>
           <tr>
-            <th><button class="sort-heading" (click)="sortBy('serviceName')">Service ↕</button></th>
-            <th><button class="sort-heading" (click)="sortBy('teamName')">Team ↕</button></th>
-            <th><button class="sort-heading" (click)="sortBy('environment')">Environment ↕</button></th>
-            <th><button class="sort-heading" (click)="sortBy('businessCriticality')">Business Criticality ↕</button></th>
-            <th>Internet Exposed</th>
-            <th>Data Sensitivity</th>
-            <th>Owner</th>
-            <th>Actions</th>
+            <th><button class="sort-btn" (click)="sortBy('serviceName')">Service ↕</button></th>
+            <th>Security State</th>
+            <th>Open Risk</th>
+            <th>Environment</th>
+            <th>Team & Owner</th>
+            <th>Criticality</th>
+            <th>Exposure</th>
+            <th>Last Scanned</th>
+            <th style="text-align:right">Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let service of filteredServices">
+          <tr *ngFor="let row of filteredServiceRows">
+            <!-- Service Name + Repo -->
             <td>
-              <div class="service-info">
-                <div class="service-name">{{ service.serviceName }}</div>
-                <div class="service-repo" *ngIf="service.repository">{{ service.repository }}</div>
+              <div style="display:flex;flex-direction:column;gap:2px">
+                <a class="fw-600" [routerLink]="['/services', row.service.id, 'security']" style="text-decoration:none;font-size:14px">
+                  {{ row.service.serviceName }}
+                </a>
+                <span *ngIf="row.service.repository" class="text-small text-muted text-mono">{{ row.service.repository }}</span>
               </div>
             </td>
-            <td>{{ service.teamName || 'N/A' }}</td>
+            <!-- Security State Badge -->
             <td>
-              <span class="environment-badge" 
-                    [class.env-production]="service.environment === 'PRODUCTION'"
-                    [class.env-staging]="service.environment === 'STAGING'"
-                    [class.env-development]="service.environment === 'DEVELOPMENT'">
-                {{ service.environment }}
+              <span class="badge" [ngClass]="getStateBadgeClass(row.securityState)">{{ row.securityState }}</span>
+            </td>
+            <!-- Open Risk: P0 / P1 / Total -->
+            <td>
+              <div style="display:flex;gap:4px;align-items:center">
+                <span *ngIf="row.p0Count > 0" class="badge badge-p0">P0: {{ row.p0Count }}</span>
+                <span *ngIf="row.p1Count > 0" class="badge badge-p1">P1: {{ row.p1Count }}</span>
+                <span *ngIf="row.p0Count === 0 && row.p1Count === 0 && row.totalFindings > 0" class="badge badge-p2">{{ row.totalFindings }} total</span>
+                <span *ngIf="row.totalFindings === 0" class="badge badge-low">0 findings</span>
+              </div>
+            </td>
+            <!-- Environment -->
+            <td>
+              <span class="badge" [ngClass]="getEnvBadgeClass(row.service.environment)">{{ row.service.environment }}</span>
+            </td>
+            <!-- Team & Owner -->
+            <td>
+              <div style="display:flex;flex-direction:column;gap:1px">
+                <span>{{ row.service.teamName || '—' }}</span>
+                <span *ngIf="row.service.owner" class="text-small text-muted">{{ row.service.owner }}</span>
+              </div>
+            </td>
+            <!-- Criticality -->
+            <td>
+              <span class="badge" [ngClass]="row.service.businessCriticality === 'CRITICAL' ? 'badge-critical' : row.service.businessCriticality === 'HIGH' ? 'badge-high' : 'badge-p4'">
+                {{ row.service.businessCriticality || 'MEDIUM' }}
               </span>
             </td>
+            <!-- Exposure -->
             <td>
-              <span [class]="getBusinessCriticalityClass(service.businessCriticality)" class="criticality-badge">
-                {{ service.businessCriticality }}
-              </span>
+              <span *ngIf="row.service.internetExposed" class="badge badge-critical" style="font-size:10px">PUBLIC</span>
+              <span *ngIf="!row.service.internetExposed" class="badge badge-p4" style="font-size:10px">INTERNAL</span>
             </td>
-            <td>
-              <span class="exposure-badge" 
-                    [class.exposed]="service.internetExposed"
-                    [class.internal]="!service.internetExposed">
-                {{ service.internetExposed ? 'Yes' : 'No' }}
-              </span>
-            </td>
-            <td>
-              <span [class]="getDataSensitivityClass(service.dataSensitivity)" class="sensitivity-badge">
-                {{ service.dataSensitivity }}
-              </span>
-            </td>
-            <td>{{ service.owner || 'N/A' }}</td>
-            <td>
-              <div class="action-buttons">
-                <button class="btn-action btn-security" (click)="viewServiceSecurity(service)" title="View Security">
-                  🔒
-                </button>
-                <button class="btn-action btn-edit" (click)="openEditForm(service)" title="Edit">
-                  ✏️
-                </button>
-                <button class="btn-action btn-delete" (click)="deleteService(service)" title="Delete">
-                  🗑️
-                </button>
+            <!-- Last Scan -->
+            <td class="text-small text-muted">{{ formatDate(row.latestScanTime) }}</td>
+            <!-- Actions -->
+            <td style="text-align:right" (click)="$event.stopPropagation()">
+              <div style="display:inline-flex;gap:6px">
+                <a class="btn btn-sm btn-secondary" [routerLink]="['/services', row.service.id, 'security']" title="Security Health Details">🔒</a>
+                <button class="btn btn-sm btn-secondary" (click)="downloadServiceCsv(row.service.serviceName)" title="Download CSV Findings">⬇</button>
+                <button class="btn btn-sm btn-secondary" (click)="openEditForm(row.service)" title="Edit Service">✏</button>
+                <button class="btn btn-sm btn-danger" (click)="deleteService(row.service)" title="Delete Service">🗑</button>
               </div>
             </td>
           </tr>
@@ -108,214 +124,65 @@
 
   <!-- Service Form Modal -->
   <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h2>{{ isEditMode ? 'Edit Service' : 'Add Service' }}</h2>
-        <button class="modal-close" (click)="closeForm()">&times;</button>
+        <h2>{{ isEditMode ? 'Edit Service' : 'Add New Service' }}</h2>
+        <button class="modal-close-btn" (click)="closeForm()">✕</button>
       </div>
-
       <div class="modal-body">
-        <form (ngSubmit)="saveService()" #serviceForm="ngForm">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="serviceName">Service Name *</label>
-              <input type="text" id="serviceName" [(ngModel)]="currentService.serviceName" 
-                     name="serviceName" required class="form-control">
+        <form (ngSubmit)="saveService()">
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="form-label">Service Name *</label>
+              <input type="text" [(ngModel)]="currentService.serviceName" name="serviceName" required class="form-control" placeholder="e.g. order-service">
             </div>
-            <div class="form-group">
-              <label for="teamName">Team Name</label>
-              <input type="text" id="teamName" [(ngModel)]="currentService.teamName" 
-                     name="teamName" class="form-control">
+            <div class="form-item">
+              <label class="form-label">Team Name</label>
+              <input type="text" [(ngModel)]="currentService.teamName" name="teamName" class="form-control" placeholder="e.g. checkout-team">
             </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="environment">Environment *</label>
-              <select id="environment" [(ngModel)]="currentService.environment" 
-                      name="environment" required class="form-control">
+            <div class="form-item">
+              <label class="form-label">Environment *</label>
+              <select [(ngModel)]="currentService.environment" name="environment" class="form-control">
                 <option *ngFor="let env of environments" [value]="env">{{ env }}</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="businessCriticality">Business Criticality</label>
-              <select id="businessCriticality" [(ngModel)]="currentService.businessCriticality" 
-                      name="businessCriticality" class="form-control">
+            <div class="form-item">
+              <label class="form-label">Business Criticality</label>
+              <select [(ngModel)]="currentService.businessCriticality" name="businessCriticality" class="form-control">
                 <option *ngFor="let crit of businessCriticalities" [value]="crit">{{ crit }}</option>
               </select>
             </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="dataSensitivity">Data Sensitivity</label>
-              <select id="dataSensitivity" [(ngModel)]="currentService.dataSensitivity" 
-                      name="dataSensitivity" class="form-control">
+            <div class="form-item">
+              <label class="form-label">Data Sensitivity</label>
+              <select [(ngModel)]="currentService.dataSensitivity" name="dataSensitivity" class="form-control">
                 <option *ngFor="let sens of dataSensitivities" [value]="sens">{{ sens }}</option>
               </select>
             </div>
-            <div class="form-group checkbox-group">
-              <label class="checkbox-label">
+            <div class="form-item">
+              <label class="form-label">Repository</label>
+              <input type="text" [(ngModel)]="currentService.repository" name="repository" class="form-control" placeholder="e.g. org/order-service">
+            </div>
+            <div class="form-item">
+              <label class="form-label">Owner Email</label>
+              <input type="email" [(ngModel)]="currentService.owner" name="owner" class="form-control" placeholder="owner@company.com">
+            </div>
+            <div class="form-item" style="display:flex;align-items:center;gap:8px;padding-top:20px">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px">
                 <input type="checkbox" [(ngModel)]="currentService.internetExposed" name="internetExposed">
-                <span class="checkmark"></span>
-                Internet Exposed
+                <strong>Internet Exposed (Public Facing)</strong>
               </label>
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="repository">Repository</label>
-              <input type="text" id="repository" [(ngModel)]="currentService.repository" 
-                     name="repository" class="form-control">
-            </div>
-            <div class="form-group">
-              <label for="deploymentPlatform">Deployment Platform</label>
-              <input type="text" id="deploymentPlatform" [(ngModel)]="currentService.deploymentPlatform" 
-                     name="deploymentPlatform" class="form-control">
-            </div>
-          </div>
+          <div *ngIf="formError" class="form-error-msg">{{ formError }}</div>
 
-          <div class="form-group">
-            <label for="owner">Owner</label>
-            <input type="email" id="owner" [(ngModel)]="currentService.owner" 
-                   name="owner" class="form-control" placeholder="email@company.com">
-          </div>
-
-          <div *ngIf="formError" class="error-message">{{ formError }}</div>
-
-          <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" (click)="closeForm()" [disabled]="formLoading">
-              Cancel
-            </button>
-            <button type="submit" class="btn btn-primary" [disabled]="formLoading || !serviceForm.form.valid">
-              <span *ngIf="formLoading">{{ isEditMode ? 'Updating...' : 'Creating...' }}</span>
-              <span *ngIf="!formLoading">{{ isEditMode ? 'Update Service' : 'Create Service' }}</span>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeForm()" [disabled]="formLoading">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="formLoading || !currentService.serviceName">
+              {{ formLoading ? 'Saving…' : (isEditMode ? 'Save Changes' : 'Create Service') }}
             </button>
           </div>
         </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Service Security Details Modal -->
-  <div *ngIf="showSecurityDetails" class="modal-overlay" (click)="closeSecurityDetails()">
-    <div class="modal-content security-modal" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>🔒 Security Details: {{ selectedServiceForSecurity?.serviceName }}</h2>
-        <button class="modal-close" (click)="closeSecurityDetails()">&times;</button>
-      </div>
-
-      <div class="modal-body">
-        <div *ngIf="loadingSecuritySummary" class="loading-container">
-          <div class="loading-spinner">Loading security data...</div>
-        </div>
-
-        <div *ngIf="!loadingSecuritySummary && securitySummary" class="security-details">
-          <!-- Quick Stats -->
-          <div class="security-stats-grid">
-            <div class="stat-card critical-stat">
-              <div class="stat-label">P0 Findings</div>
-              <div class="stat-value">{{ securitySummary.p0Count }}</div>
-              <div class="stat-description">Fix immediately</div>
-            </div>
-            <div class="stat-card high-stat">
-              <div class="stat-label">P1 Findings</div>
-              <div class="stat-value">{{ securitySummary.p1Count }}</div>
-              <div class="stat-description">Fix this week</div>
-            </div>
-            <div class="stat-card warning-stat">
-              <div class="stat-label">P2 Findings</div>
-              <div class="stat-value">{{ securitySummary.p2Count }}</div>
-              <div class="stat-description">Plan remediation</div>
-            </div>
-            <div class="stat-card info-stat">
-              <div class="stat-label">Total Findings</div>
-              <div class="stat-value">{{ securitySummary.totalFindings }}</div>
-              <div class="stat-description">All vulnerabilities</div>
-            </div>
-          </div>
-
-          <!-- Severity Breakdown -->
-          <div class="security-section">
-            <h3>Severity Breakdown</h3>
-            <div class="severity-bars">
-              <div class="severity-bar">
-                <div class="bar-label">Critical</div>
-                <div class="bar-track">
-                  <div class="bar-fill critical" [style.width.%]="getSeverityCount('CRITICAL') > 0 ? (getSeverityCount('CRITICAL') / securitySummary.totalFindings * 100) : 0"></div>
-                </div>
-                <div class="bar-value">{{ getSeverityCount('CRITICAL') }}</div>
-              </div>
-              <div class="severity-bar">
-                <div class="bar-label">High</div>
-                <div class="bar-track">
-                  <div class="bar-fill high" [style.width.%]="getSeverityCount('HIGH') > 0 ? (getSeverityCount('HIGH') / securitySummary.totalFindings * 100) : 0"></div>
-                </div>
-                <div class="bar-value">{{ getSeverityCount('HIGH') }}</div>
-              </div>
-              <div class="severity-bar">
-                <div class="bar-label">Medium</div>
-                <div class="bar-track">
-                  <div class="bar-fill medium" [style.width.%]="getSeverityCount('MEDIUM') > 0 ? (getSeverityCount('MEDIUM') / securitySummary.totalFindings * 100) : 0"></div>
-                </div>
-                <div class="bar-value">{{ getSeverityCount('MEDIUM') }}</div>
-              </div>
-              <div class="severity-bar">
-                <div class="bar-label">Low</div>
-                <div class="bar-track">
-                  <div class="bar-fill low" [style.width.%]="getSeverityCount('LOW') > 0 ? (getSeverityCount('LOW') / securitySummary.totalFindings * 100) : 0"></div>
-                </div>
-                <div class="bar-value">{{ getSeverityCount('LOW') }}</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Priority Breakdown -->
-          <div class="security-section">
-            <h3>Priority Breakdown</h3>
-            <div class="priority-summary">
-              <div class="priority-item p0">
-                <span class="priority-label">P0 (Critical)</span>
-                <span class="priority-count">{{ getPriorityCount('P0') }}</span>
-              </div>
-              <div class="priority-item p1">
-                <span class="priority-label">P1 (High)</span>
-                <span class="priority-count">{{ getPriorityCount('P1') }}</span>
-              </div>
-              <div class="priority-item p2">
-                <span class="priority-label">P2 (Medium)</span>
-                <span class="priority-count">{{ getPriorityCount('P2') }}</span>
-              </div>
-              <div class="priority-item p3">
-                <span class="priority-label">P3 (Low)</span>
-                <span class="priority-count">{{ getPriorityCount('P3') }}</span>
-              </div>
-              <div class="priority-item p4">
-                <span class="priority-label">P4 (Info)</span>
-                <span class="priority-count">{{ getPriorityCount('P4') }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="security-actions">
-            <button class="btn btn-primary" (click)="downloadServiceReport(selectedServiceForSecurity!.serviceName)">
-              📥 Download Security Report (CSV)
-            </button>
-            <button class="btn btn-secondary" routerLink="/findings" [queryParams]="{service: selectedServiceForSecurity?.serviceName}">
-              🔍 View All Findings
-            </button>
-            <button class="btn btn-secondary" routerLink="/remediation" [queryParams]="{service: selectedServiceForSecurity?.serviceName}">
-              🛠️ View Remediation Items
-            </button>
-          </div>
-        </div>
-
-        <div *ngIf="!loadingSecuritySummary && !securitySummary" class="no-security-data">
-          <p>No security data available for this service yet.</p>
-          <p class="hint">Upload a security scan report to see vulnerability details.</p>
-        </div>
       </div>
     </div>
   </div>

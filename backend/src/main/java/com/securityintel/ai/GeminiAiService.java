@@ -59,48 +59,63 @@ public class GeminiAiService {
     public String getModel() { return geminiModel; }
 
     public String explainPriority(String findingId) {
+        SecurityFinding finding = securityFindingRepository.findById(findingId)
+            .orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Finding not found: " + findingId));
+
         if (!isConfigured()) {
-            SecurityFinding finding = securityFindingRepository.findById(findingId).orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Finding not found: " + findingId));
             return localPriorityExplanation(finding);
         }
 
-        SecurityFinding finding = securityFindingRepository.findById(findingId)
-            .orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Finding not found: " + findingId));
+        try {
+            String context = buildFindingContext(finding);
+            String prompt = buildExplainPriorityPrompt(context);
+            String result = callGeminiApi(prompt);
+            if (result != null && !result.startsWith("Error calling Gemini API") && !result.startsWith("Failed to parse")) {
+                return result;
+            }
+        } catch (Exception ignored) {}
 
-        String context = buildFindingContext(finding);
-        String prompt = buildExplainPriorityPrompt(context);
-
-        return callGeminiApi(prompt);
+        return localPriorityExplanation(finding);
     }
 
     public String generateRemediationGuidance(String findingId) {
-        if (!isConfigured()) {
-            SecurityFinding finding = securityFindingRepository.findById(findingId).orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Finding not found: " + findingId));
-            return localRemediationGuidance(finding);
-        }
-
         SecurityFinding finding = securityFindingRepository.findById(findingId)
             .orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Finding not found: " + findingId));
 
-        String context = buildFindingContext(finding);
-        String prompt = buildRemediationGuidancePrompt(context);
+        if (!isConfigured()) {
+            return localRemediationGuidance(finding);
+        }
 
-        return callGeminiApi(prompt);
+        try {
+            String context = buildFindingContext(finding);
+            String prompt = buildRemediationGuidancePrompt(context);
+            String result = callGeminiApi(prompt);
+            if (result != null && !result.startsWith("Error calling Gemini API") && !result.startsWith("Failed to parse")) {
+                return result;
+            }
+        } catch (Exception ignored) {}
+
+        return localRemediationGuidance(finding);
     }
 
     public String summarizeServiceRisk(String serviceId) {
-        if (!isConfigured()) {
-            Service service = serviceRepository.findById(serviceId).orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Service not found: " + serviceId));
-            return localServiceSummary(service);
-        }
-
         Service service = serviceRepository.findById(serviceId)
             .orElseThrow(() -> new com.securityintel.exception.ResourceNotFoundException("Service not found: " + serviceId));
 
-        String context = buildServiceContext(service);
-        String prompt = buildServiceRiskSummaryPrompt(context);
+        if (!isConfigured()) {
+            return localServiceSummary(service);
+        }
 
-        return callGeminiApi(prompt);
+        try {
+            String context = buildServiceContext(service);
+            String prompt = buildServiceRiskSummaryPrompt(context);
+            String result = callGeminiApi(prompt);
+            if (result != null && !result.startsWith("Error calling Gemini API") && !result.startsWith("Failed to parse")) {
+                return result;
+            }
+        } catch (Exception ignored) {}
+
+        return localServiceSummary(service);
     }
 
     public String generateDailySecurityBrief() {
@@ -108,29 +123,43 @@ public class GeminiAiService {
             return localDailyBrief();
         }
 
-        String context = buildDailySecurityContext();
-        String prompt = buildDailySecurityBriefPrompt(context);
+        try {
+            String context = buildDailySecurityContext();
+            String prompt = buildDailySecurityBriefPrompt(context);
+            String result = callGeminiApi(prompt);
+            if (result != null && !result.startsWith("Error calling Gemini API") && !result.startsWith("Failed to parse")) {
+                return result;
+            }
+        } catch (Exception ignored) {}
 
-        return callGeminiApi(prompt);
+        return localDailyBrief();
     }
 
     public String answerQuestion(String question, String serviceId, String findingId) {
         if (!isConfigured()) {
             return localQuestionAnswer(question, serviceId, findingId);
         }
-        StringBuilder context = new StringBuilder();
-        if (serviceId != null && !serviceId.isBlank()) {
-            serviceRepository.findById(serviceId).ifPresent(service -> context.append(buildServiceContext(service)));
-        }
-        if (findingId != null && !findingId.isBlank()) {
-            securityFindingRepository.findById(findingId).ifPresent(finding -> context.append("\n").append(buildFindingContext(finding)));
-        }
-        String prompt = "Answer the security team's question using only the supplied facts. " +
-            "Lead with a direct answer, then give at most three actionable bullets. " +
-            "Say when the facts are insufficient. Do not return JSON or metadata.\n\n" +
-            "QUESTION: " + question + "\n\nFACTS:\n" + context;
-        return callGeminiApi(prompt);
+        try {
+            StringBuilder context = new StringBuilder();
+            if (serviceId != null && !serviceId.isBlank()) {
+                serviceRepository.findById(serviceId).ifPresent(service -> context.append(buildServiceContext(service)));
+            }
+            if (findingId != null && !findingId.isBlank()) {
+                securityFindingRepository.findById(findingId).ifPresent(finding -> context.append("\n").append(buildFindingContext(finding)));
+            }
+            String prompt = "Answer the security team's question using only the supplied facts. " +
+                "Lead with a direct answer, then give at most three actionable bullets. " +
+                "Say when the facts are insufficient. Do not return JSON or metadata.\n\n" +
+                "QUESTION: " + question + "\n\nFACTS:\n" + context;
+            String result = callGeminiApi(prompt);
+            if (result != null && !result.startsWith("Error calling Gemini API") && !result.startsWith("Failed to parse")) {
+                return result;
+            }
+        } catch (Exception ignored) {}
+
+        return localQuestionAnswer(question, serviceId, findingId);
     }
+
 
     private String buildFindingContext(SecurityFinding finding) {
         StringBuilder context = new StringBuilder();

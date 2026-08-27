@@ -153,25 +153,12 @@ export class FindingsComponent implements OnInit {
   }
 
   exportCsv() {
-    this.apiService.downloadAllFindingsCsv().subscribe({
-      next: (csv: string) => {
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `security-findings-${new Date().toISOString().slice(0,10)}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-      },
-      error: (err: any) => {
-        // Fallback: export filtered data client-side
-        this.exportClientSideCsv();
-      }
-    });
+    // Always export filtered data client-side to respect current filters
+    this.exportClientSideCsv();
   }
 
   private exportClientSideCsv() {
-    const headers = ['CVE','Title','Service','Environment','Tool','Severity','CVSS','Risk Score','Priority','Status','Package','Installed Version','Fixed Version','First Detected','Last Detected'];
+    const headers = ['CVE','Title','Service','Environment','Tool','Severity','CVSS','Risk Score','Priority','Status','Package','Installed Version','Fixed Version','First Detected At','Last Detected At'];
     const rows = this.filteredFindings.map(f => [
       f.cve || '',
       `"${(f.title || '').replace(/"/g, '""')}"`,

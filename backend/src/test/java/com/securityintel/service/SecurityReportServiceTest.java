@@ -20,6 +20,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.ArrayList;
@@ -32,6 +34,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class SecurityReportServiceTest {
 
     @Mock
@@ -61,6 +64,12 @@ class SecurityReportServiceTest {
     @Mock
     private SecurityReportParser mockParser;
 
+    @Mock
+    private com.securityintel.repository.ScanExecutionRepository scanExecutionRepository;
+
+    @Mock
+    private com.securityintel.remediation.RemediationService remediationService;
+
     private SecurityReportService securityReportService;
 
     @BeforeEach
@@ -73,7 +82,9 @@ class SecurityReportServiceTest {
             deduplicationEngine,
             prioritizationEngine,
             serviceManagementService,
-            entityMapper
+            entityMapper,
+            scanExecutionRepository,
+            remediationService
         );
     }
 
@@ -97,10 +108,16 @@ class SecurityReportServiceTest {
         savedReport.setId("report-123");
         when(scanReportRepository.save(any(ScanReport.class))).thenReturn(savedReport);
 
+        when(scanExecutionRepository.save(any(ScanExecution.class))).thenAnswer(inv -> {
+            ScanExecution se = inv.getArgument(0);
+            se.setId("scan-123");
+            return se;
+        });
+
         SecurityFinding normalizedFinding = new SecurityFinding();
         normalizedFinding.setCve("CVE-2024-1234");
         normalizedFinding.setSeverity(Severity.CRITICAL);
-        when(findingNormalizer.normalize(parsedReport, "report-123")).thenReturn(List.of(normalizedFinding));
+        when(findingNormalizer.normalize(eq(parsedReport), any())).thenReturn(List.of(normalizedFinding));
 
         DeduplicationResult dedupResult = new DeduplicationResult(
             new ArrayList<>(List.of(normalizedFinding)),

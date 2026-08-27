@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class SecurityFindingService {
@@ -89,6 +90,38 @@ public class SecurityFindingService {
             return entityMapper.toFindingDtos(findings);
         } catch (Exception e) {
             throw new DatabaseException("Failed to search findings", e);
+        }
+    }
+
+    public String exportAllFindingsCsv() {
+        try {
+            List<SecurityFinding> findings = securityFindingRepository.findAll();
+            List<SecurityFindingDto> findingDtos = entityMapper.toFindingDtos(findings);
+            
+            StringBuilder csv = new StringBuilder();
+            csv.append("CVE,Title,Service,Environment,Tool,Severity,CVSS,Risk Score,Priority,Status,Package,Installed Version,Fixed Version,First Detected At,Last Detected At\n");
+            
+            for (SecurityFindingDto finding : findingDtos) {
+                csv.append(finding.getCve() != null ? finding.getCve() : "").append(",");
+                csv.append(finding.getTitle() != null ? ("\"" + finding.getTitle().replace("\"", "\"\"") + "\"") : "").append(",");
+                csv.append(finding.getServiceName() != null ? finding.getServiceName() : "").append(",");
+                csv.append(finding.getEnvironment() != null ? finding.getEnvironment() : "").append(",");
+                csv.append(finding.getTool() != null ? finding.getTool() : "").append(",");
+                csv.append(finding.getSeverity() != null ? finding.getSeverity() : "").append(",");
+                csv.append(finding.getCvssScore() != null ? finding.getCvssScore() : "").append(",");
+                csv.append(finding.getRiskScore() != null ? finding.getRiskScore() : "").append(",");
+                csv.append(finding.getPriority() != null ? finding.getPriority() : "").append(",");
+                csv.append(finding.getStatus() != null ? finding.getStatus() : "").append(",");
+                csv.append(finding.getPackageName() != null ? finding.getPackageName() : "").append(",");
+                csv.append(finding.getInstalledVersion() != null ? finding.getInstalledVersion() : "").append(",");
+                csv.append(finding.getFixedVersion() != null ? finding.getFixedVersion() : "").append(",");
+                csv.append(finding.getFirstDetectedAt() != null ? finding.getFirstDetectedAt() : "").append(",");
+                csv.append(finding.getLastDetectedAt() != null ? finding.getLastDetectedAt() : "").append("\n");
+            }
+            
+            return csv.toString();
+        } catch (Exception e) {
+            throw new DatabaseException("Failed to export findings as CSV", e);
         }
     }
 }

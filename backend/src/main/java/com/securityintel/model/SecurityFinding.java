@@ -72,6 +72,7 @@ public class SecurityFinding {
     private LocalDateTime firstDetectedAt;
     private LocalDateTime lastDetectedAt;
     private String latestScanId;
+    private String scanExecutionId;
     private DetectionState detectionState;
 
     public SecurityFinding() {
@@ -335,6 +336,14 @@ public class SecurityFinding {
 
     public void setLatestScanId(String latestScanId) {
         this.latestScanId = latestScanId;
+    }
+
+    public String getScanExecutionId() {
+        return scanExecutionId;
+    }
+
+    public void setScanExecutionId(String scanExecutionId) {
+        this.scanExecutionId = scanExecutionId;
     }
 
     public DetectionState getDetectionState() {

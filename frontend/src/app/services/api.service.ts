@@ -66,6 +66,11 @@ export class ApiService {
     return this.http.get<SecurityFinding[]>(`${this.baseUrl}/findings/search`, { params });
   }
 
+  downloadAllFindingsCsv(): Observable<string> {
+    return this.http.get(`${this.baseUrl}/findings/export/csv`, { responseType: 'text' });
+  }
+
+
   // Reports (Scans)
   getAllReports(): Observable<ScanReport[]> {
     return this.http.get<ScanReport[]>(`${this.baseUrl}/reports`);
@@ -220,10 +225,6 @@ export class ApiService {
 
   emailServiceSecurityReport(serviceName: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/services/${serviceName}/security-report/email`, {});
-  }
-
-  downloadAllFindingsCsv(): Observable<string> {
-    return this.http.get(`${this.baseUrl}/findings/export/csv`, { responseType: 'text' });
   }
 
   downloadScanFindingsCsv(scanId: string): Observable<string> {

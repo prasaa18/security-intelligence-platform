@@ -61,4 +61,13 @@ public class FindingController {
         List<SecurityFindingDto> findings = securityFindingService.searchFindings(query);
         return ResponseEntity.ok(findings);
     }
+
+    @GetMapping("/export/csv")
+    public ResponseEntity<String> exportAllFindingsCsv() {
+        String csv = securityFindingService.exportAllFindingsCsv();
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/csv")
+                .header("Content-Disposition", "attachment; filename=security-findings.csv")
+                .body(csv);
+    }
 }

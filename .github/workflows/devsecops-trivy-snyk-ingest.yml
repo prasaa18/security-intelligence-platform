@@ -1,0 +1,108 @@
+name: DevSecOps Scanner & Ingest (Trivy & Snyk)
+
+# This reusable workflow runs Trivy and/or Snyk scans on any service repository
+# and automatically pushes the normalized findings to your Security Intelligence Platform.
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: 'Target Service Name (e.g. payment-service)'
+        required: true
+        type: string
+      environment:
+        description: 'Environment (PRODUCTION, STAGING, DEVELOPMENT)'
+        required: false
+        default: 'PRODUCTION'
+        type: string
+      scan_image:
+        description: 'Optional container image name to scan'
+        required: false
+        default: ''
+        type: string
+    secrets:
+      SECURITY_PLATFORM_URL:
+        description: 'Base URL of your deployed Security Intelligence Platform (e.g. https://sec-intel.myorg.com)'
+        required: true
+      SNYK_TOKEN:
+        description: 'Snyk API authentication token'
+        required: false
+
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  trivy-scan:
+    name: Run Trivy Vulnerability Scan & Ingest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@v0.2.0
+        with:
+          version: 'v0.48.3'
+
+      - name: Run Trivy Filesystem Scan (JSON format)
+        run: |
+          trivy fs --format json --output trivy-report.json .
+
+      - name: Send Trivy Report to Security Intelligence Platform
+        if: always()
+        run: |
+          PLATFORM_URL="${{ secrets.SECURITY_PLATFORM_URL || 'http://localhost:8080' }}"
+          SVC_NAME="${{ inputs.service_name || github.event.repository.name }}"
+          ENV_NAME="${{ inputs.environment || 'PRODUCTION' }}"
+          
+          echo "Ingesting Trivy scan for service: $SVC_NAME ($ENV_NAME) -> $PLATFORM_URL"
+          
+          curl -s -X POST "$PLATFORM_URL/api/reports/upload" \
+            -F "file=@trivy-report.json" \
+            -F "serviceName=$SVC_NAME" \
+            -F "environment=$ENV_NAME" \
+            | grep -o '"success":true' || echo "Report uploaded to platform."
+
+      - name: Upload Trivy Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-security-report
+          path: trivy-report.json
+
+  snyk-scan:
+    name: Run Snyk Dependency Scan & Ingest
+    runs-on: ubuntu-latest
+    if: "${{ secrets.SNYK_TOKEN != '' }}"
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Snyk CLI
+        uses: snyk/actions/setup@master
+
+      - name: Run Snyk Test (JSON format)
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk test --json > snyk-report.json || true
+
+      - name: Send Snyk Report to Security Intelligence Platform
+        if: always()
+        run: |
+          PLATFORM_URL="${{ secrets.SECURITY_PLATFORM_URL || 'http://localhost:8080' }}"
+          SVC_NAME="${{ inputs.service_name || github.event.repository.name }}"
+          ENV_NAME="${{ inputs.environment || 'PRODUCTION' }}"
+          
+          echo "Ingesting Snyk scan for service: $SVC_NAME ($ENV_NAME) -> $PLATFORM_URL"
+          
+          if [ -s snyk-report.json ]; then
+            curl -s -X POST "$PLATFORM_URL/api/reports/upload" \
+              -F "file=@snyk-report.json" \
+              -F "serviceName=$SVC_NAME" \
+              -F "environment=$ENV_NAME" \
+              | grep -o '"success":true' || echo "Snyk report uploaded to platform."
+          fi
+

@@ -70,4 +70,19 @@ public class ScanExecutionController {
             throw e;
         }
     }
+
+    @GetMapping("/{id}/findings/csv")
+    public ResponseEntity<String> exportScanFindingsCsv(@PathVariable String id) {
+        try {
+            String csv = scanExecutionService.exportScanFindingsCsv(id);
+            return ResponseEntity.ok()
+                    .header("Content-Type", "text/csv")
+                    .header("Content-Disposition", "attachment; filename=scan-findings-" + id + ".csv")
+                    .body(csv);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (DatabaseException e) {
+            throw e;
+        }
+    }
 }
