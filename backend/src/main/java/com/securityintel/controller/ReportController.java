@@ -3,6 +3,8 @@ package com.securityintel.controller;
 import com.securityintel.dto.ScanReportDto;
 import com.securityintel.model.Environment;
 import com.securityintel.service.SecurityReportService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,6 +20,7 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class ReportController {
 
+    private static final Logger log = LoggerFactory.getLogger(ReportController.class);
     private final SecurityReportService securityReportService;
 
     public ReportController(SecurityReportService securityReportService) {
@@ -28,9 +31,20 @@ public class ReportController {
     public ResponseEntity<?> uploadReport(@RequestParam("file") MultipartFile file,
                                         @RequestParam("serviceName") String serviceName,
                                         @RequestParam("environment") Environment environment) {
+                                        @RequestParam(value = "environment", defaultValue = "PRODUCTION") String environment) {
         try {
+            Environment env = Environment.PRODUCTION;
+            try {
+                if (environment != null && !environment.isBlank()) {
+                    env = Environment.valueOf(environment.toUpperCase().trim());
+                }
+            } catch (Exception ex) {
+                env = Environment.PRODUCTION;
+            }
+
             SecurityReportService.ReportProcessingResult result = 
                 securityReportService.processSecurityReport(file, serviceName, environment);
+                securityReportService.processSecurityReport(file, serviceName.trim(), env);
             
             Map<String, Object> response = Map.of(
                 "success", true,
@@ -39,14 +53,17 @@ public class ReportController {
                 "serviceName", serviceName,
                 "rawFindings", result.getRawFindings(),
                 "uniqueFindings", result.getUniqueFindings(),
+                "totalFindings", result.getUniqueFindings(),
                 "report", result.getScanReport()
             );
             
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
+            log.error("Failed to process uploaded security report: {}", e.getMessage(), e);
             Map<String, Object> errorResponse = Map.of(
                 "success", false,
                 "message", "Failed to process report: " + e.getMessage()
+                "message", "Failed to process report: " + (e.getMessage() != null ? e.getMessage() : "Unknown error")
             );
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         }
