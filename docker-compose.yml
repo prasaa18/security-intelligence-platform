@@ -13,7 +13,7 @@ services:
       MONGO_INITDB_DATABASE: securityintel
     volumes:
       - mongodb_data:/data/db
-      - ./mongodb-init:/docker-entrypoint-initdb.d
+      - ./docker/mongodb/init:/docker-entrypoint-initdb.d
     networks:
       - security-intel-network
     healthcheck:
