@@ -7,7 +7,7 @@ import { DashboardSummary, SecurityFinding, ScanReport, ServiceModel } from '../
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://localhost:8080/api';
+  private baseUrl = '/api';
 
   constructor(private http: HttpClient) { }
 
