@@ -30,7 +30,6 @@ public class ReportController {
     @PostMapping("/upload")
     public ResponseEntity<?> uploadReport(@RequestParam("file") MultipartFile file,
                                         @RequestParam("serviceName") String serviceName,
-                                        @RequestParam("environment") Environment environment) {
                                         @RequestParam(value = "environment", defaultValue = "PRODUCTION") String environment) {
         try {
             Environment env = Environment.PRODUCTION;
@@ -43,7 +42,6 @@ public class ReportController {
             }
 
             SecurityReportService.ReportProcessingResult result = 
-                securityReportService.processSecurityReport(file, serviceName, environment);
                 securityReportService.processSecurityReport(file, serviceName.trim(), env);
             
             Map<String, Object> response = Map.of(
@@ -62,7 +60,6 @@ public class ReportController {
             log.error("Failed to process uploaded security report: {}", e.getMessage(), e);
             Map<String, Object> errorResponse = Map.of(
                 "success", false,
-                "message", "Failed to process report: " + e.getMessage()
                 "message", "Failed to process report: " + (e.getMessage() != null ? e.getMessage() : "Unknown error")
             );
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
