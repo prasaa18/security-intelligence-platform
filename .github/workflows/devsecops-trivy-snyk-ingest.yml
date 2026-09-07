@@ -44,14 +44,14 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Install Trivy
-        uses: aquasecurity/setup-trivy@v0.3.1
+      - name: Run Trivy Filesystem Scan
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
-          version: 'v0.68.2'
-
-      - name: Run Trivy Filesystem Scan (JSON format)
-        run: |
-          trivy fs --format json --output trivy-report.json .
+          scan-type: fs
+          scan-ref: .
+          format: json
+          output: trivy-report.json
+          severity: HIGH,CRITICAL
 
       - name: Send Trivy Report to Security Intelligence Platform
         if: always()
