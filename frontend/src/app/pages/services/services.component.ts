@@ -81,7 +81,7 @@ export class ServicesComponent implements OnInit {
       const p1 = svcFindings.filter(f => f.priority === 'P1').length;
       const total = svcFindings.length;
 
-      const svcScans = scans.filter(s => s.serviceName === svc.serviceName)
+      const svcScans = scans.filter(s => s.serviceName === svc.serviceName && s.status === 'SUCCESS')
         .sort((a, b) => new Date(b.completedAt || b.receivedAt || b.createdAt).getTime() - new Date(a.completedAt || a.receivedAt || a.createdAt).getTime());
       
       const latestScan = svcScans[0];
@@ -89,7 +89,7 @@ export class ServicesComponent implements OnInit {
 
       let securityState: 'CRITICAL' | 'ATTENTION' | 'HEALTHY' | 'STALE' | 'UNKNOWN' = 'UNKNOWN';
       if (!latestScan) {
-        securityState = 'UNKNOWN';
+        securityState = 'STALE';
       } else {
         const scanAgeHours = (Date.now() - new Date(latestScanTime!).getTime()) / (1000 * 60 * 60);
         const staleLimit = svc.environment === 'PRODUCTION' ? 24 : 168; // 24h prod, 7d dev

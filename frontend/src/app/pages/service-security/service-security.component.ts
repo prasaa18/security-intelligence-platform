@@ -59,7 +59,9 @@ export class ServiceSecurityComponent implements OnInit {
   loadServiceScans(serviceName: string): void {
     this.apiService.getScanExecutionsByService(serviceName).subscribe({
       next: (scans) => {
-        this.scanExecutions = (scans || []).sort((a, b) => new Date(b.completedAt || b.createdAt).getTime() - new Date(a.completedAt || a.createdAt).getTime());
+        this.scanExecutions = (scans || [])
+          .filter(scan => scan.status === 'SUCCESS')
+          .sort((a, b) => new Date(b.completedAt || b.createdAt).getTime() - new Date(a.completedAt || a.createdAt).getTime());
         this.calculateSecurityState();
       },
       error: (err) => {
@@ -114,7 +116,7 @@ export class ServiceSecurityComponent implements OnInit {
   calculateSecurityState(): void {
     // Simple security state calculation based on scan freshness and open findings
     if (this.scanExecutions.length === 0) {
-      this.securityState = 'UNKNOWN';
+      this.securityState = 'STALE';
       return;
     }
 
