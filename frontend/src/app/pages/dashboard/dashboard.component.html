@@ -29,7 +29,7 @@
         </div>
         <div class="mini-stat">
           <span class="mini-label">Fresh scans</span>
-          <strong>{{ serviceOverview.length ? (serviceOverview.filter(row => row.latestScan).length) : 0 }}</strong>
+          <strong>{{ getFreshScanCount() }}</strong>
         </div>
       </div>
     </div>
@@ -46,6 +46,86 @@
       <div>
         <strong>{{ action.title }}</strong>
         <small>{{ action.subtitle }}</small>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading" class="ops-pulse-grid">
+    <section class="pulse-panel">
+      <div class="section-header compact">
+        <div>
+          <h2 class="section-title">Live Security Pulse</h2>
+          <p class="section-desc">Current detections, service drift, and scan momentum.</p>
+        </div>
+      </div>
+
+      <div class="pulse-list">
+        <div *ngFor="let item of getLivePulseEntries()" class="pulse-item">
+          <span class="pulse-badge" [ngClass]="'pulse-' + item.severity">{{ item.label }}</span>
+          <div class="pulse-content">
+            <strong>{{ item.title }}</strong>
+            <small>{{ item.detail }}</small>
+          </div>
+          <span class="pulse-time">{{ item.time }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="pulse-panel playbook-panel">
+      <div class="section-header compact">
+        <div>
+          <h2 class="section-title">Ops Playbook</h2>
+          <p class="section-desc">The next best actions for the team right now.</p>
+        </div>
+      </div>
+
+      <div class="playbook-list">
+        <div *ngFor="let step of getOperationalPlaybook(); let i = index" class="playbook-item">
+          <div class="playbook-index">0{{ i + 1 }}</div>
+          <div>
+            <strong>{{ step.title }}</strong>
+            <small>{{ step.detail }}</small>
+          </div>
+          <button class="mini-action-btn" routerLink="/findings">{{ step.action }}</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div *ngIf="!loading" class="ops-analytics-grid">
+    <div class="score-panel score-panel-primary">
+      <div class="score-head">
+        <span class="score-label">Executive readiness</span>
+        <span class="score-pill">{{ getOperationalReadiness() }}%</span>
+      </div>
+      <div class="score-ring" [style.--score]="getOperationalReadiness()">
+        <span>{{ getOperationalReadiness() }}%</span>
+      </div>
+    </div>
+
+    <div class="score-panel">
+      <div class="score-head">
+        <span class="score-label">Risk split</span>
+        <span class="score-pill neutral">Live</span>
+      </div>
+      <div class="risk-stack">
+        <div class="risk-row"><span>Critical</span><strong>{{ getRiskBreakdown().critical }}</strong></div>
+        <div class="risk-row"><span>High</span><strong>{{ getRiskBreakdown().high }}</strong></div>
+        <div class="risk-row"><span>Medium</span><strong>{{ getRiskBreakdown().medium }}</strong></div>
+        <div class="risk-row"><span>Low</span><strong>{{ getRiskBreakdown().low }}</strong></div>
+      </div>
+    </div>
+
+    <div class="score-panel">
+      <div class="score-head">
+        <span class="score-label">Control coverage</span>
+        <span class="score-pill neutral">{{ getServiceCoveragePercent() }}%</span>
+      </div>
+      <div class="meter-list">
+        <div *ngFor="let item of getControlCoverage()" class="meter-item">
+          <div class="meter-label-row"><span>{{ item.label }}</span><strong>{{ item.value }}%</strong></div>
+          <div class="meter-track"><div class="meter-fill" [ngClass]="'tone-' + item.tone" [style.width.%]="item.value"></div></div>
+        </div>
       </div>
     </div>
   </div>

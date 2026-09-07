@@ -9,6 +9,7 @@ import com.securityintel.repository.SecurityFindingRepository;
 import com.securityintel.repository.ServiceRepository;
 import com.securityintel.service.ServiceManagementService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/dev")
 @CrossOrigin(origins = "*")
+@Profile("dev")
 public class DevController {
 
     private final ServiceManagementService serviceManagementService;

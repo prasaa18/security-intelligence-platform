@@ -26,7 +26,7 @@ public class GitHubActionsIntegrationController {
 
     private static final Logger log = LoggerFactory.getLogger(GitHubActionsIntegrationController.class);
 
-    @Value("${scan.ingestion.token:test-token-123}")
+    @Value("${scan.ingestion.token:}")
     private String scanIngestionToken;
 
     private final ScanExecutionService scanExecutionService;
@@ -74,7 +74,15 @@ public class GitHubActionsIntegrationController {
             ));
         }
 
-        if (scanIngestionToken != null && !scanIngestionToken.isBlank() && !scanIngestionToken.equals(providedToken)) {
+        if (scanIngestionToken == null || scanIngestionToken.isBlank()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
+                "success", false,
+                "error", "Integration Not Configured",
+                "message", "Scan ingestion is disabled until SCAN_INGESTION_TOKEN is configured"
+            ));
+        }
+
+        if (!scanIngestionToken.equals(providedToken)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                 "success", false,
                 "error", "Forbidden",

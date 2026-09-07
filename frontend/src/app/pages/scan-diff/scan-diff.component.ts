@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { ToastService } from '../../services/toast.service';
+import { retry } from 'rxjs';
 
 @Component({
   selector: 'app-scan-diff',
@@ -33,32 +34,71 @@ export class ScanDiffComponent implements OnInit {
   }
 
   loadScans() {
-    this.apiService.getAllScanExecutions().subscribe({
+    this.loading = true;
+    this.error = null;
+
+    this.apiService.getAllScanExecutions().pipe(
+      retry({ count: 2, delay: 800 })
+    ).subscribe({
       next: (scans) => {
-        this.scansList = scans || [];
+        this.scansList = (Array.isArray(scans) ? scans : []).filter(scan => !!scan?.id).sort((a, b) => {
+          const aTime = new Date(a.completedAt || a.createdAt || a.receivedAt).getTime();
+          const bTime = new Date(b.completedAt || b.createdAt || b.receivedAt).getTime();
+          return bTime - aTime;
+        });
+
         this.route.queryParams.subscribe(params => {
           if (params['targetId']) {
             this.selectedTargetId = params['targetId'];
             this.selectedBaselineId = params['baselineId'] || '';
             this.runComparison();
-          } else if (this.scansList.length >= 2) {
-            this.selectedTargetId = this.scansList[0].id;
-            this.selectedBaselineId = this.scansList[1].id;
-            this.runComparison();
-          } else if (this.scansList.length === 1) {
-            this.selectedTargetId = this.scansList[0].id;
-            this.runComparison();
+            return;
           }
+
+          if (this.scansList.length === 0) {
+            this.selectedTargetId = '';
+            this.selectedBaselineId = '';
+            this.diffData = null;
+            this.loading = false;
+            this.error = 'No scan executions available yet. Upload a scan to start comparing.';
+            return;
+          }
+
+          this.selectedTargetId = this.scansList[0].id;
+          this.selectedBaselineId = this.scansList.length > 1 ? this.scansList[1].id : '';
+          this.runComparison();
         });
       },
       error: () => {
-        this.error = 'Failed to load scan executions';
+        this.loading = false;
+        this.error = 'Failed to load scan executions. Retry to refresh the scan list.';
       }
     });
   }
 
   runComparison() {
-    if (!this.selectedTargetId) return;
+    if (!this.selectedTargetId) {
+      this.diffData = null;
+      this.loading = false;
+      return;
+    }
+
+    const targetExists = this.scansList.some(scan => scan.id === this.selectedTargetId);
+    if (!targetExists) {
+      this.selectedTargetId = this.scansList[0]?.id || '';
+      this.selectedBaselineId = this.scansList.length > 1 ? this.scansList[1]?.id || '' : '';
+      if (!this.selectedTargetId) {
+        this.diffData = null;
+        this.loading = false;
+        this.error = 'No valid scan selected. Upload a report to compare results.';
+        return;
+      }
+    }
+
+    if (this.selectedBaselineId === this.selectedTargetId) {
+      this.selectedBaselineId = '';
+    }
+
     this.loading = true;
     this.error = null;
 
@@ -69,7 +109,7 @@ export class ScanDiffComponent implements OnInit {
           this.loading = false;
         },
         error: (err) => {
-          this.error = 'Failed to compare scans: ' + (err.error?.message || err.message);
+          this.error = 'Failed to compare scans: ' + (err.error?.message || err.message || 'Request failed');
           this.loading = false;
         }
       });
@@ -77,13 +117,13 @@ export class ScanDiffComponent implements OnInit {
       this.apiService.getScanDiff(this.selectedTargetId).subscribe({
         next: (res) => {
           this.diffData = res;
-          if (res.baselineScan) {
+          if (res?.baselineScan) {
             this.selectedBaselineId = res.baselineScan.id;
           }
           this.loading = false;
         },
         error: (err) => {
-          this.error = 'Failed to get scan diff: ' + (err.error?.message || err.message);
+          this.error = 'Failed to get scan diff: ' + (err.error?.message || err.message || 'Request failed');
           this.loading = false;
         }
       });

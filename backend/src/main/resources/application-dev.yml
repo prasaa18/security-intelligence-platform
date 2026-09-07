@@ -1,0 +1,8 @@
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/securityintel}
+
+scan:
+  ingestion:
+    token: ${SCAN_INGESTION_TOKEN:dev-only-replace-me}

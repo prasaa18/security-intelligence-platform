@@ -55,11 +55,11 @@ For each service:
    
    Add the following secrets:
    
-   - `SECURITY_INTEL_API_URL`: Your Security Intelligence Platform API URL
-     - Example: `http://your-platform.com/api` or `http://localhost:8080/api` (if using tunnel)
+    - `SECURITY_INTEL_API_URL`: Your Security Intelligence Platform API URL
+       - Docker deployment example: `http://YOUR_SERVER_IP:4200/api`
+       - The GitHub Actions workflow appends `/integrations/scans/github-actions`.
    
-   - `SCAN_INGESTION_TOKEN`: Your scan ingestion token from the platform
-     - Generate a secure token and configure it in your platform's environment variables
+    - `SCAN_INGESTION_TOKEN`: The exact token configured in the platform `.env` file
    
    - `SERVICE_NAME`: The service name
      - For payment-service: `payment-service`

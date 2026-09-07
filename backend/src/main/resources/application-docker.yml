@@ -1,9 +1,12 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://admin:admin123@mongodb:27017/securityintel?authSource=admin
+      uri: ${MONGODB_URI:}
       database: securityintel
       auto-index-creation: true
+
+server:
+  forward-headers-strategy: framework
 
 # Gemini AI Configuration
 gemini:
@@ -15,7 +18,7 @@ gemini:
 # Security Integration Configuration
 scan:
   ingestion:
-    token: ${SCAN_INGESTION_TOKEN:test-token-123}
+    token: ${SCAN_INGESTION_TOKEN:}
   freshness:
     production:
       hours: ${SCAN_FRESHNESS_PRODUCTION_HOURS:24}

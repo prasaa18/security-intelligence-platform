@@ -27,6 +27,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/scans/scans.component').then(c => c.ScansComponent)
   },
   {
+    path: 'scans/compare',
+    loadComponent: () => import('./pages/scan-diff/scan-diff.component').then(c => c.ScanDiffComponent)
+  },
+  {
     path: 'scans/:id',
     loadComponent: () => import('./pages/scan-detail/scan-detail.component').then(c => c.ScanDetailComponent)
   },
@@ -37,10 +41,6 @@ export const routes: Routes = [
   {
     path: 'compliance',
     loadComponent: () => import('./pages/compliance/compliance.component').then(c => c.ComplianceComponent)
-  },
-  {
-    path: 'scans/compare',
-    loadComponent: () => import('./pages/scan-diff/scan-diff.component').then(c => c.ScanDiffComponent)
   },
   {
     path: 'ingestion-studio',

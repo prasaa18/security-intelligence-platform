@@ -25,14 +25,23 @@ The application requires MongoDB to run. Here are your options:
 
 ## 📋 QUICK SETUP STEPS
 
-### Step 1: Get MongoDB Running (Choose one option above)
-- Install local MongoDB OR
-- Set up MongoDB Atlas connection
+### Step 1: Configure the Docker deployment
+From the project root, copy `.env.example` to `.env` and replace every `replace-with-...` value with a strong secret. Docker Compose keeps MongoDB and the backend private; only the frontend port is published.
 
-### Step 2: Create Environment File
-Create `backend/.env`:
+Generate tokens instead of typing predictable values:
 ```bash
-SCAN_INGESTION_TOKEN=test-token-123
+# Linux/macOS
+openssl rand -hex 32
+
+# PowerShell
+[Convert]::ToHexString((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
+```
+
+### Step 2: Create Environment File for local development
+Create `backend/.env` when running the backend outside Docker:
+```bash
+MONGODB_URI=mongodb://localhost:27017/securityintel
+SCAN_INGESTION_TOKEN=replace-with-a-long-random-token
 GEMINI_API_KEY=your-gemini-key-optional
 ```
 
@@ -40,12 +49,14 @@ GEMINI_API_KEY=your-gemini-key-optional
 ```bash
 # Terminal 1 - Backend
 cd security-intelligence-platform/backend
-mvn spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 # Terminal 2 - Frontend  
 cd security-intelligence-platform/frontend
 npm start
 ```
+
+For a protected deployment, use the `secure` profile and set `APP_ADMIN_USERNAME`, `APP_ADMIN_PASSWORD`, `APP_VIEWER_USERNAME`, and `APP_VIEWER_PASSWORD`. The secure profile protects application APIs with stateless HTTP Basic authentication; GitHub Actions ingestion continues to require `SCAN_INGESTION_TOKEN`.
 
 ### Step 4: Test the Application
 - Open browser: http://localhost:4200
@@ -55,8 +66,18 @@ npm start
 
 ### Test with Sample Data
 ```bash
-# Seed sample services
+# Seed sample services (available only with the dev profile)
 curl -X POST http://localhost:8080/api/dev/seed
+
+### Docker deployment
+```bash
+docker compose up -d --build
+docker compose ps
+```
+
+Open `http://YOUR_SERVER_IP:4200`. The public API base for all CI integrations is `http://YOUR_SERVER_IP:4200/api` and the upload endpoint is `POST /api/integrations/scans/github-actions`.
+
+Use the same `SCAN_INGESTION_TOKEN` from `.env` as the `Authorization: Bearer` token in GitHub Actions, GitLab CI, Jenkins, or direct uploads. Do not expose MongoDB or port 8080 publicly.
 
 # Upload sample report
 curl -X POST http://localhost:8080/api/reports/upload \

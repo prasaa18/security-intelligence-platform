@@ -207,6 +207,76 @@ export class DashboardComponent implements OnDestroy, OnInit {
     return Math.max(0, Math.min(100, Math.round(((total - stale) / total) * 100)));
   }
 
+  getRiskBreakdown() {
+    return {
+      critical: this.summary?.critical || 0,
+      high: this.summary?.high || 0,
+      medium: this.summary?.medium || 0,
+      low: this.summary?.low || 0,
+      p0: this.summary?.p0 || 0,
+      p1: this.summary?.p1 || 0
+    };
+  }
+
+  getControlCoverage(): Array<{ label: string; value: number; tone: string }> {
+    const base = this.getServiceCoveragePercent();
+    const active = Math.min(100, Math.round((this.summary?.totalFindings || 0) / Math.max(1, this.serviceOverview.length || 1) * 2 + 40));
+    return [
+      { label: 'Coverage', value: base, tone: 'brand' },
+      { label: 'Remediation', value: Math.min(100, Math.round(100 - ((this.summary?.p0 || 0) * 10 + (this.summary?.p1 || 0) * 5))), tone: 'success' },
+      { label: 'Detection', value: Math.min(100, Math.max(35, active)), tone: 'amber' },
+      { label: 'Automation', value: Math.min(100, Math.round((base * 0.7) + 20)), tone: 'danger' }
+    ];
+  }
+
+  getOperationalReadiness(): number {
+    const riskScore = this.getRiskPostureScore();
+    const coverage = this.getServiceCoveragePercent();
+    return Math.max(0, Math.min(100, Math.round((riskScore + coverage) / 2)));
+  }
+
+  getFreshScanCount(): number {
+    return this.serviceOverview.filter(row => !!row.latestScan).length;
+  }
+
+  getLivePulseEntries(): Array<{ label: string; title: string; detail: string; severity: string; time: string }> {
+    const entries: Array<{ label: string; title: string; detail: string; severity: string; time: string }> = [];
+
+    if (this.actionCenter?.recentScanActivity?.length) {
+      this.actionCenter.recentScanActivity.slice(0, 3).forEach(scan => {
+        entries.push({
+          label: 'Scan',
+          title: `${scan.serviceName} • ${scan.tool}`,
+          detail: `${scan.status} • ${scan.newFindings} new • ${scan.resolvedFindings} resolved`,
+          severity: scan.status === 'SUCCESS' ? 'success' : scan.status === 'FAILED' ? 'danger' : 'amber',
+          time: this.formatDate(scan.completedAt || scan.createdAt || scan.receivedAt)
+        });
+      });
+    }
+
+    if (this.serviceOverview.length) {
+      this.serviceOverview.slice(0, 3).forEach(service => {
+        entries.push({
+          label: 'Service',
+          title: service.service.serviceName,
+          detail: `${service.open} open findings • ${service.p0} P0 • ${service.p1} P1`,
+          severity: service.p0 > 0 || service.critical > 0 ? 'danger' : service.p1 > 0 || service.high > 0 ? 'amber' : 'success',
+          time: service.latestScan ? this.formatDate(service.latestScan.completedAt || service.latestScan.receivedAt) : 'No scan'
+        });
+      });
+    }
+
+    return entries.slice(0, 6);
+  }
+
+  getOperationalPlaybook() {
+    return [
+      { title: 'Patch critical backlog', detail: 'Prioritize P0 and critical service findings first.', action: 'Review findings' },
+      { title: 'Close scan gaps', detail: 'Restore stale coverage for services with missing telemetry.', action: 'Open services' },
+      { title: 'Verify fixes', detail: 'Confirm remediated issues are no longer recurrent in diff analysis.', action: 'Run diff' }
+    ];
+  }
+
   generateSecurityBrief() {
     this.generatingBrief = true;
     this.apiService.generateDailySecurityBrief().subscribe({

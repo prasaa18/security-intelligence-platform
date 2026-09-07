@@ -169,8 +169,8 @@ security-intelligence-platform/
 
 2. **Configure the following variables in `.env`:**
    ```bash
-   MONGODB_URI=mongodb+srv://admin:admin@cluster0.hs3mybp.mongodb.net/securityintel
-   SCAN_INGESTION_TOKEN=your-secret-token-here
+  MONGODB_URI=mongodb://localhost:27017/securityintel
+  SCAN_INGESTION_TOKEN=replace-with-a-long-random-token
    GEMINI_API_KEY=your-gemini-api-key-here  # Optional but recommended
    ```
 
@@ -491,7 +491,7 @@ HEALTHY
 - `GET /api/findings/{id}` - Get finding details
 - `POST /api/reports/upload` - Manual report upload
 - `GET /api/services` - Service management
-- `POST /api/dev/seed` - Seed sample data
+- `POST /api/dev/seed` - Seed sample data (dev Spring profile only)
 
 ---
 
