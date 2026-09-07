@@ -13,6 +13,8 @@ import java.util.Optional;
 
 @Repository
 public interface ScanExecutionRepository extends MongoRepository<ScanExecution, String> {
+
+    List<ScanExecution> findTop500ByOrderByCreatedAtDesc();
     
     List<ScanExecution> findByServiceNameOrderByCreatedAtDesc(String serviceName);
 

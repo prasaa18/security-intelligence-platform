@@ -181,7 +181,7 @@ public class ScanExecutionService {
 
     public List<ScanExecution> getAllScanExecutions() {
         try {
-            return scanExecutionRepository.findAll();
+            return scanExecutionRepository.findTop500ByOrderByCreatedAtDesc();
         } catch (Exception e) {
             throw new DatabaseException("Failed to retrieve scan executions", e);
         }
@@ -363,4 +363,4 @@ public class ScanExecutionService {
             throw new DatabaseException("Failed to generate scan diff: " + e.getMessage(), e);
         }
     }
-}
+}
