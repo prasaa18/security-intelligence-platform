@@ -12,6 +12,44 @@
     <button class="btn btn-sm btn-secondary" (click)="loadDashboard()">Retry</button>
   </div>
 
+  <!-- Hero / OPS Overview -->
+  <div *ngIf="!loading" class="ops-hero">
+    <div class="ops-hero-main">
+      <div class="eyebrow">Security Operations Overview</div>
+      <h2>Risk posture is <span [ngClass]="getRiskPostureLabel() === 'Critical' ? 'text-danger' : getRiskPostureLabel() === 'At risk' ? 'text-warning' : 'text-success'">{{ getRiskPostureLabel() }}</span></h2>
+      <p>Prioritized coverage, active risk, and control drift across your application security estate.</p>
+      <div class="hero-metrics">
+        <div class="mini-stat">
+          <span class="mini-label">Risk score</span>
+          <strong>{{ getRiskPostureScore() }}%</strong>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-label">Coverage</span>
+          <strong>{{ getServiceCoveragePercent() }}%</strong>
+        </div>
+        <div class="mini-stat">
+          <span class="mini-label">Fresh scans</span>
+          <strong>{{ serviceOverview.length ? (serviceOverview.filter(row => row.latestScan).length) : 0 }}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="ops-hero-side">
+      <div class="status-chip"><span class="dot dot-green"></span> Live telemetry</div>
+      <div class="status-chip"><span class="dot dot-amber"></span> {{ actionCenter?.staleServices || 0 }} stale services</div>
+      <div class="status-chip"><span class="dot dot-red"></span> {{ actionCenter?.immediateActions || 0 }} P0 actions</div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading" class="quick-actions-panel">
+    <div *ngFor="let action of quickActions" class="quick-action" [routerLink]="action.route" [queryParams]="action.queryParams">
+      <span class="quick-icon">{{ action.icon }}</span>
+      <div>
+        <strong>{{ action.title }}</strong>
+        <small>{{ action.subtitle }}</small>
+      </div>
+    </div>
+  </div>
+
   <!-- Content -->
   <div *ngIf="!loading">
 

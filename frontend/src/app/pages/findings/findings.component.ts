@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ApiService } from '../../services/api.service';
+import { ToastService } from '../../services/toast.service';
 import { SecurityFinding } from '../../models/dashboard.model';
 
 @Component({
@@ -24,12 +25,19 @@ export class FindingsComponent implements OnInit {
   selectedTool = '';
   selectedService = '';
   selectedStatus = 'OPEN';
+  activePreset = 'ALL';
+
+  selectedIds = new Set<string>();
 
   severities = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'];
   priorities = ['P0', 'P1', 'P2', 'P3', 'P4'];
   statuses = ['', 'OPEN', 'RESOLVED', 'ACCEPTED_RISK', 'FALSE_POSITIVE'];
 
-  constructor(private apiService: ApiService, private route: ActivatedRoute) {}
+  constructor(
+    private apiService: ApiService,
+    private route: ActivatedRoute,
+    private toastService: ToastService
+  ) {}
 
   ngOnInit() {
     const params = this.route.snapshot.queryParamMap;
@@ -80,6 +88,25 @@ export class FindingsComponent implements OnInit {
     });
   }
 
+  setPreset(preset: string) {
+    this.activePreset = preset;
+    this.clearFilters();
+    if (preset === 'P0') {
+      this.selectedPriority = 'P0';
+      this.selectedStatus = 'OPEN';
+    } else if (preset === 'P1') {
+      this.selectedPriority = 'P1';
+      this.selectedStatus = 'OPEN';
+    } else if (preset === 'FIXABLE') {
+      this.selectedStatus = 'OPEN';
+      this.filteredFindings = this.findings.filter(f => f.fixedVersion && f.status === 'OPEN');
+      return;
+    } else if (preset === 'RESOLVED') {
+      this.selectedStatus = 'RESOLVED';
+    }
+    this.applyFilters();
+  }
+
   onSearchChange() { this.applyFilters(); }
   onFilterChange()  { this.applyFilters(); }
 
@@ -98,91 +125,58 @@ export class FindingsComponent implements OnInit {
   }
 
   getUniqueValues(field: keyof SecurityFinding): string[] {
-    return [...new Set(this.findings.map(f => f[field] as string).filter(Boolean))].sort();
+    const vals = new Set<string>();
+    for (const f of this.findings) {
+      const v = f[field];
+      if (typeof v === 'string' && v) vals.add(v);
+    }
+    return Array.from(vals).sort();
   }
 
-  getToolBadgeClass(tool: string): string {
-    if (!tool) return 'badge badge-other';
-    const t = tool.toUpperCase();
-    if (t === 'TRIVY') return 'badge badge-trivy';
-    if (t === 'SNYK')  return 'badge badge-snyk';
-    return 'badge badge-other';
-  }
-
-  getEnvBadgeClass(env: string): string {
-    if (!env) return '';
-    switch (env.toUpperCase()) {
-      case 'PRODUCTION':  return 'badge-env-production';
-      case 'STAGING':     return 'badge-env-staging';
-      case 'DEVELOPMENT': return 'badge-env-development';
-      default:            return '';
+  toggleSelect(id: string) {
+    if (this.selectedIds.has(id)) {
+      this.selectedIds.delete(id);
+    } else {
+      this.selectedIds.add(id);
     }
   }
 
-  getCvssClass(score: number): string {
-    if (score >= 9)   return 'risk-score-high';
-    if (score >= 7)   return 'risk-score-medium';
-    return 'risk-score-low';
-  }
-
-  getRiskBadgeClass(score: number): string {
-    if (score >= 90) return 'risk-score-high';
-    if (score >= 55) return 'risk-score-medium';
-    return 'risk-score-low';
-  }
-
-  getDetectionBadgeClass(state: string): string {
-    if (!state) return '';
-    switch (state.toUpperCase()) {
-      case 'NEW':                        return 'badge-new-finding';
-      case 'PRESENT':                    return 'badge-present';
-      case 'NOT_DETECTED_IN_LATEST_SCAN': return 'badge-not-detected';
-      default:                           return '';
+  toggleSelectAll() {
+    if (this.selectedIds.size === this.filteredFindings.length) {
+      this.selectedIds.clear();
+    } else {
+      this.filteredFindings.forEach(f => this.selectedIds.add(f.id));
     }
   }
 
-  getStatusBadgeClass(status: string): string {
-    if (!status) return 'badge';
-    switch (status.toUpperCase()) {
-      case 'OPEN':           return 'badge badge-open';
-      case 'RESOLVED':       return 'badge badge-resolved';
-      case 'ACCEPTED_RISK':  return 'badge badge-accepted';
-      case 'FALSE_POSITIVE': return 'badge badge-accepted';
-      default:               return 'badge badge-p4';
+  isAllSelected(): boolean {
+    return this.filteredFindings.length > 0 && this.selectedIds.size === this.filteredFindings.length;
+  }
+
+  copyFixSnippet(f: SecurityFinding) {
+    let cmd = '';
+    if (f.packageName && f.fixedVersion) {
+      cmd = `npm update ${f.packageName}@${f.fixedVersion}`;
+    } else {
+      cmd = `Review finding ${f.cve || f.title}`;
     }
+    navigator.clipboard.writeText(cmd);
+    this.toastService.success(`Copied: ${cmd}`);
   }
 
   exportCsv() {
-    // Always export filtered data client-side to respect current filters
-    this.exportClientSideCsv();
-  }
-
-  private exportClientSideCsv() {
-    const headers = ['CVE','Title','Service','Environment','Tool','Severity','CVSS','Risk Score','Priority','Status','Package','Installed Version','Fixed Version','First Detected At','Last Detected At'];
-    const rows = this.filteredFindings.map(f => [
-      f.cve || '',
-      `"${(f.title || '').replace(/"/g, '""')}"`,
-      f.serviceName || '',
-      f.environment || '',
-      f.tool || '',
-      f.severity || '',
-      f.cvssScore || '',
-      f.riskScore || '',
-      f.priority || '',
-      f.status || '',
-      f.packageName || '',
-      f.installedVersion || '',
-      f.fixedVersion || '',
-      f.firstDetectedAt || f.createdAt || '',
-      f.lastDetectedAt || f.updatedAt || ''
-    ].join(','));
-    const csv = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url  = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `security-findings-${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    this.apiService.downloadAllFindingsCsv().subscribe({
+      next: (csv) => {
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url  = window.URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `security-findings-${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.toastService.success('Exported findings to CSV');
+      },
+      error: () => this.toastService.error('Failed to export CSV')
+    });
   }
 }

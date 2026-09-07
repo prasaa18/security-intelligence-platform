@@ -1,161 +1,175 @@
 <div class="findings-page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Findings</h1>
-      <p class="page-subtitle">All deduplicated security findings across every scanner</p>
+      <h1 class="page-title">🔍 Deduplicated Findings Matrix</h1>
+      <p class="page-subtitle">Cross-scanner normalized CVEs prioritized by business context and runtime exploitability.</p>
     </div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-secondary" (click)="exportCsv()">⬇ Export CSV</button>
+      <button class="btn btn-secondary btn-sm" (click)="exportCsv()">⬇ Export All CSV</button>
     </div>
   </div>
 
+  <!-- Presets Strip -->
+  <div class="preset-strip">
+    <button class="preset-chip" [class.active]="activePreset==='ALL'" (click)="setPreset('ALL')">All Findings</button>
+    <button class="preset-chip" [class.active]="activePreset==='P0'" (click)="setPreset('P0')">🔴 P0 Criticals</button>
+    <button class="preset-chip" [class.active]="activePreset==='P1'" (click)="setPreset('P1')">🟠 P1 Highs</button>
+    <button class="preset-chip" [class.active]="activePreset==='FIXABLE'" (click)="setPreset('FIXABLE')">📦 Fixable Upgrades</button>
+    <button class="preset-chip" [class.active]="activePreset==='RESOLVED'" (click)="setPreset('RESOLVED')">✅ Resolved</button>
+  </div>
+
   <!-- Filters -->
-  <div class="filters-bar">
-    <div class="filter-item" style="flex:1;min-width:200px">
-      <label>Search</label>
-      <input type="text" [(ngModel)]="searchQuery" (input)="onSearchChange()"
-             placeholder="CVE, title, package, service…" class="search-input" style="padding-left:36px">
-    </div>
-    <div class="filter-item">
-      <label>Severity</label>
-      <select [(ngModel)]="selectedSeverity" (change)="onFilterChange()">
-        <option value="">All severities</option>
-        <option *ngFor="let s of severities" [value]="s">{{ s }}</option>
-      </select>
-    </div>
-    <div class="filter-item">
-      <label>Priority</label>
-      <select [(ngModel)]="selectedPriority" (change)="onFilterChange()">
-        <option value="">All priorities</option>
-        <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
-      </select>
-    </div>
-    <div class="filter-item">
-      <label>Status</label>
-      <select [(ngModel)]="selectedStatus" (change)="onFilterChange()">
-        <option *ngFor="let s of statuses" [value]="s">{{ s || 'All statuses' }}</option>
-      </select>
-    </div>
-    <div class="filter-item">
-      <label>Tool</label>
-      <select [(ngModel)]="selectedTool" (change)="onFilterChange()">
-        <option value="">All tools</option>
-        <option *ngFor="let t of getUniqueValues('tool')" [value]="t">{{ t }}</option>
-      </select>
-    </div>
-    <div class="filter-item">
-      <label>Service</label>
-      <select [(ngModel)]="selectedService" (change)="onFilterChange()">
-        <option value="">All services</option>
-        <option *ngFor="let s of getUniqueValues('serviceName')" [value]="s">{{ s }}</option>
-      </select>
-    </div>
-    <div class="filter-item" style="justify-content:flex-end;padding-top:18px">
-      <button class="btn btn-sm btn-secondary" (click)="clearFilters()">Clear</button>
+  <div class="section-card filters-card">
+    <div class="filters-bar">
+      <div class="filter-item" style="flex:1;min-width:220px">
+        <label>Search Query</label>
+        <input type="text" [(ngModel)]="searchQuery" (input)="onSearchChange()"
+               placeholder="CVE code, title, package, service name…" class="form-input">
+      </div>
+      <div class="filter-item">
+        <label>Severity</label>
+        <select class="form-select" [(ngModel)]="selectedSeverity" (change)="onFilterChange()">
+          <option value="">All Severities</option>
+          <option *ngFor="let s of severities" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label>Priority</label>
+        <select class="form-select" [(ngModel)]="selectedPriority" (change)="onFilterChange()">
+          <option value="">All Priorities</option>
+          <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label>Status</label>
+        <select class="form-select" [(ngModel)]="selectedStatus" (change)="onFilterChange()">
+          <option *ngFor="let s of statuses" [value]="s">{{ s || 'All Statuses' }}</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label>Tool</label>
+        <select class="form-select" [(ngModel)]="selectedTool" (change)="onFilterChange()">
+          <option value="">All Tools</option>
+          <option *ngFor="let t of getUniqueValues('tool')" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label>Service</label>
+        <select class="form-select" [(ngModel)]="selectedService" (change)="onFilterChange()">
+          <option value="">All Services</option>
+          <option *ngFor="let s of getUniqueValues('serviceName')" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+      <div class="filter-item" style="justify-content:flex-end;padding-top:18px">
+        <button class="btn btn-sm btn-secondary" (click)="clearFilters()">Clear</button>
+      </div>
     </div>
   </div>
 
   <!-- Stats Bar -->
   <div class="stats-bar" *ngIf="!loading">
-    <span class="stats-count"><strong>{{ filteredFindings.length }}</strong> of {{ findings.length }} findings</span>
-    <span class="stats-p0" *ngIf="countByPriority('P0') > 0">🔴 {{ countByPriority('P0') }} P0</span>
-    <span class="stats-p1" *ngIf="countByPriority('P1') > 0">🟠 {{ countByPriority('P1') }} P1</span>
+    <span class="stats-count">Showing <strong>{{ filteredFindings.length }}</strong> of {{ findings.length }} unique findings</span>
+    <span class="badge badge-p0" *ngIf="countByPriority('P0') > 0">🔴 {{ countByPriority('P0') }} P0 Critical</span>
+    <span class="badge badge-p1" *ngIf="countByPriority('P1') > 0">🟠 {{ countByPriority('P1') }} P1 High</span>
   </div>
 
   <!-- Loading -->
-  <div *ngIf="loading" class="loading-state">
-    <div class="loading-spinner"></div>
+  <div *ngIf="loading" class="loading-state" style="text-align:center;padding:40px;">
     <p>Loading findings…</p>
   </div>
 
   <!-- Error -->
-  <div *ngIf="error && !loading" class="error-state">
-    <div class="error-icon">⚠</div>
-    <p class="error-title">{{ error }}</p>
-    <button class="btn btn-primary" (click)="loadFindings()">Retry</button>
+  <div *ngIf="error && !loading" class="error-banner" style="background:#fee2e2;color:#991b1b;padding:12px;border-radius:8px;margin-bottom:16px;">
+    <span>⚠️ {{ error }}</span>
+    <button class="btn btn-sm btn-secondary" (click)="loadFindings()">Retry</button>
   </div>
 
   <!-- Table -->
-  <div *ngIf="!loading && !error" class="card" style="padding:0;overflow:hidden">
-
+  <div *ngIf="!loading && !error" class="section-card" style="padding:0;overflow:hidden">
     <!-- Empty -->
-    <div *ngIf="filteredFindings.length === 0" class="empty-state">
-      <div class="empty-icon">🔍</div>
-      <p class="empty-title" *ngIf="findings.length === 0">No findings yet</p>
-      <p class="empty-title" *ngIf="findings.length > 0">No matches</p>
-      <p class="empty-desc" *ngIf="findings.length === 0">Upload a scanner report to start seeing findings.</p>
-      <p class="empty-desc" *ngIf="findings.length > 0">Try adjusting your filters.</p>
-      <a *ngIf="findings.length === 0" class="btn btn-primary" routerLink="/scans">Upload Report →</a>
-      <button *ngIf="findings.length > 0" class="btn btn-secondary" (click)="clearFilters()">Clear Filters</button>
+    <div *ngIf="filteredFindings.length === 0" class="empty-state" style="padding:48px 20px;text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">🔍</div>
+      <p style="font-weight:700;margin:0 0 4px;">No matching findings found</p>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">Try adjusting search keywords or clearing filters.</p>
+      <button class="btn btn-secondary btn-sm" (click)="clearFilters()">Reset Filters</button>
     </div>
 
     <!-- Data table -->
-    <div *ngIf="filteredFindings.length > 0" class="table-wrap">
-      <table class="data-table">
+    <div *ngIf="filteredFindings.length > 0" class="table-container" style="border:none;">
+      <table class="sec-table">
         <thead>
           <tr>
-            <th>Finding</th>
+            <th style="width:36px;text-align:center;">
+              <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll()" title="Select All" />
+            </th>
+            <th>Vulnerability / CVE</th>
+            <th>Package & Fix Target</th>
             <th>Service</th>
-            <th>Tool</th>
             <th>Severity</th>
-            <th>CVSS</th>
-            <th>Risk</th>
             <th>Priority</th>
-            <th>Detection</th>
+            <th>Scanner</th>
             <th>Status</th>
+            <th>1-Click Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let f of filteredFindings" [routerLink]="['/findings', f.id]">
-            <!-- Finding: CVE + title + package upgrade arrow -->
-            <td style="max-width:320px">
-              <div style="display:flex;flex-direction:column;gap:3px">
-                <code class="cve-code" *ngIf="f.cve">{{ f.cve }}</code>
-                <span class="fw-600" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" [title]="f.title">
-                  {{ f.title || 'No title' }}
-                </span>
-                <span *ngIf="f.packageName" class="version-arrow">
-                  <span class="text-mono text-small">{{ f.packageName }}</span>
-                  <span *ngIf="f.installedVersion" class="version-old">{{ f.installedVersion }}</span>
-                  <span *ngIf="f.fixedVersion"> → </span>
-                  <span *ngIf="f.fixedVersion" class="version-new">{{ f.fixedVersion }}</span>
-                  <span *ngIf="!f.fixedVersion && f.installedVersion" class="text-muted text-small">(no fix)</span>
-                </span>
+          <tr *ngFor="let f of filteredFindings" [class.selected-row]="selectedIds.has(f.id)">
+            <td style="text-align:center;">
+              <input type="checkbox" [checked]="selectedIds.has(f.id)" (change)="toggleSelect(f.id)" />
+            </td>
+            <td>
+              <div style="font-weight:700;">
+                <a [routerLink]="['/findings', f.id]">{{ f.cve || 'VULN' }}</a>
+              </div>
+              <div style="font-size:12px;color:var(--muted);max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" [title]="f.title">
+                {{ f.title }}
               </div>
             </td>
-            <!-- Service + env -->
             <td>
-              <div>{{ f.serviceName }}</div>
-              <span class="badge" [ngClass]="getEnvBadgeClass(f.environment)" style="font-size:10px">{{ f.environment }}</span>
+              <div *ngIf="f.packageName">
+                <code>{{ f.packageName + '@' + (f.installedVersion || 'unknown') }}</code>
+                <div *ngIf="f.fixedVersion" style="color:#10b981;font-size:11px;font-weight:600;margin-top:2px;">
+                  Upgrade → {{ f.fixedVersion }}
+                </div>
+              </div>
+              <span *ngIf="!f.packageName" class="text-muted text-small">—</span>
             </td>
-            <!-- Tool -->
-            <td><span class="badge" [ngClass]="getToolBadgeClass(f.tool)">{{ f.tool }}</span></td>
-            <!-- Severity -->
-            <td><span class="badge" [ngClass]="'badge-' + (f.severity || 'unknown').toLowerCase()">{{ f.severity }}</span></td>
-            <!-- CVSS -->
             <td>
-              <span *ngIf="f.cvssScore" class="risk-score-badge" [ngClass]="getCvssClass(f.cvssScore)">{{ f.cvssScore.toFixed(1) }}</span>
-              <span *ngIf="!f.cvssScore" class="text-muted text-small">–</span>
+              <a [routerLink]="['/services', f.serviceName, 'security']" style="font-weight:600;">{{ f.serviceName }}</a>
             </td>
-            <!-- Risk Score -->
             <td>
-              <span *ngIf="f.riskScore" class="risk-score-badge" [ngClass]="getRiskBadgeClass(f.riskScore)">{{ f.riskScore }}</span>
-              <span *ngIf="!f.riskScore" class="text-muted text-small">–</span>
+              <span class="badge badge-{{ (f.severity || 'unknown').toLowerCase() }}">{{ f.severity }}</span>
             </td>
-            <!-- Priority -->
-            <td><span class="badge" [ngClass]="'badge-' + (f.priority || 'p4').toLowerCase()">{{ f.priority || 'P4' }}</span></td>
-            <!-- Detection State -->
             <td>
-              <span *ngIf="f.detectionState" class="badge" [ngClass]="getDetectionBadgeClass(f.detectionState)">
-                {{ f.detectionState === 'NOT_DETECTED_IN_LATEST_SCAN' ? 'GONE' : f.detectionState }}
-              </span>
-              <span *ngIf="!f.detectionState" class="text-muted text-small">–</span>
+              <span class="badge badge-{{ (f.priority || 'p4').toLowerCase() }}">{{ f.priority }}</span>
             </td>
-            <!-- Status -->
-            <td><span class="badge" [ngClass]="getStatusBadgeClass(f.status)">{{ f.status }}</span></td>
+            <td>
+              <span class="badge badge-unknown">{{ f.tool }}</span>
+            </td>
+            <td>
+              <span class="badge badge-{{ (f.status || 'open').toLowerCase() }}">{{ f.status }}</span>
+            </td>
+            <td>
+              <div style="display:flex;gap:6px;align-items:center;">
+                <button class="btn btn-secondary btn-sm" (click)="copyFixSnippet(f)" title="Copy Remediation Command">📋 Fix</button>
+                <a [routerLink]="['/findings', f.id]" class="btn btn-secondary btn-sm" title="Deep Inspection">→</a>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Bulk Action Bar -->
+  <div class="bulk-bar" *ngIf="selectedIds.size > 0">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="badge badge-p0">{{ selectedIds.size }} items selected</span>
+      <span style="font-size:13px;font-weight:600;">Batch Actions:</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary btn-sm" (click)="selectedIds.clear()">Deselect All</button>
+      <button class="btn btn-primary btn-sm" (click)="exportCsv()">Export Selected</button>
     </div>
   </div>
 </div>

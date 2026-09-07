@@ -27,7 +27,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: security-intel-backend  
+    container_name: security-intel-backend
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -41,6 +41,7 @@ services:
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.6-flash}
       GEMINI_ENDPOINT: ${GEMINI_ENDPOINT:-https://generativelanguage.googleapis.com/v1beta/interactions}
       SCAN_INGESTION_TOKEN: ${SCAN_INGESTION_TOKEN:-test-token-123}
+      TZ: Asia/Kolkata
     depends_on:
       mongodb:
         condition: service_healthy

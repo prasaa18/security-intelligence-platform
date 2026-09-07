@@ -1,0 +1,52 @@
+<div class="cmd-backdrop" *ngIf="isOpen" (click)="close()">
+  <div class="cmd-modal" (click)="$event.stopPropagation()">
+    <div class="cmd-header">
+      <span class="cmd-search-icon">🔍</span>
+      <input
+        #searchInput
+        type="text"
+        class="cmd-input"
+        placeholder="Type to search pages, services, CVEs, or actions... (Esc to close)"
+        [(ngModel)]="searchQuery"
+        (keydown)="handleKeyboardEvent($event)"
+      />
+      <span class="cmd-esc-hint">ESC</span>
+    </div>
+
+    <div class="cmd-body">
+      <div *ngIf="filteredItems.length === 0" class="cmd-empty">
+        <p>No results found for "<strong>{{ searchQuery }}</strong>"</p>
+        <span class="text-muted">Try searching for "Action", "P0", "Payment", or "Theme"</span>
+      </div>
+
+      <div *ngIf="filteredItems.length > 0" class="cmd-list">
+        <div
+          *ngFor="let item of filteredItems; let i = index"
+          class="cmd-item"
+          [class.active]="i === selectedIndex"
+          (click)="selectItem(i)"
+          (mouseenter)="selectedIndex = i"
+        >
+          <span class="cmd-item-icon">{{ item.icon }}</span>
+          <div class="cmd-item-content">
+            <div class="cmd-item-title-row">
+              <span class="cmd-item-title">{{ item.title }}</span>
+              <span *ngIf="item.badge" class="badge" [class.badge-p0]="item.badge==='P0'||item.badge==='CRITICAL'" [class.badge-p1]="item.badge==='P1'||item.badge==='HIGH'" [class.badge-low]="item.badge==='LOW'||item.badge==='PRODUCTION'">{{ item.badge }}</span>
+            </div>
+            <span *ngIf="item.subtitle" class="cmd-item-subtitle">{{ item.subtitle }}</span>
+          </div>
+          <span class="cmd-item-category">{{ item.category }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cmd-footer">
+      <div class="cmd-shortcuts">
+        <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+        <span><kbd>↵</kbd> Select</span>
+        <span><kbd>ESC</kbd> Close</span>
+      </div>
+      <span class="cmd-brand">Security Intel Command</span>
+    </div>
+  </div>
+</div>

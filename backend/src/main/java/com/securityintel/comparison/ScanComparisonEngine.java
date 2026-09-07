@@ -33,17 +33,20 @@ public class ScanComparisonEngine {
         String tool = currentScanExecution.getTool().name();
         String scanType = currentScanExecution.getScanType().name();
         
-        // Find previous successful scan for the same service, tool, and scan type
-        var previousScanOpt = scanExecutionRepository
+        // Find the most recent successful scan for the same service, tool, and scan type.
+        // The Optional-based lookup avoids MongoDB "non unique result" errors when multiple
+        // successful scans exist for the same service/tool combination.
+        Optional<ScanExecution> previousScanOpt = scanExecutionRepository
             .findFirstByServiceNameAndToolAndScanTypeAndStatusOrderByCreatedAtDesc(
-                serviceName, 
-                currentScanExecution.getTool(), 
+                serviceName,
+                currentScanExecution.getTool(),
                 currentScanExecution.getScanType(),
                 com.securityintel.model.Status.SUCCESS);
         
         List<SecurityFinding> previousFindings = previousScanOpt
             .map(scan -> securityFindingRepository.findByLatestScanId(scan.getId()))
             .orElse(new ArrayList<>());
+
         
         // Create fingerprint maps for efficient comparison
         Map<String, SecurityFinding> currentFingerprints = currentFindings.stream()

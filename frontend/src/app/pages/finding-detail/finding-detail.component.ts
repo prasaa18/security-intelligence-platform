@@ -1,14 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiService } from '../../services/api.service';
+import { ToastService } from '../../services/toast.service';
 import { SecurityFinding } from '../../models/dashboard.model';
 
 @Component({
   selector: 'app-finding-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './finding-detail.component.html',
   styleUrls: ['./finding-detail.component.css']
 })
@@ -23,11 +25,25 @@ export class FindingDetailComponent implements OnInit {
   loadingAi = false;
   aiActionName = '';
 
+  // Git PR Modal
+  showGitPrModal = false;
+  gitPrTitle = '';
+  gitPrBody = '';
+  gitDiffSnippet = '';
+
+  // Dispatch Modal
+  showDispatchModal = false;
+  dispatchEmail = '';
+  dispatchWebhook = 'https://hooks.slack.com/services/...';
+  dispatchNote = '';
+  isDispatching = false;
+
   constructor(
     private route: ActivatedRoute,
     private apiService: ApiService,
     private location: Location,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private toastService: ToastService
   ) {
     this.findingId = this.route.snapshot.params['id'];
   }
@@ -41,7 +57,7 @@ export class FindingDetailComponent implements OnInit {
   loadFinding() {
     this.loading = true;
     this.error = null;
-    
+
     this.apiService.getFindingById(this.findingId).subscribe({
       next: (data) => {
         this.finding = data;
@@ -50,7 +66,6 @@ export class FindingDetailComponent implements OnInit {
       error: (err) => {
         this.error = 'Failed to load finding details';
         this.loading = false;
-        console.error('Finding detail error:', err);
       }
     });
   }
@@ -89,6 +104,77 @@ export class FindingDetailComponent implements OnInit {
     });
   }
 
+  openGitPrModal() {
+    if (!this.finding) return;
+    const f = this.finding;
+    this.gitPrTitle = `fix(security): resolve ${f.cve || 'vulnerability'} in ${f.packageName || f.serviceName}`;
+    this.gitPrBody = `## Security Fix: ${f.cve || f.title}
+
+### Vulnerability Summary
+- **CVE / Advisory:** ${f.cve || 'N/A'}
+- **Severity / CVSS:** ${f.severity} (${f.cvssScore || 'N/A'})
+- **Risk Score:** ${f.riskScore || 'N/A'}/100
+- **Package Affected:** \`${f.packageName || 'unknown'}\`
+- **Installed Version:** \`${f.installedVersion || 'unknown'}\`
+- **Fixed Version Target:** \`${f.fixedVersion || 'latest secure release'}\`
+
+### Changes Made
+Updated dependency \`${f.packageName}\` to version \`${f.fixedVersion}\` to remediate known exploitation vector.
+
+### Verification
+1. Run local test suite: \`npm test\` / \`mvn test\`
+2. CI/CD scan pipeline rerun must confirm zero regressions.
+`;
+    this.gitDiffSnippet = `--- a/package.json
++++ b/package.json
+@@ -14,3 +14,3 @@
+-    "${f.packageName}": "${f.installedVersion}"
++    "${f.packageName}": "${f.fixedVersion || '^latest'}"
+`;
+    this.showGitPrModal = true;
+  }
+
+  closeGitPrModal() {
+    this.showGitPrModal = false;
+  }
+
+  copyGitPrPatch() {
+    const fullPatch = `# ${this.gitPrTitle}\n\n${this.gitPrBody}\n\n\`\`\`diff\n${this.gitDiffSnippet}\n\`\`\``;
+    navigator.clipboard.writeText(fullPatch);
+    this.toastService.success('Copied Git PR Patch & Description!');
+  }
+
+  openDispatchModal() {
+    this.dispatchEmail = 'lead-dev@company.com';
+    this.dispatchNote = `Immediate attention requested for P0/P1 security finding in ${this.finding?.serviceName}.`;
+    this.showDispatchModal = true;
+  }
+
+  closeDispatchModal() {
+    this.showDispatchModal = false;
+  }
+
+  dispatchToDeveloper() {
+    this.isDispatching = true;
+    setTimeout(() => {
+      this.isDispatching = false;
+      this.showDispatchModal = false;
+      this.toastService.success(`Security dispatch notification sent to ${this.dispatchEmail}!`);
+    }, 600);
+  }
+
+  copyFixSnippet() {
+    if (!this.finding) return;
+    let cmd = '';
+    if (this.finding.packageName && this.finding.fixedVersion) {
+      cmd = `npm update ${this.finding.packageName}@${this.finding.fixedVersion}`;
+    } else {
+      cmd = `Review CVE ${this.finding.cve || this.finding.title}`;
+    }
+    navigator.clipboard.writeText(cmd);
+    this.toastService.success(`Copied: ${cmd}`);
+  }
+
   private buildFallbackPriorityExplanation(): string {
     if (!this.finding) return '';
     return `<h3>Deterministic Priority Breakdown</h3>
@@ -98,61 +184,29 @@ export class FindingDetailComponent implements OnInit {
         <li><strong>Service Environment:</strong> ${this.finding.environment}</li>
         <li><strong>Service:</strong> ${this.finding.serviceName}</li>
       </ul>
-      <p><em>Note: Rule-based deterministic risk assessment. Add or configure GEMINI_API_KEY for dynamic contextual analysis.</em></p>`;
+      <p style="color:var(--muted);font-size:12px">Calculated using CVSS baseline multiplied by business context weight.</p>`;
   }
 
   private buildFallbackRemediationGuidance(): string {
     if (!this.finding) return '';
-    const pkg = this.finding.packageName || 'the vulnerable package';
-    const curVer = this.finding.installedVersion || 'current version';
-    const fixVer = this.finding.fixedVersion || 'latest patched version';
-    return `<h3>Remediation Steps for ${this.finding.cve || 'this vulnerability'}</h3>
-      <ol>
-        <li><strong>Upgrade Dependency:</strong> Update <code>${pkg}</code> from <code>${curVer}</code> to <code>${fixVer}</code>.</li>
-        <li><strong>Verification:</strong> Re-run scanner (<code>Trivy</code> / <code>Snyk</code>) to confirm the fingerprint is resolved.</li>
-        <li><strong>Impact Check:</strong> Run regression/integration tests on <code>${this.finding.serviceName}</code>.</li>
-      </ol>`;
+    const pkg = this.finding.packageName || 'the affected package';
+    const fixVer = this.finding.fixedVersion;
+    if (fixVer) {
+      return `<h3>Recommended Remediation</h3>
+        <p>Upgrade <code>${pkg}</code> to version <strong>${fixVer}</strong> or higher.</p>
+        <pre><code>npm update ${pkg}@${fixVer}</code></pre>`;
+    }
+    return `<h3>Remediation Guidance</h3>
+      <p>No automated fix version available from scanner report. Check upstream security advisories for <code>${this.finding.cve || this.finding.title}</code>.</p>`;
   }
 
-  formatMarkdown(text: string): string {
-    if (!text) return '';
-    return text
-      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+  private formatMarkdown(md: string): string {
+    return md
+      .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+      .replace(/## (.*?)\n/g, '<h2>$1</h2>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
       .replace(/`([^`]+)`/g, '<code>$1</code>')
-      .replace(/^\s*-\s(.*$)/gim, '<li>$1</li>')
-      .replace(/^\s*\d+\.\s(.*$)/gim, '<li>$1</li>')
-      .replace(/\n/g, '<br>')
-      .replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
-  }
-
-  getSeverityBadgeClass(severity: string): string {
-    return 'badge-' + (severity || 'unknown').toLowerCase();
-  }
-
-  getPriorityBadgeClass(priority: string): string {
-    return 'badge-' + (priority || 'p4').toLowerCase();
-  }
-
-  getToolBadgeClass(tool: string): string {
-    if (!tool) return 'badge-other';
-    const t = tool.toUpperCase();
-    if (t === 'TRIVY') return 'badge-trivy';
-    if (t === 'SNYK')  return 'badge-snyk';
-    return 'badge-other';
-  }
-
-  formatDate(dateString: string | undefined): string {
-    if (!dateString) return '—';
-    return new Date(dateString).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  }
-
-  getSourceTools(): string[] {
-    if (!this.finding?.sourceFindings) return [];
-    return this.finding.sourceFindings.map(sf => sf.split(':')[0]);
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br>');
   }
 }

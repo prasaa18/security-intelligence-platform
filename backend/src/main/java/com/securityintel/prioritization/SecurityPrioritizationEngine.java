@@ -19,6 +19,10 @@ public class SecurityPrioritizationEngine {
         List<String> reasons = new ArrayList<>();
         int riskScore = 0;
 
+        if (finding == null) {
+            return new PriorityResult(0, Priority.P4, List.of("No finding data"));
+        }
+
         // Base severity score
         int severityScore = calculateSeverityScore(finding.getSeverity());
         riskScore += severityScore;
@@ -51,45 +55,38 @@ public class SecurityPrioritizationEngine {
             }
 
             // Business criticality
-            switch (service.getBusinessCriticality()) {
-                case CRITICAL:
+            if (service.getBusinessCriticality() != null) {
+                if (service.getBusinessCriticality() == BusinessCriticality.CRITICAL) {
                     riskScore += 20;
                     reasons.add("Critical business service");
-                    break;
-                case HIGH:
+                } else if (service.getBusinessCriticality() == BusinessCriticality.HIGH) {
                     riskScore += 10;
                     reasons.add("High business criticality");
-                    break;
-                case MEDIUM:
+                } else if (service.getBusinessCriticality() == BusinessCriticality.MEDIUM) {
                     riskScore += 5;
                     reasons.add("Medium business criticality");
-                    break;
-                // LOW and null add no score but could be mentioned
+                }
             }
 
             // Data sensitivity
-            switch (service.getDataSensitivity()) {
-                case HIGHLY_SENSITIVE:
+            if (service.getDataSensitivity() != null) {
+                if (service.getDataSensitivity() == DataSensitivity.HIGHLY_SENSITIVE) {
                     riskScore += 15;
                     reasons.add("Handles highly sensitive data");
-                    break;
-                case SENSITIVE:
+                } else if (service.getDataSensitivity() == DataSensitivity.SENSITIVE) {
                     riskScore += 10;
                     reasons.add("Handles sensitive data");
-                    break;
-                case CONFIDENTIAL:
+                } else if (service.getDataSensitivity() == DataSensitivity.CONFIDENTIAL) {
                     riskScore += 5;
                     reasons.add("Handles confidential data");
-                    break;
-                // INTERNAL and PUBLIC add no additional risk
+                }
             }
         } else {
-            // If no service context, note it as a limitation
+            // If no service context, check finding environment
             if (finding.getEnvironment() == Environment.PRODUCTION) {
                 riskScore += 15;
                 reasons.add("Production environment");
             }
-            // Can't assess other context without service information
         }
 
         // Cap the score at 100
@@ -106,19 +103,11 @@ public class SecurityPrioritizationEngine {
             return 5; // UNKNOWN
         }
 
-        switch (severity) {
-            case CRITICAL:
-                return 70;
-            case HIGH:
-                return 55;
-            case MEDIUM:
-                return 35;
-            case LOW:
-                return 15;
-            case UNKNOWN:
-            default:
-                return 5;
-        }
+        if (severity == Severity.CRITICAL) return 70;
+        if (severity == Severity.HIGH) return 55;
+        if (severity == Severity.MEDIUM) return 35;
+        if (severity == Severity.LOW) return 15;
+        return 5;
     }
 
     private String getSeverityReason(Severity severity) {
@@ -126,19 +115,11 @@ public class SecurityPrioritizationEngine {
             return "Unknown severity";
         }
 
-        switch (severity) {
-            case CRITICAL:
-                return "Critical severity vulnerability";
-            case HIGH:
-                return "High severity vulnerability";
-            case MEDIUM:
-                return "Medium severity vulnerability";
-            case LOW:
-                return "Low severity vulnerability";
-            case UNKNOWN:
-            default:
-                return "Unknown severity vulnerability";
-        }
+        if (severity == Severity.CRITICAL) return "Critical severity vulnerability";
+        if (severity == Severity.HIGH) return "High severity vulnerability";
+        if (severity == Severity.MEDIUM) return "Medium severity vulnerability";
+        if (severity == Severity.LOW) return "Low severity vulnerability";
+        return "Unknown severity vulnerability";
     }
 
     private Priority determinePriority(int riskScore) {
@@ -162,7 +143,8 @@ public class SecurityPrioritizationEngine {
      */
     public List<PriorityResult> calculatePriorities(List<FindingWithService> findings) {
         List<PriorityResult> results = new ArrayList<>();
-        
+        if (findings == null) return results;
+
         for (FindingWithService findingWithService : findings) {
             PriorityResult result = calculatePriority(
                 findingWithService.getFinding(), 
@@ -170,7 +152,7 @@ public class SecurityPrioritizationEngine {
             );
             results.add(result);
         }
-        
+
         return results;
     }
 
@@ -197,11 +179,8 @@ public class SecurityPrioritizationEngine {
 
     /**
      * Demonstrates the context importance as specified in requirements
-     * This method shows how a HIGH severity finding in production with context
-     * can get higher priority than a CRITICAL finding in development without context
      */
     public DemonstrationResult demonstrateContextImportance() {
-        // Finding A: CRITICAL severity, development, no business context
         SecurityFinding findingA = new SecurityFinding();
         findingA.setSeverity(Severity.CRITICAL);
         findingA.setEnvironment(Environment.DEVELOPMENT);
@@ -213,7 +192,6 @@ public class SecurityPrioritizationEngine {
         serviceA.setInternetExposed(false);
         serviceA.setDataSensitivity(DataSensitivity.INTERNAL);
 
-        // Finding B: HIGH severity, production, full business context
         SecurityFinding findingB = new SecurityFinding();
         findingB.setSeverity(Severity.HIGH);
         findingB.setEnvironment(Environment.PRODUCTION);
@@ -256,11 +234,9 @@ public class SecurityPrioritizationEngine {
         }
 
         public boolean contextMatters() {
-            // Finding B (with context) should have higher priority than Finding A (without context)
             return resultB.getRiskScore() > resultA.getRiskScore();
         }
 
-        // Getters for all fields
         public SecurityFinding getFindingA() { return findingA; }
         public PriorityResult getResultA() { return resultA; }
         public Service getServiceA() { return serviceA; }

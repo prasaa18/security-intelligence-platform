@@ -25,8 +25,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import com.securityintel.dto.ScanDiffDto;
+import com.securityintel.dto.SecurityFindingDto;
 
 @Component
 public class ScanExecutionService {
@@ -280,4 +285,82 @@ public class ScanExecutionService {
             throw new DatabaseException("Failed to export scan findings as CSV", e);
         }
     }
-}
+
+    public ScanDiffDto compareScans(String baselineId, String targetId) {
+        try {
+            ScanExecution baseline = (baselineId != null && !baselineId.isBlank()) ? getScanExecutionById(baselineId) : null;
+            ScanExecution target = getScanExecutionById(targetId);
+
+            List<SecurityFinding> targetFindings = securityFindingRepository.findByScanExecutionId(targetId);
+            List<SecurityFinding> baselineFindings = baseline != null ?
+                securityFindingRepository.findByScanExecutionId(baseline.getId()) : new ArrayList<>();
+
+            Map<String, SecurityFinding> baselineMap = baselineFindings.stream()
+                .collect(Collectors.toMap(
+                    f -> (f.getFingerprint() != null && !f.getFingerprint().isBlank()) ? f.getFingerprint() : (f.getCve() + ":" + f.getPackageName()),
+                    f -> f,
+                    (a, b) -> a
+                ));
+
+            Map<String, SecurityFinding> targetMap = targetFindings.stream()
+                .collect(Collectors.toMap(
+                    f -> (f.getFingerprint() != null && !f.getFingerprint().isBlank()) ? f.getFingerprint() : (f.getCve() + ":" + f.getPackageName()),
+                    f -> f,
+                    (a, b) -> a
+                ));
+
+            List<SecurityFindingDto> newFindings = new ArrayList<>();
+            List<SecurityFindingDto> persistentFindings = new ArrayList<>();
+            List<SecurityFindingDto> resolvedFindings = new ArrayList<>();
+
+            for (SecurityFinding tf : targetFindings) {
+                String key = (tf.getFingerprint() != null && !tf.getFingerprint().isBlank()) ? tf.getFingerprint() : (tf.getCve() + ":" + tf.getPackageName());
+                if (baselineMap.containsKey(key)) {
+                    persistentFindings.add(entityMapper.toDto(tf));
+                } else {
+                    newFindings.add(entityMapper.toDto(tf));
+                }
+            }
+
+            for (SecurityFinding bf : baselineFindings) {
+                String key = (bf.getFingerprint() != null && !bf.getFingerprint().isBlank()) ? bf.getFingerprint() : (bf.getCve() + ":" + bf.getPackageName());
+                if (!targetMap.containsKey(key)) {
+                    resolvedFindings.add(entityMapper.toDto(bf));
+                }
+            }
+
+            return new ScanDiffDto(
+                baseline, target,
+                newFindings.size(), resolvedFindings.size(), persistentFindings.size(),
+                newFindings, resolvedFindings, persistentFindings
+            );
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DatabaseException("Failed to compare scans: " + e.getMessage(), e);
+        }
+    }
+
+    public ScanDiffDto getScanDiff(String targetId) {
+        try {
+            ScanExecution target = getScanExecutionById(targetId);
+            List<ScanExecution> allScans = scanExecutionRepository.findByServiceNameOrderByCreatedAtDesc(target.getServiceName());
+            ScanExecution baseline = null;
+            LocalDateTime targetTime = target.getCreatedAt() != null ? target.getCreatedAt() : LocalDateTime.now();
+            for (ScanExecution s : allScans) {
+                if (!s.getId().equals(targetId)) {
+                    LocalDateTime sTime = s.getCreatedAt() != null ? s.getCreatedAt() : LocalDateTime.MIN;
+                    if (sTime.isBefore(targetTime) || sTime.isEqual(targetTime)) {
+                        baseline = s;
+                        break;
+                    }
+                }
+            }
+            return compareScans(baseline != null ? baseline.getId() : null, targetId);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new DatabaseException("Failed to generate scan diff: " + e.getMessage(), e);
+        }
+    }
+}

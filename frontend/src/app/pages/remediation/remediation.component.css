@@ -1,38 +1,50 @@
-.remediation-page {}
-
-.rem-stats {
+.filters-card {
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+.filters-bar {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
-  font-size: 13px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
-
-.rem-stat {
-  font-weight: 600;
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
 }
-
-.rem-stat-total {
-  color: var(--muted);
-}
-
-.rem-stat-p0 {
-  color: var(--p0-fg);
-}
-
-.rem-stat-p1 {
-  color: var(--p1-fg);
-}
-
-.rem-stat-progress {
-  color: var(--status-progress-fg);
-}
-
-.rec-action {
-  font-size: 12px;
+.filter-item label {
+  font-size: 11px;
+  font-weight: 700;
   color: var(--ink-2);
+  text-transform: uppercase;
 }
-
-.table-wrap {
-  overflow-x: auto;
+.form-select {
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 13px;
+  outline: none;
+}
+.select-sm {
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+}
+.selected-row {
+  background: var(--brand-light) !important;
+}
+.code-editor {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 10px;
+  outline: none;
+  resize: vertical;
 }

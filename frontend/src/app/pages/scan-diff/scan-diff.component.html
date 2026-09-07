@@ -1,0 +1,229 @@
+<div class="diff-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">⚖️ Scan Diff & Time-Travel Engine</h1>
+      <p class="page-subtitle">Track security regressions, newly introduced vulnerabilities, and verified fixes across scan runs.</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <a routerLink="/scans" class="btn btn-secondary btn-sm">← Back to Scans</a>
+    </div>
+  </div>
+
+  <!-- Scan Selector Bar -->
+  <div class="section-card selector-card">
+    <div class="selector-grid">
+      <div class="selector-col">
+        <label class="selector-label">🎯 Target Scan (Latest / Current)</label>
+        <select class="form-select" [(ngModel)]="selectedTargetId" (change)="runComparison()">
+          <option value="" disabled>Select Target Scan</option>
+          <option *ngFor="let scan of scansList" [value]="scan.id">
+            {{ scan.serviceName }} • {{ scan.tool }} ({{ scan.createdAt | date:'short' }}) [{{ scan.commitId ? scan.commitId.substring(0,7) : 'manual' }}]
+          </option>
+        </select>
+      </div>
+
+      <div class="compare-icon-wrap">
+        <span>VS</span>
+      </div>
+
+      <div class="selector-col">
+        <label class="selector-label">🕰️ Baseline Scan (Previous / Reference)</label>
+        <select class="form-select" [(ngModel)]="selectedBaselineId" (change)="runComparison()">
+          <option value="">Auto-detect immediately preceding scan</option>
+          <option *ngFor="let scan of scansList" [value]="scan.id" [disabled]="scan.id === selectedTargetId">
+            {{ scan.serviceName }} • {{ scan.tool }} ({{ scan.createdAt | date:'short' }}) [{{ scan.commitId ? scan.commitId.substring(0,7) : 'manual' }}]
+          </option>
+        </select>
+      </div>
+
+      <div class="selector-action">
+        <button class="btn btn-primary" (click)="runComparison()" [disabled]="!selectedTargetId || loading">
+          <span *ngIf="!loading">⚡ Run Diff</span>
+          <span *ngIf="loading">Comparing…</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state" style="text-align:center;padding:40px;">
+    <p>Analyzing delta and correlating vulnerability fingerprints…</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-banner" style="background:#fee2e2;color:#991b1b;padding:12px 16px;border-radius:8px;margin-bottom:20px;">
+    <span>⚠️ {{ error }}</span>
+  </div>
+
+  <!-- Diff Results View -->
+  <div *ngIf="diffData && !loading">
+
+    <!-- KPI Delta Summary -->
+    <div class="diff-kpi-grid">
+      <div class="diff-kpi-tile kpi-new" [class.active-kpi]="activeTab==='new'" (click)="activeTab='new'">
+        <div class="diff-kpi-badge">+{{ diffData.newCount }}</div>
+        <div class="diff-kpi-title">🚨 Newly Introduced (Regressions)</div>
+        <div class="diff-kpi-desc">Vulnerabilities introduced in this commit</div>
+      </div>
+
+      <div class="diff-kpi-tile kpi-resolved" [class.active-kpi]="activeTab==='resolved'" (click)="activeTab='resolved'">
+        <div class="diff-kpi-badge">-{{ diffData.resolvedCount }}</div>
+        <div class="diff-kpi-title">✅ Remediated & Fixed</div>
+        <div class="diff-kpi-desc">Vulnerabilities cleared since baseline scan</div>
+      </div>
+
+      <div class="diff-kpi-tile kpi-persistent" [class.active-kpi]="activeTab==='persistent'" (click)="activeTab='persistent'">
+        <div class="diff-kpi-badge">={{ diffData.persistentCount }}</div>
+        <div class="diff-kpi-title">⏳ Persistent Debt</div>
+        <div class="diff-kpi-desc">Existing issues still unresolved</div>
+      </div>
+    </div>
+
+    <!-- Main Comparison Table Card -->
+    <div class="section-card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">
+            <span *ngIf="activeTab==='new'">🔴 Newly Introduced Vulnerabilities ({{ diffData.newCount }})</span>
+            <span *ngIf="activeTab==='resolved'">🟢 Remediated & Verified Resolved ({{ diffData.resolvedCount }})</span>
+            <span *ngIf="activeTab==='persistent'">🟡 Persistent Vulnerabilities ({{ diffData.persistentCount }})</span>
+          </h2>
+          <p class="section-desc">
+            Baseline: <strong>{{ diffData.baselineScan ? (diffData.baselineScan.createdAt | date:'medium') : 'Initial Reference' }}</strong>
+            → Target: <strong>{{ diffData.targetScan?.createdAt | date:'medium' }}</strong>
+          </p>
+        </div>
+
+        <div class="tab-switcher">
+          <button class="tab-btn" [class.active]="activeTab==='new'" (click)="activeTab='new'">New (+{{ diffData.newCount }})</button>
+          <button class="tab-btn" [class.active]="activeTab==='resolved'" (click)="activeTab='resolved'">Resolved (-{{ diffData.resolvedCount }})</button>
+          <button class="tab-btn" [class.active]="activeTab==='persistent'" (click)="activeTab='persistent'">Persistent (={{ diffData.persistentCount }})</button>
+        </div>
+      </div>
+
+      <!-- Tab: NEW (Regressions) -->
+      <div *ngIf="activeTab === 'new'">
+        <div *ngIf="diffData.newFindings.length === 0" class="empty-diff-tab">
+          <span style="font-size:32px;">🎉</span>
+          <p><strong>Zero Regressions!</strong> No new vulnerabilities were introduced in this scan.</p>
+        </div>
+
+        <div *ngIf="diffData.newFindings.length > 0" class="table-container">
+          <table class="sec-table">
+            <thead>
+              <tr>
+                <th>Diff</th>
+                <th>CVE / Finding</th>
+                <th>Package</th>
+                <th>Severity</th>
+                <th>Priority</th>
+                <th>Fix Recommendation</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let f of diffData.newFindings">
+                <td><span class="badge badge-diff-new">+ NEW</span></td>
+                <td>
+                  <div style="font-weight:700;"><a [routerLink]="['/findings', f.id]">{{ f.cve || 'VULN' }}</a></div>
+                  <div style="font-size:12px;color:var(--muted)">{{ f.title }}</div>
+                </td>
+                <td>
+                  <code>{{ (f.packageName || '') + '@' + (f.installedVersion || '') }}</code>
+                  <span *ngIf="f.fixedVersion" style="color:#10b981;font-weight:600;"> → {{ f.fixedVersion }}</span>
+                </td>
+                <td>
+                  <span class="badge badge-{{ f.severity.toLowerCase() }}">{{ f.severity }}</span>
+                </td>
+                <td>
+                  <span class="badge badge-{{ f.priority.toLowerCase() }}">{{ f.priority }}</span>
+                </td>
+                <td>
+                  <span *ngIf="f.fixedVersion">Upgrade to <code>{{ f.fixedVersion }}</code></span>
+                  <span *ngIf="!f.fixedVersion" class="text-muted">Review upstream dependency</span>
+                </td>
+                <td>
+                  <button class="btn btn-secondary btn-sm" (click)="copyFixSnippet(f)">📋 Copy Fix</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab: RESOLVED -->
+      <div *ngIf="activeTab === 'resolved'">
+        <div *ngIf="diffData.resolvedFindings.length === 0" class="empty-diff-tab">
+          <span style="font-size:32px;">ℹ️</span>
+          <p>No vulnerabilities were resolved between these two scans.</p>
+        </div>
+
+        <div *ngIf="diffData.resolvedFindings.length > 0" class="table-container">
+          <table class="sec-table">
+            <thead>
+              <tr>
+                <th>Diff</th>
+                <th>CVE / Finding</th>
+                <th>Package</th>
+                <th>Severity</th>
+                <th>Prior State</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let f of diffData.resolvedFindings">
+                <td><span class="badge badge-diff-resolved">- RESOLVED</span></td>
+                <td>
+                  <div style="font-weight:700;"><a [routerLink]="['/findings', f.id]">{{ f.cve || 'VULN' }}</a></div>
+                  <div style="font-size:12px;color:var(--muted)">{{ f.title }}</div>
+                </td>
+                <td><code>{{ (f.packageName || '') + '@' + (f.installedVersion || '') }}</code></td>
+                <td><span class="badge badge-{{ f.severity.toLowerCase() }}">{{ f.severity }}</span></td>
+                <td><span class="badge badge-{{ f.priority.toLowerCase() }}">{{ f.priority }}</span></td>
+                <td><span class="badge badge-resolved">CLEARED ✓</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab: PERSISTENT -->
+      <div *ngIf="activeTab === 'persistent'">
+        <div *ngIf="diffData.persistentFindings.length === 0" class="empty-diff-tab">
+          <p>No persistent vulnerabilities found.</p>
+        </div>
+
+        <div *ngIf="diffData.persistentFindings.length > 0" class="table-container">
+          <table class="sec-table">
+            <thead>
+              <tr>
+                <th>Diff</th>
+                <th>CVE / Finding</th>
+                <th>Package</th>
+                <th>Severity</th>
+                <th>Priority</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let f of diffData.persistentFindings">
+                <td><span class="badge badge-diff-persistent">= UNCHANGED</span></td>
+                <td>
+                  <div style="font-weight:700;"><a [routerLink]="['/findings', f.id]">{{ f.cve || 'VULN' }}</a></div>
+                  <div style="font-size:12px;color:var(--muted)">{{ f.title }}</div>
+                </td>
+                <td><code>{{ (f.packageName || '') + '@' + (f.installedVersion || '') }}</code></td>
+                <td><span class="badge badge-{{ f.severity.toLowerCase() }}">{{ f.severity }}</span></td>
+                <td><span class="badge badge-{{ f.priority.toLowerCase() }}">{{ f.priority }}</span></td>
+                <td>
+                  <a [routerLink]="['/findings', f.id]" class="btn btn-secondary btn-sm">Inspect →</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

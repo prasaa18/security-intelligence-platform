@@ -1,0 +1,100 @@
+<div class="compliance-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">📜 Executive Compliance & Audit Center</h1>
+      <p class="page-subtitle">Continuous compliance tracking across OWASP Top 10, SOC 2 Type II, and PCI-DSS 4.0.</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button class="btn btn-primary" (click)="printAuditReport()">🖨️ Export Executive Audit Brief (PDF)</button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state" style="text-align:center;padding:40px;">
+    <p>Mapping vulnerability landscape to regulatory control frameworks…</p>
+  </div>
+
+  <div *ngIf="!loading">
+    <!-- Top KPI Grid -->
+    <div class="kpi-grid">
+      <div class="kpi-tile" style="border-left: 4px solid #00c0f0;">
+        <div class="kpi-icon">🛡️</div>
+        <div class="kpi-value" [style.color]="complianceScore >= 80 ? '#10b981' : '#f59e0b'">{{ complianceScore }}%</div>
+        <div class="kpi-label">Audit Readiness Score</div>
+        <div class="kpi-hint">Aggregated across active controls</div>
+      </div>
+
+      <div class="kpi-tile kpi-critical">
+        <div class="kpi-icon">🚨</div>
+        <div class="kpi-value">{{ p0Count }}</div>
+        <div class="kpi-label">Blocking P0 Audit Risks</div>
+        <div class="kpi-hint">Violates SOC 2 CC6.8 & PCI 6.3.3</div>
+      </div>
+
+      <div class="kpi-tile kpi-high">
+        <div class="kpi-icon">⚠️</div>
+        <div class="kpi-value">{{ p1Count }}</div>
+        <div class="kpi-label">P1 Compliance Warnings</div>
+        <div class="kpi-hint">Requires resolution within 30-day SLA</div>
+      </div>
+
+      <div class="kpi-tile kpi-resolved">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-value">100%</div>
+        <div class="kpi-label">CI/CD Scan Coverage</div>
+        <div class="kpi-hint">Automated gating active</div>
+      </div>
+    </div>
+
+    <!-- Framework Filter & Summary -->
+    <div class="section-card">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Regulatory Framework Controls</h2>
+          <p class="section-desc">Real-time mapping of discovered CVEs and misconfigurations to compliance standards.</p>
+        </div>
+
+        <div class="tab-switcher">
+          <button class="tab-btn" [class.active]="activeFramework==='ALL'" (click)="activeFramework='ALL'">All Frameworks</button>
+          <button class="tab-btn" [class.active]="activeFramework==='OWASP'" (click)="activeFramework='OWASP'">OWASP Top 10</button>
+          <button class="tab-btn" [class.active]="activeFramework==='SOC2'" (click)="activeFramework='SOC2'">SOC 2 Type II</button>
+          <button class="tab-btn" [class.active]="activeFramework==='PCI-DSS'" (click)="activeFramework='PCI-DSS'">PCI-DSS 4.0</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="sec-table">
+          <thead>
+            <tr>
+              <th>Framework</th>
+              <th>Control ID</th>
+              <th>Requirement Name</th>
+              <th>Audit Status</th>
+              <th>Affected Findings</th>
+              <th>Requirement Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of filteredControls">
+              <td><strong>{{ c.framework }}</strong></td>
+              <td><code>{{ c.id }}</code></td>
+              <td style="font-weight:700;">{{ c.name }}</td>
+              <td>
+                <span *ngIf="c.status === 'COMPLIANT'" class="badge badge-low">COMPLIANT ✓</span>
+                <span *ngIf="c.status === 'NEEDS_ATTENTION'" class="badge badge-high">ATTENTION ⚠️</span>
+                <span *ngIf="c.status === 'NON_COMPLIANT'" class="badge badge-critical">NON-COMPLIANT 🔴</span>
+              </td>
+              <td>
+                <span *ngIf="c.findingCount > 0" class="badge badge-p0">{{ c.findingCount }} Findings</span>
+                <span *ngIf="c.findingCount === 0" class="text-muted">0 issues</span>
+              </td>
+              <td style="font-size:12px;color:var(--ink-2);max-width:320px;">
+                {{ c.description }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

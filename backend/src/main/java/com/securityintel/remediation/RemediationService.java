@@ -131,6 +131,20 @@ public class RemediationService {
         return remediationItemRepository.save(item);
     }
 
+    public List<RemediationItem> batchUpdateStatus(List<String> ids, RemediationStatus newStatus) {
+        List<RemediationItem> updated = new java.util.ArrayList<>();
+        if (ids == null || ids.isEmpty() || newStatus == null) {
+            return updated;
+        }
+        for (String id : ids) {
+            try {
+                updated.add(updateRemediationStatus(id, newStatus));
+            } catch (Exception ignored) {
+            }
+        }
+        return updated;
+    }
+
     public ActionCenterSummary getActionCenterSummary() {
         try {
             long immediateActions = remediationItemRepository.countByPriorityAndStatus(

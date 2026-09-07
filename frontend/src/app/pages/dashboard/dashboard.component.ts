@@ -153,6 +153,60 @@ export class DashboardComponent implements OnDestroy, OnInit {
     };
   }
 
+  readonly quickActions = [
+    {
+      icon: '🚨',
+      title: 'P0 backlog',
+      subtitle: 'Fix today',
+      route: '/findings',
+      queryParams: { priority: 'P0', status: 'OPEN' }
+    },
+    {
+      icon: '🧪',
+      title: 'Ingestion Studio',
+      subtitle: 'Simulate reports',
+      route: '/ingestion-studio',
+      queryParams: {}
+    },
+    {
+      icon: '📜',
+      title: 'Compliance',
+      subtitle: 'Audit posture',
+      route: '/compliance',
+      queryParams: {}
+    },
+    {
+      icon: '⚖️',
+      title: 'Scan diff',
+      subtitle: 'Compare runs',
+      route: '/scans/compare',
+      queryParams: {}
+    }
+  ];
+
+  getRiskPostureScore(): number {
+    if (!this.summary) return 0;
+    const riskLoad = ((this.summary.p0 || 0) * 35) + ((this.summary.p1 || 0) * 18) + ((this.summary.critical || 0) * 8) + ((this.summary.high || 0) * 5) + ((this.actionCenter?.staleServices || 0) * 10);
+    const total = Math.max(1, (this.summary.totalFindings || 0) + (this.actionCenter?.staleServices || 0) + 10);
+    const score = 100 - Math.min(100, Math.round((riskLoad / total) * 100));
+    return Math.max(0, Math.min(100, score));
+  }
+
+  getRiskPostureLabel(): string {
+    const score = this.getRiskPostureScore();
+    if (score >= 80) return 'Strong';
+    if (score >= 60) return 'Watchlist';
+    if (score >= 40) return 'At risk';
+    return 'Critical';
+  }
+
+  getServiceCoveragePercent(): number {
+    if (!this.serviceOverview.length) return 0;
+    const stale = this.actionCenter?.staleServices || 0;
+    const total = Math.max(1, this.serviceOverview.length);
+    return Math.max(0, Math.min(100, Math.round(((total - stale) / total) * 100)));
+  }
+
   generateSecurityBrief() {
     this.generatingBrief = true;
     this.apiService.generateDailySecurityBrief().subscribe({

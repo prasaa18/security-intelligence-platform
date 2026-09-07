@@ -5,11 +5,21 @@
       <span class="brand-icon">🛡</span>
       <div class="brand-text">
         <span class="brand-name">Security Intel</span>
-        <span class="brand-tagline">Remediation Platform</span>
+        <span class="brand-tagline">DevSecOps Platform</span>
       </div>
     </div>
 
+    <!-- Quick Search / Command Palette Trigger -->
+    <div class="cmd-trigger-wrap">
+      <button class="cmd-trigger-btn" (click)="openCommandPalette()" title="Press Ctrl+K or Cmd+K">
+        <span class="cmd-trigger-icon">🔍</span>
+        <span class="cmd-trigger-text">Search anything...</span>
+        <kbd class="cmd-trigger-kbd">Ctrl K</kbd>
+      </button>
+    </div>
+
     <ul class="sidebar-nav" role="list">
+      <li class="nav-section-header">OPERATIONS</li>
       <li>
         <a routerLink="/dashboard" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
           <span class="nav-icon">🎯</span>
@@ -34,22 +44,55 @@
           <span class="nav-label">Services</span>
         </a>
       </li>
+
+      <li class="nav-section-header">SECURITY & AUDIT</li>
       <li>
-        <a routerLink="/scans" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
-          <span class="nav-icon">📡</span>
-          <span class="nav-label">Scans</span>
+        <a routerLink="/compliance" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
+          <span class="nav-icon">📜</span>
+          <span class="nav-label">Compliance & Audit</span>
         </a>
       </li>
+      <li>
+        <a routerLink="/scans/compare" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
+          <span class="nav-icon">⚖️</span>
+          <span class="nav-label">Scan Diff Engine</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/scans" routerLinkActive="active" class="nav-item" [routerLinkActiveOptions]="{exact: true}" ariaCurrentWhenActive="page">
+          <span class="nav-icon">📡</span>
+          <span class="nav-label">Scan History</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/ingestion-studio" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
+          <span class="nav-icon">🚀</span>
+          <span class="nav-label">Ingestion Studio</span>
+        </a>
+      </li>
+
+      <li class="nav-section-header">INTELLIGENCE</li>
       <li>
         <a routerLink="/ai-assistant" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
           <span class="nav-icon">🤖</span>
           <span class="nav-label">AI Assistant</span>
         </a>
       </li>
+      <li>
+        <a routerLink="/reports" routerLinkActive="active" class="nav-item" ariaCurrentWhenActive="page">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Reports</span>
+        </a>
+      </li>
     </ul>
 
     <div class="sidebar-footer">
-      <span class="sidebar-version">Security Intelligence v2</span>
+      <div class="theme-switch-row">
+        <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="'Switch to ' + (themeService.isDark() ? 'Light' : 'Dark') + ' Mode'">
+          <span>{{ themeService.isDark() ? '☀️ Light Mode' : '🌙 Cyber Dark' }}</span>
+        </button>
+      </div>
+      <span class="sidebar-version">Security Intelligence v2.0</span>
     </div>
   </nav>
 
@@ -58,3 +101,7 @@
     <router-outlet></router-outlet>
   </main>
 </div>
+
+<!-- Global Components -->
+<app-command-palette #commandPalette></app-command-palette>
+<app-toast-container></app-toast-container>

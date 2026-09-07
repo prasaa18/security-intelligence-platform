@@ -15,7 +15,11 @@ import java.util.Optional;
 public interface ScanExecutionRepository extends MongoRepository<ScanExecution, String> {
     
     List<ScanExecution> findByServiceNameOrderByCreatedAtDesc(String serviceName);
-    
+
+    @Query("{ 'serviceName': ?0, 'tool': ?1, 'scanType': ?2, 'status': ?3 }")
+    List<ScanExecution> findByServiceNameAndToolAndScanTypeAndStatusOrderByCreatedAtDesc(
+        String serviceName, Tool tool, ScanType scanType, com.securityintel.model.Status status);
+
     @Query("{ 'serviceName': ?0, 'tool': ?1, 'scanType': ?2, 'status': ?3 }")
     Optional<ScanExecution> findFirstByServiceNameAndToolAndScanTypeAndStatusOrderByCreatedAtDesc(
         String serviceName, Tool tool, ScanType scanType, com.securityintel.model.Status status);
@@ -28,9 +32,16 @@ public interface ScanExecutionRepository extends MongoRepository<ScanExecution, 
     
     @Query("{ 'serviceName': ?0, 'status': 'SUCCESS' }")
     List<ScanExecution> findSuccessfulScansByService(String serviceName);
+    List<ScanExecution> findByServiceNameAndStatusOrderByCreatedAtDesc(String serviceName, com.securityintel.model.Status status);
     
-    @Query("{ 'serviceName': ?0, 'status': 'SUCCESS' }")
-    Optional<ScanExecution> findLatestSuccessfulScanByService(String serviceName);
+    @Query(value = "{ 'serviceName': ?0, 'status': 'SUCCESS' }", sort = "{ 'createdAt': -1 }")
+    List<ScanExecution> findSuccessfulScansByServiceOrdered(String serviceName);
+
+    default Optional<ScanExecution> findLatestSuccessfulScanByService(String serviceName) {
+        return findSuccessfulScansByServiceOrdered(serviceName).stream().findFirst();
+    }
+
+    Optional<ScanExecution> findFirstByServiceNameAndStatusOrderByCreatedAtDesc(String serviceName, com.securityintel.model.Status status);
     
     long countByServiceNameAndStatus(String serviceName, com.securityintel.model.Status status);
 }

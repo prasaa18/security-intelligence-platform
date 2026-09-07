@@ -1,5 +1,6 @@
 package com.securityintel.controller;
 
+import com.securityintel.dto.ScanDiffDto;
 import com.securityintel.exception.DatabaseException;
 import com.securityintel.exception.ResourceNotFoundException;
 import com.securityintel.model.ScanExecution;
@@ -79,6 +80,32 @@ public class ScanExecutionController {
                     .header("Content-Type", "text/csv")
                     .header("Content-Disposition", "attachment; filename=scan-findings-" + id + ".csv")
                     .body(csv);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (DatabaseException e) {
+            throw e;
+        }
+    }
+
+    @GetMapping("/{id}/diff")
+    public ResponseEntity<ScanDiffDto> getScanDiff(@PathVariable String id) {
+        try {
+            ScanDiffDto diff = scanExecutionService.getScanDiff(id);
+            return ResponseEntity.ok(diff);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (DatabaseException e) {
+            throw e;
+        }
+    }
+
+    @GetMapping("/compare")
+    public ResponseEntity<ScanDiffDto> compareScans(
+            @RequestParam(required = false) String baselineId,
+            @RequestParam String targetId) {
+        try {
+            ScanDiffDto diff = scanExecutionService.compareScans(baselineId, targetId);
+            return ResponseEntity.ok(diff);
         } catch (ResourceNotFoundException e) {
             throw e;
         } catch (DatabaseException e) {

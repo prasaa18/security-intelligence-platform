@@ -35,6 +35,18 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/reports/reports.component').then(c => c.ReportsComponent)
   },
   {
+    path: 'compliance',
+    loadComponent: () => import('./pages/compliance/compliance.component').then(c => c.ComplianceComponent)
+  },
+  {
+    path: 'scans/compare',
+    loadComponent: () => import('./pages/scan-diff/scan-diff.component').then(c => c.ScanDiffComponent)
+  },
+  {
+    path: 'ingestion-studio',
+    loadComponent: () => import('./pages/ingestion-studio/ingestion-studio.component').then(c => c.IngestionStudioComponent)
+  },
+  {
     path: 'findings',
     loadComponent: () => import('./pages/findings/findings.component').then(c => c.FindingsComponent)
   },

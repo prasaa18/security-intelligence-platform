@@ -1,0 +1,128 @@
+<div class="studio-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">🚀 CI/CD Ingestion Studio & Pipeline Simulator</h1>
+      <p class="page-subtitle">Test and simulate real-time scanner reports pushing from GitHub Actions, GitLab CI, or Jenkins.</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <a routerLink="/scans" class="btn btn-secondary btn-sm">View Scans Feed →</a>
+    </div>
+  </div>
+
+  <div class="studio-grid">
+    <!-- Left: Configuration & Editor -->
+    <div class="studio-editor-col">
+      <div class="section-card">
+        <div class="section-header">
+          <h2 class="section-title">1. Pipeline Context Metadata</h2>
+          <div class="template-pills">
+            <button class="pill-btn" [class.active]="selectedTemplate==='trivy'" (click)="loadTemplate('trivy')">Trivy (Container)</button>
+            <button class="pill-btn" [class.active]="selectedTemplate==='snyk'" (click)="loadTemplate('snyk')">Snyk (SCA)</button>
+            <button class="pill-btn" [class.active]="selectedTemplate==='gitleaks'" (click)="loadTemplate('gitleaks')">Gitleaks (Secrets)</button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Target Service</label>
+            <input type="text" class="form-input" [(ngModel)]="serviceName" placeholder="e.g. payment-service" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Environment</label>
+            <select class="form-select" [(ngModel)]="environment">
+              <option value="PRODUCTION">PRODUCTION</option>
+              <option value="STAGING">STAGING</option>
+              <option value="DEVELOPMENT">DEVELOPMENT</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Git Branch</label>
+            <input type="text" class="form-input" [(ngModel)]="branch" placeholder="main" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Commit SHA</label>
+            <input type="text" class="form-input" [(ngModel)]="commitId" placeholder="9fa81b2" />
+          </div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <label class="form-label" style="margin:0;">2. Scanner JSON Payload</label>
+            <span class="text-muted text-small">Simulating CI/CD multipart file upload</span>
+          </div>
+          <textarea class="code-editor" [(ngModel)]="rawPayload" rows="14"></textarea>
+        </div>
+
+        <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+          <button class="btn btn-primary" (click)="submitIngestion()" [disabled]="isSubmitting">
+            <span *ngIf="!isSubmitting">⚡ Simulate GitHub Actions Push</span>
+            <span *ngIf="isSubmitting">Ingesting & Deduplicating…</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Ingestion Live Result -->
+    <div class="studio-result-col">
+      <div class="section-card">
+        <div class="section-header">
+          <h2 class="section-title">Ingestion Engine Output</h2>
+          <span *ngIf="ingestionResponse" class="badge badge-low">HTTP 200 OK ✓</span>
+        </div>
+
+        <div *ngIf="!ingestionResponse && !error && !isSubmitting" class="empty-result">
+          <span style="font-size:36px;">📡</span>
+          <p>Ready to simulate. Click <strong>"Simulate GitHub Actions Push"</strong> to trigger the ingestion, deduplication, and prioritization pipeline.</p>
+        </div>
+
+        <div *ngIf="isSubmitting" class="empty-result">
+          <p>Processing findings, comparing fingerprints, calculating business risk score…</p>
+        </div>
+
+        <div *ngIf="error" class="error-banner" style="background:#fee2e2;color:#991b1b;padding:12px;border-radius:8px;">
+          {{ error }}
+        </div>
+
+        <div *ngIf="ingestionResponse" class="result-details">
+          <div class="result-kpi-row">
+            <div class="result-stat">
+              <span class="stat-num">{{ ingestionResponse.totalRawFindings || 0 }}</span>
+              <span class="stat-label">Raw Findings</span>
+            </div>
+            <div class="result-stat">
+              <span class="stat-num" style="color:var(--brand);">{{ ingestionResponse.totalUniqueFindings || 0 }}</span>
+              <span class="stat-label">Deduplicated</span>
+            </div>
+            <div class="result-stat">
+              <span class="stat-num" style="color:#ef4444;">{{ ingestionResponse.newFindings || 0 }}</span>
+              <span class="stat-label">New Regressions</span>
+            </div>
+            <div class="result-stat">
+              <span class="stat-num" style="color:#10b981;">{{ ingestionResponse.resolvedFindings || 0 }}</span>
+              <span class="stat-label">Resolved</span>
+            </div>
+          </div>
+
+          <div style="margin-top:18px;">
+            <h3 style="font-size:13px;font-weight:700;margin-bottom:8px;">Processed Scan Execution</h3>
+            <div class="scan-meta-box">
+              <div><strong>Scan ID:</strong> <code>{{ ingestionResponse.id }}</code></div>
+              <div><strong>Service:</strong> {{ ingestionResponse.serviceName }} ({{ ingestionResponse.environment }})</div>
+              <div><strong>Tool:</strong> {{ ingestionResponse.tool }} • {{ ingestionResponse.scanType }}</div>
+              <div><strong>Status:</strong> <span class="badge badge-low">{{ ingestionResponse.status }}</span></div>
+            </div>
+          </div>
+
+          <div style="margin-top:20px;display:flex;gap:10px;">
+            <a [routerLink]="['/scans', ingestionResponse.id]" class="btn btn-primary btn-sm">Inspect Scan Execution →</a>
+            <a routerLink="/remediation" class="btn btn-secondary btn-sm">Go to Action Plan →</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

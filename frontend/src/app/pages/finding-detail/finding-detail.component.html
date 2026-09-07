@@ -1,188 +1,187 @@
 <div class="finding-detail-page">
-  <!-- Header -->
   <div class="page-header">
     <div>
-      <button class="btn btn-sm btn-secondary" (click)="goBack()">← Back to Findings</button>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
-        <h1 class="page-title">{{ finding?.cve || 'Security Finding' }}</h1>
-        <span *ngIf="finding" class="badge" [ngClass]="getPriorityBadgeClass(finding.priority || 'P4')">{{ finding.priority || 'P4' }}</span>
-        <span *ngIf="finding" class="badge" [ngClass]="getSeverityBadgeClass(finding.severity)">{{ finding.severity }}</span>
-      </div>
-      <p class="page-subtitle">{{ finding?.title }}</p>
+      <a class="back-link" (click)="goBack()">← Back</a>
+      <h1 class="page-title" *ngIf="finding">
+        {{ finding.cve || finding.title }}
+      </h1>
+      <p class="page-subtitle" *ngIf="finding">
+        {{ finding.serviceName }} • {{ finding.tool }} • {{ finding.environment }}
+      </p>
     </div>
-    <div *ngIf="finding" style="display:flex;gap:8px">
-      <a class="btn btn-primary" routerLink="/remediation" [queryParams]="{findingId: finding.id}">
-        🔧 View in Remediation Plan →
-      </a>
+
+    <!-- Action Toolbar -->
+    <div style="display:flex;gap:8px;align-items:center;" *ngIf="finding">
+      <button class="btn btn-primary btn-sm" (click)="openGitPrModal()">🔨 Generate Git PR Patch</button>
+      <button class="btn btn-secondary btn-sm" (click)="openDispatchModal()">✉️ Send to Developer</button>
+      <button class="btn btn-secondary btn-sm" (click)="copyFixSnippet()">📋 Copy Fix</button>
     </div>
   </div>
 
-  <!-- Loading State -->
-  <div *ngIf="loading" class="loading-state">
-    <div class="loading-spinner"></div>
-    <p>Loading finding details…</p>
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state" style="text-align:center;padding:40px;">
+    <p>Loading finding intelligence…</p>
   </div>
 
-  <!-- Error State -->
-  <div *ngIf="error && !loading" class="error-state">
-    <div class="error-icon">⚠</div>
-    <p class="error-title">{{ error }}</p>
-    <button class="btn btn-primary" (click)="loadFinding()">Retry</button>
+  <!-- Error -->
+  <div *ngIf="error && !loading" class="error-banner" style="background:#fee2e2;color:#991b1b;padding:12px;border-radius:8px;">
+    {{ error }}
   </div>
 
-  <!-- Main 2-Column Content -->
-  <div *ngIf="!loading && !error && finding" class="finding-grid">
-
-    <!-- LEFT COLUMN: SYSTEM FACTS & EVIDENCE -->
-    <div class="facts-column">
-
-      <!-- Priority & Risk Scoring Breakdown -->
-      <div class="card">
-        <h3 class="card-title">Remediation Priority & Scoring</h3>
-        <div class="priority-banner">
-          <div class="score-box">
-            <span class="score-num">{{ finding.riskScore || '—' }}</span>
-            <span class="score-label">Risk Score / 100</span>
-          </div>
-          <div class="score-details">
-            <div class="detail-row">
-              <span class="label">Assigned Priority:</span>
-              <span class="badge" [ngClass]="getPriorityBadgeClass(finding.priority || 'P4')">{{ finding.priority || 'P4' }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">CVSS Base:</span>
-              <span class="fw-600">{{ finding.cvssScore ? finding.cvssScore.toFixed(1) : 'N/A' }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="label">Service Context:</span>
-              <span>{{ finding.serviceName }} ({{ finding.environment }})</span>
-            </div>
-          </div>
+  <!-- Content 2-Column Grid -->
+  <div *ngIf="finding && !loading" class="detail-grid">
+    <!-- Left: Facts & Impact -->
+    <div class="detail-col">
+      <div class="section-card">
+        <h2 class="section-title">Vulnerability Overview</h2>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="badge badge-{{ (finding.severity || 'unknown').toLowerCase() }}">{{ finding.severity }} Severity</span>
+          <span class="badge badge-{{ (finding.priority || 'p4').toLowerCase() }}">{{ finding.priority }} Priority</span>
+          <span class="badge badge-{{ (finding.status || 'open').toLowerCase() }}">{{ finding.status }}</span>
+          <span *ngIf="finding.detectionState" class="badge badge-unknown">{{ finding.detectionState }}</span>
         </div>
 
-        <div *ngIf="finding.priorityReasons && finding.priorityReasons.length > 0" class="reasons-list">
-          <h4 style="margin:12px 0 6px 0;font-size:12px;color:var(--muted);text-transform:uppercase">Deterministic Factors:</h4>
-          <ul>
-            <li *ngFor="let reason of finding.priorityReasons">✓ {{ reason }}</li>
-          </ul>
+        <div style="margin-top:16px;">
+          <h3 style="font-size:13px;font-weight:700;color:var(--ink-2);margin-bottom:4px;">Description</h3>
+          <p style="font-size:13px;color:var(--ink);line-height:1.6;">
+            {{ finding.description || finding.title || 'No extended description available from scanner.' }}
+          </p>
         </div>
-      </div>
 
-      <!-- Upgrade Path / Package Info -->
-      <div class="card" *ngIf="finding.packageName">
-        <h3 class="card-title">Vulnerable Package & Upgrade</h3>
-        <div class="upgrade-path">
-          <div class="pkg-name">
-            <strong>Package:</strong> <code>{{ finding.packageName }}</code>
+        <div class="facts-grid" style="margin-top:16px;">
+          <div class="fact-box">
+            <span class="fact-label">Package Name</span>
+            <span class="fact-val"><code>{{ finding.packageName || 'N/A' }}</code></span>
           </div>
-          <div class="version-transition">
-            <div class="ver-box ver-current">
-              <span class="ver-label">Installed Version</span>
-              <span class="ver-val">{{ finding.installedVersion || 'Unknown' }}</span>
-            </div>
-            <div class="ver-arrow">➔</div>
-            <div class="ver-box ver-fixed" [class.no-fix]="!finding.fixedVersion">
-              <span class="ver-label">Fixed Version</span>
-              <span class="ver-val">{{ finding.fixedVersion || 'No fix available yet' }}</span>
-            </div>
+          <div class="fact-box">
+            <span class="fact-label">Installed Version</span>
+            <span class="fact-val"><code>{{ finding.installedVersion || 'N/A' }}</code></span>
+          </div>
+          <div class="fact-box">
+            <span class="fact-label">Fixed Version</span>
+            <span class="fact-val" style="color:#10b981;font-weight:700;"><code>{{ finding.fixedVersion || 'No fix published' }}</code></span>
+          </div>
+          <div class="fact-box">
+            <span class="fact-label">Risk Score</span>
+            <span class="fact-val"><strong>{{ finding.riskScore || 'N/A' }}/100</strong></span>
+          </div>
+          <div class="fact-box">
+            <span class="fact-label">CVSS Base Score</span>
+            <span class="fact-val">{{ finding.cvssScore || 'N/A' }}</span>
+          </div>
+          <div class="fact-box">
+            <span class="fact-label">Scanner Tool</span>
+            <span class="fact-val">{{ finding.tool }}</span>
           </div>
         </div>
       </div>
-
-      <!-- Location & Scanner Origin -->
-      <div class="card">
-        <h3 class="card-title">Origin & Scanner Evidence</h3>
-        <div class="info-grid">
-          <div class="info-cell">
-            <span class="info-label">Scanner Tool</span>
-            <span class="badge" [ngClass]="getToolBadgeClass(finding.tool)">{{ finding.tool }}</span>
-          </div>
-          <div class="info-cell">
-            <span class="info-label">Scan Type</span>
-            <span class="fw-600">{{ finding.scanType }}</span>
-          </div>
-          <div class="info-cell">
-            <span class="info-label">Current Status</span>
-            <span class="badge badge-open">{{ finding.status }}</span>
-          </div>
-          <div class="info-cell">
-            <span class="info-label">CWE ID</span>
-            <code>{{ finding.cwe || 'N/A' }}</code>
-          </div>
-          <div class="info-cell" *ngIf="finding.filePath">
-            <span class="info-label">File Path</span>
-            <code>{{ finding.filePath }}<span *ngIf="finding.lineNumber">:{{ finding.lineNumber }}</span></code>
-          </div>
-          <div class="info-cell" *ngIf="finding.containerImage">
-            <span class="info-label">Container Image</span>
-            <code>{{ finding.containerImage }}</code>
-          </div>
-          <div class="info-cell">
-            <span class="info-label">First Detected</span>
-            <span>{{ formatDate(finding.firstDetectedAt || finding.createdAt) }}</span>
-          </div>
-          <div class="info-cell">
-            <span class="info-label">Last Seen</span>
-            <span>{{ formatDate(finding.lastDetectedAt || finding.updatedAt) }}</span>
-          </div>
-        </div>
-
-        <div *ngIf="getSourceTools().length > 0" style="margin-top:14px">
-          <span class="info-label">Deduplicated from scanners:</span>
-          <div style="display:flex;gap:6px;margin-top:4px">
-            <span *ngFor="let tool of getSourceTools()" class="badge badge-other">✓ {{ tool }}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Description & Scanner Output -->
-      <div class="card">
-        <h3 class="card-title">Scanner Vulnerability Description & Context</h3>
-        <p *ngIf="finding.description" style="font-size:13px;line-height:1.6;margin:0;color:var(--ink-2);white-space:pre-wrap">{{ finding.description }}</p>
-        <p *ngIf="!finding.description" style="font-size:13px;color:var(--muted);margin:0">
-          Identified by <strong>{{ finding.tool }}</strong> scanner ({{ finding.scanType }} scan). 
-          Affects package <code>{{ finding.packageName }}</code> version <code>{{ finding.installedVersion }}</code>.
-          {{ finding.fixedVersion ? 'Fixed in version ' + finding.fixedVersion + '.' : 'No upstream patch available yet.' }}
-        </p>
-      </div>
-
-
     </div>
 
-    <!-- RIGHT COLUMN: AI SECURITY ADVISOR -->
-    <div class="ai-column">
-      <div class="card ai-card">
-        <div class="ai-card-header">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:22px">🤖</span>
-            <div>
-              <h3 style="margin:0;font-size:15px;font-weight:700">AI Security Guidance</h3>
-              <span class="text-small text-muted">Context-aware advice from scanner findings</span>
-            </div>
+    <!-- Right: AI Copilot & Remediation Guidance -->
+    <div class="detail-col">
+      <div class="section-card">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">🤖 AI Security Copilot</h2>
+            <p class="section-desc">Contextual priority explanation and remediation instructions.</p>
           </div>
         </div>
 
-        <div class="ai-quick-actions">
-          <button class="btn btn-sm btn-primary" (click)="explainPriority()" [disabled]="loadingAi">
-            ✨ Explain Priority
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="btn btn-secondary btn-sm" (click)="explainPriority()" [disabled]="loadingAi">
+            Explain Priority Context
           </button>
-          <button class="btn btn-sm btn-secondary" (click)="suggestRemediation()" [disabled]="loadingAi">
-            💡 How to Fix & Verify
+          <button class="btn btn-secondary btn-sm" (click)="suggestRemediation()" [disabled]="loadingAi">
+            Suggest Remediation Step
           </button>
         </div>
 
-        <div *ngIf="loadingAi" class="loading-state" style="padding:24px 0">
-          <div class="loading-spinner"></div>
-          <p>{{ aiActionName }}…</p>
+        <div *ngIf="loadingAi" class="loading-state" style="padding:20px;text-align:center;">
+          <p>Consulting Security Copilot...</p>
         </div>
 
-        <div *ngIf="!loadingAi && aiGuidance" class="ai-result markdown-content" [innerHTML]="aiGuidance"></div>
+        <div *ngIf="aiGuidance && !loadingAi" class="ai-guidance-box" [innerHTML]="aiGuidance"></div>
 
-        <div *ngIf="!loadingAi && !aiGuidance" class="ai-placeholder">
-          <p>Click <strong>Explain Priority</strong> to understand business risk and prioritization reasons, or <strong>How to Fix & Verify</strong> for step-by-step developer remediation instructions.</p>
+        <div *ngIf="!aiGuidance && !loadingAi" class="empty-ai" style="padding:32px 16px;text-align:center;color:var(--muted);">
+          <span style="font-size:28px;">💡</span>
+          <p>Click above to trigger AI deep priority analysis or remediation patch suggestions.</p>
         </div>
       </div>
     </div>
+  </div>
 
+  <!-- Git PR Patch Modal -->
+  <div class="cmd-backdrop" *ngIf="showGitPrModal" (click)="closeGitPrModal()">
+    <div class="cmd-modal" (click)="$event.stopPropagation()" style="max-width:720px;">
+      <div class="cmd-header">
+        <span style="font-size:20px;">🔨</span>
+        <div style="flex:1;">
+          <h3 style="margin:0;font-size:15px;">Automated Git PR Patch Generator</h3>
+          <span style="font-size:12px;color:var(--muted);">Ready-to-merge branch pull request template</span>
+        </div>
+        <button class="toast-close" (click)="closeGitPrModal()">✕</button>
+      </div>
+
+      <div class="cmd-body" style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--ink-2);text-transform:uppercase;">PR Title</label>
+          <input type="text" class="form-input" [(ngModel)]="gitPrTitle" style="width:100%;margin-top:4px;" />
+        </div>
+
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--ink-2);text-transform:uppercase;">PR Markdown Description</label>
+          <textarea class="code-editor" [(ngModel)]="gitPrBody" rows="7" style="width:100%;margin-top:4px;"></textarea>
+        </div>
+
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--ink-2);text-transform:uppercase;">Diff Snippet</label>
+          <textarea class="code-editor" [(ngModel)]="gitDiffSnippet" rows="4" style="width:100%;margin-top:4px;"></textarea>
+        </div>
+      </div>
+
+      <div class="cmd-footer" style="padding:12px 16px;justify-content:flex-end;gap:10px;">
+        <button class="btn btn-secondary btn-sm" (click)="closeGitPrModal()">Close</button>
+        <button class="btn btn-primary btn-sm" (click)="copyGitPrPatch()">📋 Copy Full PR Patch</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Developer Dispatch Modal -->
+  <div class="cmd-backdrop" *ngIf="showDispatchModal" (click)="closeDispatchModal()">
+    <div class="cmd-modal" (click)="$event.stopPropagation()" style="max-width:540px;">
+      <div class="cmd-header">
+        <span style="font-size:20px;">✉️</span>
+        <div style="flex:1;">
+          <h3 style="margin:0;font-size:15px;">Dispatch to Service Developer</h3>
+          <span style="font-size:12px;color:var(--muted);">Send automated alert via Webhook, Email, or Slack</span>
+        </div>
+        <button class="toast-close" (click)="closeDispatchModal()">✕</button>
+      </div>
+
+      <div class="cmd-body" style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--ink-2);text-transform:uppercase;">Developer / Team Email</label>
+          <input type="email" class="form-input" [(ngModel)]="dispatchEmail" style="width:100%;margin-top:4px;" />
+        </div>
+
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--ink-2);text-transform:uppercase;">Slack / Teams Webhook URL</label>
+          <input type="text" class="form-input" [(ngModel)]="dispatchWebhook" style="width:100%;margin-top:4px;" />
+        </div>
+
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--ink-2);text-transform:uppercase;">Security Team Note</label>
+          <textarea class="form-input" [(ngModel)]="dispatchNote" rows="3" style="width:100%;margin-top:4px;"></textarea>
+        </div>
+      </div>
+
+      <div class="cmd-footer" style="padding:12px 16px;justify-content:flex-end;gap:10px;">
+        <button class="btn btn-secondary btn-sm" (click)="closeDispatchModal()">Cancel</button>
+        <button class="btn btn-primary btn-sm" (click)="dispatchToDeveloper()" [disabled]="isDispatching">
+          <span *ngIf="!isDispatching">🚀 Send Notification</span>
+          <span *ngIf="isDispatching">Dispatching…</span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>

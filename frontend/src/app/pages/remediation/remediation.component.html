@@ -1,154 +1,165 @@
 <div class="remediation-page">
   <div class="page-header">
     <div>
-      <h1 class="page-title">Remediation Plan</h1>
-      <p class="page-subtitle">Prioritized by business risk — fix what matters most first</p>
+      <h1 class="page-title">🔧 Remediation Action Plan</h1>
+      <p class="page-subtitle">Track, assign, and dispatch prioritized fixes directly to service development teams.</p>
     </div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-secondary" (click)="exportCsv()">⬇ Export CSV</button>
-      <button class="btn btn-secondary" (click)="loadRemediationItems()">⟳ Refresh</button>
+      <button class="btn btn-secondary btn-sm" (click)="exportCsv()">⬇ Export Plan (CSV)</button>
     </div>
   </div>
 
   <!-- Filters -->
-  <div class="filters-bar">
-    <div class="filter-item">
-      <label>Priority</label>
-      <select [(ngModel)]="priorityFilter" (change)="onFilterChange()">
-        <option value="">All priorities</option>
-        <option value="P0">P0 — Fix Today</option>
-        <option value="P1">P1 — This Week</option>
-        <option value="P2">P2 — This Sprint</option>
-        <option value="P3">P3 — Planned</option>
-        <option value="P4">P4 — Backlog</option>
-      </select>
-    </div>
-    <div class="filter-item">
-      <label>Status</label>
-      <select [(ngModel)]="statusFilter" (change)="onFilterChange()">
-        <option value="">All statuses</option>
-        <option value="NEW">New</option>
-        <option value="OPEN">Open</option>
-        <option value="IN_PROGRESS">In Progress</option>
-        <option value="RESOLVED">Resolved</option>
-        <option value="ACCEPTED_RISK">Accepted Risk</option>
-      </select>
-    </div>
-    <div class="filter-item">
-      <label>Team</label>
-      <select [(ngModel)]="teamFilter" (change)="onFilterChange()">
-        <option value="">All teams</option>
-        <option *ngFor="let t of getUniqueTeams()" [value]="t">{{ t }}</option>
-      </select>
-    </div>
-    <div class="filter-item">
-      <label>Service</label>
-      <select [(ngModel)]="serviceFilter" (change)="onFilterChange()">
-        <option value="">All services</option>
-        <option *ngFor="let s of getUniqueServices()" [value]="s">{{ s }}</option>
-      </select>
-    </div>
-    <div class="filter-item" style="padding-top:18px">
-      <button class="btn btn-sm btn-secondary" (click)="clearFilters()">Clear</button>
+  <div class="section-card filters-card">
+    <div class="filters-bar">
+      <div class="filter-item">
+        <label>Priority</label>
+        <select class="form-select" [(ngModel)]="priorityFilter" (change)="onFilterChange()">
+          <option value="">All Priorities</option>
+          <option value="P0">P0 — Fix Today</option>
+          <option value="P1">P1 — Fix This Week</option>
+          <option value="P2">P2 — Medium</option>
+          <option value="P3">P3 — Low</option>
+          <option value="P4">P4 — Informational</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label>Status</label>
+        <select class="form-select" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+          <option value="">All Statuses</option>
+          <option value="OPEN">Open</option>
+          <option value="IN_PROGRESS">In Progress</option>
+          <option value="RESOLVED">Resolved</option>
+          <option value="ACCEPTED_RISK">Accepted Risk</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label>Team</label>
+        <select class="form-select" [(ngModel)]="teamFilter" (change)="onFilterChange()">
+          <option value="">All Teams</option>
+          <option *ngFor="let t of getUniqueTeams()" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+
+      <div class="filter-item">
+        <label>Service</label>
+        <select class="form-select" [(ngModel)]="serviceFilter" (change)="onFilterChange()">
+          <option value="">All Services</option>
+          <option *ngFor="let s of getUniqueServices()" [value]="s">{{ s }}</option>
+        </select>
+      </div>
     </div>
   </div>
 
-  <!-- Stats -->
-  <div class="rem-stats" *ngIf="!loading">
-    <span class="rem-stat rem-stat-total">{{ filteredItems.length }} items</span>
-    <span class="rem-stat rem-stat-p0" *ngIf="getP0Count() > 0">🔴 {{ getP0Count() }} P0</span>
-    <span class="rem-stat rem-stat-p1" *ngIf="getP1Count() > 0">🟠 {{ getP1Count() }} P1</span>
-    <span class="rem-stat rem-stat-progress" *ngIf="getInProgressCount() > 0">🔵 {{ getInProgressCount() }} In Progress</span>
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state" style="text-align:center;padding:40px;">
+    <p>Loading remediation roadmap…</p>
   </div>
 
-  <div *ngIf="loading" class="loading-state">
-    <div class="loading-spinner"></div><p>Loading remediation plan…</p>
-  </div>
-
-  <div *ngIf="error && !loading" class="error-state">
-    <div class="error-icon">⚠</div><p class="error-title">{{ error }}</p>
-    <button class="btn btn-primary" (click)="loadRemediationItems()">Retry</button>
-  </div>
-
-  <div *ngIf="!loading && !error" class="card" style="padding:0;overflow:hidden">
-
-    <div *ngIf="filteredItems.length === 0" class="empty-state">
-      <div class="empty-icon">🎉</div>
-      <p class="empty-title">No remediation items</p>
-      <p class="empty-desc">Upload a scanner report to generate remediation items.</p>
+  <!-- Table -->
+  <div *ngIf="!loading && !error" class="section-card" style="padding:0;overflow:hidden">
+    <div *ngIf="filteredItems.length === 0" class="empty-state" style="padding:48px 20px;text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">✅</div>
+      <p style="font-weight:700;margin:0 0 4px;">No active remediation items matching filters</p>
+      <p style="color:var(--muted);font-size:13px;margin:0;">All prioritized security debt in this filter is cleared.</p>
     </div>
 
-    <div *ngIf="filteredItems.length > 0" class="table-wrap">
-      <table class="data-table">
+    <div *ngIf="filteredItems.length > 0" class="table-container" style="border:none;">
+      <table class="sec-table">
         <thead>
           <tr>
-            <th style="width:60px">Priority</th>
-            <th>Finding</th>
-            <th>Service</th>
-            <th>Team</th>
-            <th style="width:70px">Risk</th>
-            <th>Fix Action</th>
-            <th>First Seen</th>
-            <th>Last Seen</th>
+            <th style="width:36px;text-align:center;">
+              <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll()" title="Select All" />
+            </th>
+            <th>Priority</th>
+            <th>Service & Team</th>
+            <th>Recommended Fix Action</th>
+            <th>Risk Score</th>
             <th>Status</th>
-            <th style="width:50px"></th>
+            <th>Dev Handover</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let item of filteredItems">
-            <!-- Priority -->
-            <td><span class="badge" [ngClass]="'badge-' + (item.priority || 'p4').toLowerCase()">{{ item.priority }}</span></td>
-            <!-- Finding: CVE + title -->
-            <td style="max-width:280px">
-              <div style="display:flex;flex-direction:column;gap:2px">
-                <code class="cve-code" *ngIf="item.cve">{{ item.cve }}</code>
-                <span class="fw-600" style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" [title]="item.title">
-                  {{ item.title || ('Finding ' + (item.findingId ? item.findingId.substring(0,8) : '—')) }}
-                </span>
-                <span *ngIf="item.packageName" class="version-arrow">
-                  <span class="text-mono text-small">{{ item.packageName }}</span>
-                  <span *ngIf="item.installedVersion" class="version-old">{{ item.installedVersion }}</span>
-                  <span *ngIf="item.fixedVersion"> → </span>
-                  <span *ngIf="item.fixedVersion" class="version-new">{{ item.fixedVersion }}</span>
-                </span>
+          <tr *ngFor="let item of filteredItems" [class.selected-row]="selectedIds.has(item.id)">
+            <td style="text-align:center;">
+              <input type="checkbox" [checked]="selectedIds.has(item.id)" (change)="toggleSelect(item.id)" />
+            </td>
+            <td>
+              <span class="badge badge-{{ item.priority.toLowerCase() }}">{{ item.priority }}</span>
+            </td>
+            <td>
+              <div style="font-weight:700;">
+                <a [routerLink]="['/services', item.serviceName, 'security']">{{ item.serviceName }}</a>
+              </div>
+              <div style="font-size:11px;color:var(--muted)">Team: {{ item.teamName || 'Unassigned' }}</div>
+            </td>
+            <td>
+              <div style="max-width:380px;font-size:13px;">
+                {{ item.recommendedAction }}
               </div>
             </td>
-            <!-- Service -->
-            <td>{{ item.serviceName }}</td>
-            <!-- Team -->
-            <td>{{ item.teamName || '—' }}</td>
-            <!-- Risk Score -->
             <td>
-              <span *ngIf="item.riskScore" class="risk-score-badge" [ngClass]="getRiskBadgeClass(item.riskScore)">{{ item.riskScore }}</span>
-              <span *ngIf="!item.riskScore" class="text-muted">—</span>
+              <strong>{{ item.riskScore || 'N/A' }}</strong>
             </td>
-            <!-- Recommended Action -->
-            <td style="max-width:200px">
-              <span class="rec-action" [title]="item.recommendedAction">
-                {{ item.recommendedAction ? (item.recommendedAction.length > 60 ? (item.recommendedAction | slice:0:60) + '…' : item.recommendedAction) : '—' }}
-              </span>
-            </td>
-            <!-- First/Last seen -->
-            <td class="text-small text-muted">{{ formatDate(item.firstDetectedAt) }}</td>
-            <td class="text-small text-muted">{{ formatDate(item.lastDetectedAt) }}</td>
-            <!-- Status -->
             <td>
-              <select class="status-select"
-                [value]="item.remediationStatus"
-                (change)="updateStatus(item.id, $event)"
-                [disabled]="item.remediationStatus === 'RESOLVED' || item.remediationStatus === 'ACCEPTED_RISK'">
-                <option value="NEW">New</option>
-                <option value="OPEN">Open</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="RESOLVED">Resolved</option>
-                <option value="ACCEPTED_RISK">Accept Risk</option>
+              <select class="form-select select-sm" [value]="item.remediationStatus" (change)="updateStatus(item.id, $event)">
+                <option value="OPEN">OPEN</option>
+                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                <option value="RESOLVED">RESOLVED</option>
+                <option value="ACCEPTED_RISK">ACCEPTED_RISK</option>
               </select>
             </td>
-            <!-- Detail -->
-            <td><a class="btn btn-sm btn-secondary" [routerLink]="['/remediation', item.id]">→</a></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-secondary btn-sm" (click)="openTicketModal(item)" title="Create Developer Ticket">🎫 Ticket</button>
+                <button class="btn btn-secondary btn-sm" (click)="copyFixSnippet(item)" title="Copy Recommended Action">📋</button>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Bulk Action Bar -->
+  <div class="bulk-bar" *ngIf="selectedIds.size > 0">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="badge badge-p0">{{ selectedIds.size }} items selected</span>
+      <span style="font-size:13px;font-weight:600;">Batch Triage:</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-secondary btn-sm" (click)="batchSetStatus('IN_PROGRESS')">Mark In Progress</button>
+      <button class="btn btn-success btn-sm" (click)="batchSetStatus('RESOLVED')">Mark Resolved ✓</button>
+      <button class="btn btn-secondary btn-sm" (click)="batchSetStatus('ACCEPTED_RISK')">Accept Risk</button>
+      <button class="btn btn-secondary btn-sm" (click)="selectedIds.clear()">Clear</button>
+    </div>
+  </div>
+
+  <!-- Ticket Handover Modal -->
+  <div class="cmd-backdrop" *ngIf="selectedItemForTicket" (click)="closeTicketModal()">
+    <div class="cmd-modal" (click)="$event.stopPropagation()" style="max-width:680px;">
+      <div class="cmd-header">
+        <span style="font-size:20px;">🎫</span>
+        <div style="flex:1;">
+          <h3 style="margin:0;font-size:15px;">Developer Handover Ticket</h3>
+          <span style="font-size:12px;color:var(--muted);">Service: {{ selectedItemForTicket.serviceName }} • Priority: {{ selectedItemForTicket.priority }}</span>
+        </div>
+        <button class="toast-close" (click)="closeTicketModal()">✕</button>
+      </div>
+
+      <div class="cmd-body" style="padding:16px;">
+        <p style="font-size:12px;color:var(--ink-2);margin:0 0 8px;">
+          Copy this formatted markdown ticket directly into <strong>Jira, GitHub Issues, or Slack</strong>:
+        </p>
+        <textarea class="code-editor" [(ngModel)]="ticketMarkdown" rows="10" style="width:100%;"></textarea>
+      </div>
+
+      <div class="cmd-footer" style="padding:12px 16px;justify-content:flex-end;gap:10px;">
+        <button class="btn btn-secondary btn-sm" (click)="closeTicketModal()">Close</button>
+        <button class="btn btn-primary btn-sm" (click)="copyTicketMarkdown()">📋 Copy Ticket Markdown</button>
+      </div>
     </div>
   </div>
 </div>

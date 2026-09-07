@@ -235,6 +235,27 @@ export class ApiService {
     return this.http.post(`${this.baseUrl}/notifications/daily-brief`, {});
   }
 
+  // Scan Comparison & Diff
+  getScanDiff(scanId: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/scans/${scanId}/diff`);
+  }
+
+  compareScans(baselineId: string | null | undefined, targetId: string): Observable<any> {
+    let params = new HttpParams().set('targetId', targetId);
+    if (baselineId) {
+      params = params.set('baselineId', baselineId);
+    }
+    return this.http.get<any>(`${this.baseUrl}/scans/compare`, { params });
+  }
+
+  // Batch Remediation Updates
+  batchUpdateRemediationStatus(ids: string[], status: string): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/remediation/batch-status`, {
+      ids,
+      remediationStatus: status
+    });
+  }
+
   // Development
   seedSampleServices(): Observable<any> {
     return this.http.post(`${this.baseUrl}/dev/seed`, {});
@@ -243,4 +264,4 @@ export class ApiService {
   seedSampleData(): Observable<any> {
     return this.http.post(`${this.baseUrl}/dev/seed`, {});
   }
-}
+}

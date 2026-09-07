@@ -623,6 +623,17 @@ If AI features are not working:
    - Check `SECURITY_INTEL_API_URL` is accessible from GitHub Actions
    - Use ngrok for local development: `ngrok http 8080`
 
+4. **Report Upload Fails with "Failed to save security findings":**
+   - This is likely due to MongoDB schema mismatch for `riskScore` field
+   - Run the migration script: `mongosh "mongodb+srv://admin:admin@cluster0.hs3mybp.mongodb.net/securityintel" --file scripts/migrate-risk-score.js`
+   - The migration converts existing Integer riskScore values to Double to match the updated schema
+
+5. **Timezone Issues (Times showing incorrect dates):**
+   - The platform uses IST (Asia/Kolkata) timezone by default
+   - Ensure the backend container has `TZ: Asia/Kolkata` environment variable set
+   - Verify `application.yml` has Jackson timezone configuration
+   - Restart the backend after timezone configuration changes
+
 ### Frontend Issues
 1. **CORS Errors:**
    - Backend controllers have `@CrossOrigin(origins = "*")` configured
@@ -631,6 +642,10 @@ If AI features are not working:
 2. **API Connection Issues:**
    - Check backend is accessible at `http://localhost:8080/api`
    - Verify no firewall blocking localhost connections
+
+3. **Docker Build Caching Issues:**
+   - If frontend changes aren't appearing, rebuild without cache: `docker-compose build --no-cache frontend`
+   - Use the provided rebuild script: `scripts/rebuild-frontend.bat` (Windows) or `scripts/rebuild-frontend.sh` (Linux/Mac)
 
 ### Scan Processing Issues
 1. **Report Parsing Fails:**
@@ -642,6 +657,18 @@ If AI features are not working:
    - Check the scanner report actually contains findings
    - Verify service name matches existing services
    - Review parser logs for specific errors
+
+### Remediation Status Update Issues
+1. **Status Update Fails:**
+   - Check the backend logs for detailed error messages
+   - Valid status transitions: NEW → OPEN → IN_PROGRESS → RESOLVED
+   - Invalid transitions will return 400 Bad Request
+   - Ensure the remediation item exists in the database
+
+2. **Status Not Updating After Resolving Findings:**
+   - Findings are not automatically marked RESOLVED when not detected in latest scan
+   - This requires explicit status update to prevent false positives
+   - Update remediation status manually via UI or API
 
 ---
 
@@ -671,7 +698,81 @@ For comprehensive testing, use the provided demo services and sample data to ver
 
 ---
 
-## 📈 16. Product Evolution
+## � 16. Deployment
+
+### Production Deployment Steps
+
+#### 1. MongoDB Migration
+Run the migration script to convert riskScore from Integer to Double:
+```bash
+mongosh "mongodb+srv://admin:admin@cluster0.hs3mybp.mongodb.net/securityintel" --file scripts/migrate-risk-score.js
+```
+
+Or use the provided script:
+```bash
+# Windows
+scripts\run-migration.bat
+
+# Linux/Mac
+chmod +x scripts/run-migration.sh
+./scripts/run-migration.sh
+```
+
+#### 2. Build Backend
+```bash
+cd backend
+mvn clean package -DskipTests
+```
+
+#### 3. Build Frontend
+```bash
+# Force rebuild without cache
+docker-compose build --no-cache frontend
+
+# Or use the script
+# Windows
+scripts\rebuild-frontend.bat
+
+# Linux/Mac
+chmod +x scripts/rebuild-frontend.sh
+./scripts/rebuild-frontend.sh
+```
+
+#### 4. Deploy to Server
+Use the deployment script or manually deploy:
+```bash
+# Use the comprehensive deployment script
+chmod +x scripts/deploy-fixes.sh
+./scripts/deploy-fixes.sh
+
+# Or manual deployment
+docker-compose up -d backend frontend
+```
+
+#### 5. Verify Deployment
+- Check backend logs for timezone configuration
+- Verify times are showing in IST timezone
+- Test report upload functionality
+- Test remediation status updates
+- Verify AI features if configured
+
+### Timezone Configuration
+The platform is configured to use IST (Asia/Kolkata) timezone:
+- Backend: `application.yml` - Jackson timezone configuration
+- MongoDB: `MongoConfig.java` - LocalDateTime converters use IST
+- Docker: `docker-compose.yml` - Backend container has `TZ: Asia/Kolkata`
+
+### Environment Variables for Production
+```bash
+MONGODB_URI=mongodb+srv://admin:admin@cluster0.hs3mybp.mongodb.net/securityintel
+SCAN_INGESTION_TOKEN=your-production-token
+GEMINI_API_KEY=your-production-gemini-key
+TZ=Asia/Kolkata
+```
+
+---
+
+## �📈 16. Product Evolution
 
 ### From Security Intelligence to Remediation Intelligence
 
