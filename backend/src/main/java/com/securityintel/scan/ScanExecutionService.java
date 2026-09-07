@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.securityintel.dto.ScanDiffDto;
@@ -128,6 +129,7 @@ public class ScanExecutionService {
             DeduplicationResult deduplicationResult = deduplicationEngine.processFindings(normalizedFindings);
 
             // Apply service context and prioritization
+            ensureServiceRegistration(serviceName, environment, repository);
             Optional<Service> serviceEntity = serviceRepository.findByServiceName(serviceName);
             for (SecurityFinding finding : deduplicationResult.getUniqueFindings()) {
                 PriorityResult priorityResult = prioritizationEngine.calculatePriority(finding, serviceEntity.orElse(null));
@@ -291,6 +293,12 @@ public class ScanExecutionService {
             ScanExecution baseline = (baselineId != null && !baselineId.isBlank()) ? getScanExecutionById(baselineId) : null;
             ScanExecution target = getScanExecutionById(targetId);
 
+            if (baseline != null && (!Objects.equals(target.getServiceName(), baseline.getServiceName())
+                    || target.getTool() != baseline.getTool()
+                    || target.getScanType() != baseline.getScanType())) {
+                throw new IllegalArgumentException("Baseline and target scans must use the same service, tool, and scan type");
+            }
+
             List<SecurityFinding> targetFindings = securityFindingRepository.findByScanExecutionId(targetId);
             List<SecurityFinding> baselineFindings = baseline != null ?
                 securityFindingRepository.findByScanExecutionId(baseline.getId()) : new ArrayList<>();
@@ -339,6 +347,36 @@ public class ScanExecutionService {
         } catch (Exception e) {
             throw new DatabaseException("Failed to compare scans: " + e.getMessage(), e);
         }
+    }
+
+    private void ensureServiceRegistration(String serviceName, Environment environment, String repository) {
+        if (serviceName == null || serviceName.isBlank()) {
+            return;
+        }
+
+        serviceRepository.findByServiceName(serviceName).ifPresentOrElse(service -> {
+            boolean changed = false;
+            if (repository != null && !repository.isBlank() && !repository.equals(service.getRepository())) {
+                service.setRepository(repository);
+                changed = true;
+            }
+            if (environment != null && environment != service.getEnvironment()) {
+                service.setEnvironment(environment);
+                changed = true;
+            }
+            if (changed) {
+                service.setUpdatedAt(LocalDateTime.now());
+                serviceRepository.save(service);
+            }
+        }, () -> {
+            Service service = new Service();
+            service.setServiceName(serviceName);
+            service.setEnvironment(environment != null ? environment : Environment.PRODUCTION);
+            service.setRepository(repository);
+            service.setTeamName("CI/CD");
+            service.setOwner("GitHub Actions");
+            serviceRepository.save(service);
+        });
     }
 
     public ScanDiffDto getScanDiff(String targetId) {

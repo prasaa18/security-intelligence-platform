@@ -68,7 +68,7 @@
       </div>
 
       <div class="diff-kpi-tile kpi-resolved" [class.active-kpi]="activeTab==='resolved'" (click)="activeTab='resolved'">
-        <div class="diff-kpi-badge">-{{ diffData.resolvedCount }}</div>
+        <div class="diff-kpi-badge">{{ diffData.resolvedCount }}</div>
         <div class="diff-kpi-title">✅ Remediated & Fixed</div>
         <div class="diff-kpi-desc">Vulnerabilities cleared since baseline scan</div>
       </div>
@@ -97,7 +97,7 @@
 
         <div class="tab-switcher">
           <button class="tab-btn" [class.active]="activeTab==='new'" (click)="activeTab='new'">New (+{{ diffData.newCount }})</button>
-          <button class="tab-btn" [class.active]="activeTab==='resolved'" (click)="activeTab='resolved'">Resolved (-{{ diffData.resolvedCount }})</button>
+          <button class="tab-btn" [class.active]="activeTab==='resolved'" (click)="activeTab='resolved'">Resolved ({{ diffData.resolvedCount }})</button>
           <button class="tab-btn" [class.active]="activeTab==='persistent'" (click)="activeTab='persistent'">Persistent (={{ diffData.persistentCount }})</button>
         </div>
       </div>
