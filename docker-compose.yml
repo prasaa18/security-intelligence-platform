@@ -28,7 +28,7 @@ services:
     container_name: security-intel-backend
     restart: unless-stopped
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: docker,secure
       SPRING_DATA_MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:?MONGO_INITDB_ROOT_USERNAME must be set}:${MONGO_INITDB_ROOT_PASSWORD:?MONGO_INITDB_ROOT_PASSWORD must be set}@mongodb:27017/securityintel?authSource=admin
       SERVER_PORT: 8080
       LOGGING_LEVEL_ROOT: INFO
@@ -37,6 +37,10 @@ services:
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.6-flash}
       GEMINI_ENDPOINT: ${GEMINI_ENDPOINT:-https://generativelanguage.googleapis.com/v1beta/interactions}
       SCAN_INGESTION_TOKEN: ${SCAN_INGESTION_TOKEN:?SCAN_INGESTION_TOKEN must be set}
+      APP_ADMIN_USERNAME: ${APP_ADMIN_USERNAME:?APP_ADMIN_USERNAME must be set}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:?APP_ADMIN_PASSWORD must be set}
+      APP_VIEWER_USERNAME: ${APP_VIEWER_USERNAME:?APP_VIEWER_USERNAME must be set}
+      APP_VIEWER_PASSWORD: ${APP_VIEWER_PASSWORD:?APP_VIEWER_PASSWORD must be set}
       TZ: Asia/Kolkata
     depends_on:
       mongodb:
@@ -44,7 +48,7 @@ services:
     networks:
       - security-intel-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/dashboard/summary"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/integrations/scans/github-actions/health"]
       interval: 30s
       timeout: 10s
       retries: 5

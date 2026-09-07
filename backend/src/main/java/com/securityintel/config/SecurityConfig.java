@@ -10,6 +10,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -33,17 +35,23 @@ public class SecurityConfig {
     }
 
     @Bean
+    PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
     InMemoryUserDetailsManager userDetailsService(
             @Value("${security.users.admin.username}") String adminUsername,
             @Value("${security.users.admin.password}") String adminPassword,
             @Value("${security.users.viewer.username}") String viewerUsername,
-            @Value("${security.users.viewer.password}") String viewerPassword) {
+            @Value("${security.users.viewer.password}") String viewerPassword,
+            PasswordEncoder passwordEncoder) {
         UserDetails admin = User.withUsername(adminUsername)
-            .password(adminPassword)
+            .password(passwordEncoder.encode(adminPassword))
             .roles("ADMIN", "SECURITY_LEAD")
             .build();
         UserDetails viewer = User.withUsername(viewerUsername)
-            .password(viewerPassword)
+            .password(passwordEncoder.encode(viewerPassword))
             .roles("VIEWER")
             .build();
         return new InMemoryUserDetailsManager(admin, viewer);

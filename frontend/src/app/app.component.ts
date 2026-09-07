@@ -1,9 +1,10 @@
 import { Component, ViewChild } from '@angular/core';
-import { RouterOutlet, RouterModule } from '@angular/router';
+import { Router, RouterOutlet, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { CommandPaletteComponent } from './components/command-palette/command-palette.component';
 import { ToastContainerComponent } from './components/toast-container/toast-container.component';
 import { ThemeService } from './services/theme.service';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -23,7 +24,11 @@ export class AppComponent {
 
   @ViewChild('commandPalette') commandPalette!: CommandPaletteComponent;
 
-  constructor(public themeService: ThemeService) {}
+  constructor(public themeService: ThemeService, public authService: AuthService, private router: Router) {}
+
+  isLoginRoute(): boolean {
+    return this.router.url.startsWith('/login');
+  }
 
   openCommandPalette() {
     if (this.commandPalette) {
@@ -33,5 +38,9 @@ export class AppComponent {
 
   toggleTheme() {
     this.themeService.toggleTheme();
+  }
+
+  logout() {
+    this.authService.logout();
   }
 }

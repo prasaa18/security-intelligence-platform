@@ -118,6 +118,27 @@
   flex-direction: column;
   gap: 8px;
 }
+.auth-session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: rgba(255,255,255,.78);
+  font-size: 11px;
+}
+.auth-session-user {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.auth-logout-btn {
+  border: 0;
+  background: transparent;
+  color: #7dd3fc;
+  font-size: 10px;
+  cursor: pointer;
+}
+.auth-logout-btn:hover { color: #fff; }
 .theme-switch-row {
   display: flex;
 }

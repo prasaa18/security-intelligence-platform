@@ -1,4 +1,4 @@
-<div class="app-shell">
+<div *ngIf="!isLoginRoute()" class="app-shell">
   <!-- Sidebar Navigation -->
   <nav class="sidebar" aria-label="Primary navigation">
     <div class="sidebar-brand">
@@ -87,6 +87,10 @@
     </ul>
 
     <div class="sidebar-footer">
+      <div *ngIf="authService.isAuthenticated()" class="auth-session-row">
+        <span class="auth-session-user">{{ authService.getUsername() }}</span>
+        <button class="auth-logout-btn" (click)="logout()" title="Clear secure session">Sign out</button>
+      </div>
       <div class="theme-switch-row">
         <button class="theme-toggle-btn" (click)="toggleTheme()" [title]="'Switch to ' + (themeService.isDark() ? 'Light' : 'Dark') + ' Mode'">
           <span>{{ themeService.isDark() ? '☀️ Light Mode' : '🌙 Cyber Dark' }}</span>
@@ -102,6 +106,8 @@
   </main>
 </div>
 
+<router-outlet *ngIf="isLoginRoute()"></router-outlet>
+
 <!-- Global Components -->
-<app-command-palette #commandPalette></app-command-palette>
-<app-toast-container></app-toast-container>
+<app-command-palette *ngIf="!isLoginRoute()" #commandPalette></app-command-palette>
+<app-toast-container *ngIf="!isLoginRoute()"></app-toast-container>

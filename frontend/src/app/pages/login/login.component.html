@@ -1,0 +1,23 @@
+<main class="login-page">
+  <section class="login-panel" aria-labelledby="login-title">
+    <div class="login-mark">🛡</div>
+    <p class="login-eyebrow">SECURITY INTELLIGENCE PLATFORM</p>
+    <h1 id="login-title">Sign in to your command center</h1>
+    <p class="login-copy">Use the credentials configured for the secure deployment profile.</p>
+
+    <form (ngSubmit)="submit()" #loginForm="ngForm">
+      <label for="username">Username</label>
+      <input id="username" name="username" [(ngModel)]="username" autocomplete="username" required />
+
+      <label for="password">Password</label>
+      <input id="password" name="password" [(ngModel)]="password" type="password" autocomplete="current-password" required />
+
+      <p *ngIf="error" class="login-error" role="alert">{{ error }}</p>
+      <button type="submit" [disabled]="submitting || loginForm.invalid">
+        {{ submitting ? 'Verifying access…' : 'Enter platform' }}
+      </button>
+    </form>
+
+    <p class="login-note">Local development without the secure profile does not require a login.</p>
+  </section>
+</main>
