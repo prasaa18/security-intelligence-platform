@@ -38,9 +38,9 @@ services:
       GEMINI_ENDPOINT: ${GEMINI_ENDPOINT:-https://generativelanguage.googleapis.com/v1beta/interactions}
       SCAN_INGESTION_TOKEN: ${SCAN_INGESTION_TOKEN:-change-me-please}
       APP_ADMIN_USERNAME: ${APP_ADMIN_USERNAME:-admin}
-      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:-ChangeMeStrongAdmin123!}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:-StrongPass123!}
       APP_VIEWER_USERNAME: ${APP_VIEWER_USERNAME:-viewer}
-      APP_VIEWER_PASSWORD: ${APP_VIEWER_PASSWORD:-ChangeMeStrongViewer123!}
+      APP_VIEWER_PASSWORD: ${APP_VIEWER_PASSWORD:-StrongPass123!}
       TZ: Asia/Kolkata
     depends_on:
       mongodb:

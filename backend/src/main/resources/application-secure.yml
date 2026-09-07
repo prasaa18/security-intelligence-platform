@@ -1,8 +1,8 @@
 security:
   users:
     admin:
-      username: ${APP_ADMIN_USERNAME:?APP_ADMIN_USERNAME must be set}
-      password: ${APP_ADMIN_PASSWORD:?APP_ADMIN_PASSWORD must be set}
+      username: ${APP_ADMIN_USERNAME:admin}
+      password: ${APP_ADMIN_PASSWORD:StrongPass123!}
     viewer:
-      username: ${APP_VIEWER_USERNAME:?APP_VIEWER_USERNAME must be set}
-      password: ${APP_VIEWER_PASSWORD:?APP_VIEWER_PASSWORD must be set}
+      username: ${APP_VIEWER_USERNAME:viewer}
+      password: ${APP_VIEWER_PASSWORD:StrongPass123!}

@@ -1,8 +1,10 @@
 spring:
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/securityintel}
+      uri: ${MONGODB_URI:mongodb://admin:StrongPass123!@localhost:27017/securityintel?authSource=admin}
+      database: ${MONGODB_DATABASE:securityintel}
+      auto-index-creation: false
 
 scan:
   ingestion:
-    token: ${SCAN_INGESTION_TOKEN:dev-only-replace-me}
+    token: ${SCAN_INGESTION_TOKEN:change-me-please}

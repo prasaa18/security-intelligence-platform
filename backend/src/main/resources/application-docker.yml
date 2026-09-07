@@ -3,7 +3,7 @@ spring:
     mongodb:
       uri: ${MONGODB_URI:}
       database: securityintel
-      auto-index-creation: true
+      auto-index-creation: false
 
 server:
   forward-headers-strategy: framework
