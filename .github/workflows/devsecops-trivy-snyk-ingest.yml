@@ -24,6 +24,9 @@ on:
       SECURITY_PLATFORM_URL:
         description: 'Base URL of your deployed Security Intelligence Platform (e.g. https://sec-intel.myorg.com)'
         required: true
+      SCAN_INGESTION_TOKEN:
+        description: 'Bearer token configured as SCAN_INGESTION_TOKEN on the platform'
+        required: true
       SNYK_TOKEN:
         description: 'Snyk API authentication token'
         required: false
@@ -53,13 +56,14 @@ jobs:
       - name: Send Trivy Report to Security Intelligence Platform
         if: always()
         run: |
-          PLATFORM_URL="${{ secrets.SECURITY_PLATFORM_URL || 'http://localhost:8080' }}"
+          PLATFORM_URL="${{ secrets.SECURITY_PLATFORM_URL }}"
           SVC_NAME="${{ inputs.service_name || github.event.repository.name }}"
           ENV_NAME="${{ inputs.environment || 'PRODUCTION' }}"
           
           echo "Ingesting Trivy scan for service: $SVC_NAME ($ENV_NAME) -> $PLATFORM_URL"
           
-          curl -s -X POST "$PLATFORM_URL/api/reports/upload" \
+          curl -s -X POST "$PLATFORM_URL/api/integrations/scans/github-actions" \
+            -H "Authorization: Bearer ${{ secrets.SCAN_INGESTION_TOKEN }}" \
             -F "file=@trivy-report.json" \
             -F "serviceName=$SVC_NAME" \
             -F "environment=$ENV_NAME" \
@@ -92,14 +96,15 @@ jobs:
       - name: Send Snyk Report to Security Intelligence Platform
         if: always()
         run: |
-          PLATFORM_URL="${{ secrets.SECURITY_PLATFORM_URL || 'http://localhost:8080' }}"
+          PLATFORM_URL="${{ secrets.SECURITY_PLATFORM_URL }}"
           SVC_NAME="${{ inputs.service_name || github.event.repository.name }}"
           ENV_NAME="${{ inputs.environment || 'PRODUCTION' }}"
           
           echo "Ingesting Snyk scan for service: $SVC_NAME ($ENV_NAME) -> $PLATFORM_URL"
           
           if [ -s snyk-report.json ]; then
-            curl -s -X POST "$PLATFORM_URL/api/reports/upload" \
+            curl -s -X POST "$PLATFORM_URL/api/integrations/scans/github-actions" \
+              -H "Authorization: Bearer ${{ secrets.SCAN_INGESTION_TOKEN }}" \
               -F "file=@snyk-report.json" \
               -F "serviceName=$SVC_NAME" \
               -F "environment=$ENV_NAME" \
