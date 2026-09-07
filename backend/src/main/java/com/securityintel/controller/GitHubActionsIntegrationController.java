@@ -46,6 +46,7 @@ public class GitHubActionsIntegrationController {
             @RequestParam(value = "metadataJson", required = false) String metadataJson,
             @RequestParam(value = "serviceName", required = false) String serviceName,
             @RequestParam(value = "repository", required = false) String repository,
+            @RequestParam(value = "organizationUrl", required = false) String organizationUrl,
             @RequestParam(value = "branch", required = false) String branch,
             @RequestParam(value = "commitId", required = false) String commitId,
             @RequestParam(value = "commit", required = false) String commit,
@@ -101,6 +102,7 @@ public class GitHubActionsIntegrationController {
         // Parse metadata if provided
         String effectiveServiceName = serviceName;
         String effectiveRepository = repository;
+        String effectiveOrganizationUrl = organizationUrl;
         String effectiveBranch = branch;
         String effectiveCommitId = commitId != null ? commitId : commit;
         String effectiveWorkflowRunId = workflowRunId;
@@ -120,6 +122,9 @@ public class GitHubActionsIntegrationController {
                 }
                 if ((effectiveRepository == null || effectiveRepository.isBlank()) && metaNode.has("repository")) {
                     effectiveRepository = metaNode.get("repository").asText();
+                }
+                if ((effectiveOrganizationUrl == null || effectiveOrganizationUrl.isBlank()) && metaNode.has("organizationUrl")) {
+                    effectiveOrganizationUrl = metaNode.get("organizationUrl").asText();
                 }
                 if ((effectiveBranch == null || effectiveBranch.isBlank()) && metaNode.has("branch")) {
                     effectiveBranch = metaNode.get("branch").asText();
@@ -182,6 +187,7 @@ public class GitHubActionsIntegrationController {
                 environmentEnum,
                 TriggerType.GITHUB_ACTIONS,
                 effectiveRepository,
+                effectiveOrganizationUrl,
                 effectiveBranch,
                 effectiveCommitId,
                 effectiveWorkflowRunId

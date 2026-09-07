@@ -83,6 +83,7 @@ export interface ServiceModel {
   internetExposed?: boolean;
   dataSensitivity?: string;
   repository?: string;
+  organizationUrl?: string;
   deploymentPlatform?: string;
   owner?: string;
   createdAt: string;

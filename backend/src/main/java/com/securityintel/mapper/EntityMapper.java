@@ -24,6 +24,7 @@ public class EntityMapper {
         dto.setInternetExposed(service.isInternetExposed());
         dto.setDataSensitivity(service.getDataSensitivity());
         dto.setRepository(service.getRepository());
+        dto.setOrganizationUrl(service.getOrganizationUrl());
         dto.setDeploymentPlatform(service.getDeploymentPlatform());
         dto.setOwner(service.getOwner());
         dto.setCreatedAt(service.getCreatedAt());
@@ -43,6 +44,7 @@ public class EntityMapper {
         service.setInternetExposed(dto.isInternetExposed());
         service.setDataSensitivity(dto.getDataSensitivity());
         service.setRepository(dto.getRepository());
+        service.setOrganizationUrl(dto.getOrganizationUrl());
         service.setDeploymentPlatform(dto.getDeploymentPlatform());
         service.setOwner(dto.getOwner());
         

@@ -74,7 +74,7 @@ public class ScanExecutionService {
     }
 
     public ScanExecution processScanExecution(MultipartFile file, String serviceName, Environment environment,
-                                            TriggerType triggerType, String repository, String branch,
+                                            TriggerType triggerType, String repository, String organizationUrl, String branch,
                                             String commitId, String workflowRunId) 
             throws SecurityReportParseException, IOException {
         
@@ -129,7 +129,7 @@ public class ScanExecutionService {
             DeduplicationResult deduplicationResult = deduplicationEngine.processFindings(normalizedFindings);
 
             // Apply service context and prioritization
-            ensureServiceRegistration(serviceName, environment, repository);
+            ensureServiceRegistration(serviceName, environment, repository, organizationUrl);
             Optional<Service> serviceEntity = serviceRepository.findByServiceName(serviceName);
             for (SecurityFinding finding : deduplicationResult.getUniqueFindings()) {
                 PriorityResult priorityResult = prioritizationEngine.calculatePriority(finding, serviceEntity.orElse(null));
@@ -349,7 +349,7 @@ public class ScanExecutionService {
         }
     }
 
-    private void ensureServiceRegistration(String serviceName, Environment environment, String repository) {
+    private void ensureServiceRegistration(String serviceName, Environment environment, String repository, String organizationUrl) {
         if (serviceName == null || serviceName.isBlank()) {
             return;
         }
@@ -358,6 +358,10 @@ public class ScanExecutionService {
             boolean changed = false;
             if (repository != null && !repository.isBlank() && !repository.equals(service.getRepository())) {
                 service.setRepository(repository);
+                changed = true;
+            }
+            if (organizationUrl != null && !organizationUrl.isBlank() && !organizationUrl.equals(service.getOrganizationUrl())) {
+                service.setOrganizationUrl(organizationUrl);
                 changed = true;
             }
             if (environment != null && environment != service.getEnvironment()) {
@@ -373,6 +377,7 @@ public class ScanExecutionService {
             service.setServiceName(serviceName);
             service.setEnvironment(environment != null ? environment : Environment.PRODUCTION);
             service.setRepository(repository);
+            service.setOrganizationUrl(organizationUrl);
             service.setTeamName("CI/CD");
             service.setOwner("GitHub Actions");
             serviceRepository.save(service);

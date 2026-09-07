@@ -23,6 +23,7 @@ public class Service {
     private boolean internetExposed;
     private DataSensitivity dataSensitivity;
     private String repository;
+    private String organizationUrl;
     private String deploymentPlatform;
     private String owner;
     
@@ -123,6 +124,14 @@ public class Service {
 
     public void setRepository(String repository) {
         this.repository = repository;
+    }
+
+    public String getOrganizationUrl() {
+        return organizationUrl;
+    }
+
+    public void setOrganizationUrl(String organizationUrl) {
+        this.organizationUrl = organizationUrl;
     }
 
     public String getDeploymentPlatform() {

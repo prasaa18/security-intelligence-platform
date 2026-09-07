@@ -82,6 +82,7 @@ public class ServiceManagementService {
             existingService.setInternetExposed(serviceDto.isInternetExposed());
             existingService.setDataSensitivity(serviceDto.getDataSensitivity());
             existingService.setRepository(serviceDto.getRepository());
+            existingService.setOrganizationUrl(serviceDto.getOrganizationUrl());
             existingService.setDeploymentPlatform(serviceDto.getDeploymentPlatform());
             existingService.setOwner(serviceDto.getOwner());
             existingService.setUpdatedAt(LocalDateTime.now());

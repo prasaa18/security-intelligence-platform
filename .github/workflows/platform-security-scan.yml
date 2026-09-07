@@ -16,23 +16,120 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  trivy:
-    name: Trivy - ${{ matrix.service }}
+  repository-scan:
+    name: Repository dependencies, misconfiguration and secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan repository with Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: json
+          output: trivy-repository.json
+          scanners: vuln,misconfig,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+
+      - name: Ingest repository report
+        env:
+          PLATFORM_URL: ${{ secrets.SECURITY_INTEL_API_URL }}
+          INGESTION_TOKEN: ${{ secrets.SCAN_INGESTION_TOKEN }}
+        run: |
+          set -euo pipefail
+          platform_url="${PLATFORM_URL%/}"
+          platform_url="${platform_url%/api}"
+
+          curl --fail-with-body --silent --show-error \
+            -X POST "$platform_url/api/integrations/scans/github-actions" \
+            -H "Authorization: Bearer $INGESTION_TOKEN" \
+            -F "file=@trivy-repository.json" \
+            -F "serviceName=security-intelligence-platform" \
+            -F "repository=https://github.com/${{ github.repository }}" \
+            -F "organizationUrl=https://github.com/${{ github.repository_owner }}" \
+            -F "branch=${{ github.ref_name }}" \
+            -F "commitId=${{ github.sha }}" \
+            -F "workflowRunId=${{ github.run_id }}" \
+            -F "environment=PRODUCTION"
+
+      - name: Upload repository report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-repository-report
+          path: trivy-repository.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  container-scan:
+    name: Container scan - ${{ matrix.name }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - service: security-intelligence-backend
-            path: backend
-          - service: security-intelligence-frontend
-            path: frontend
-          - service: demo-auth-service
-            path: demo-services/auth-service
-          - service: demo-order-service
-            path: demo-services/order-service
-          - service: demo-payment-service
-            path: demo-services/payment-service
+          - name: backend
+            service: security-intelligence-platform-backend
+            image: securityintel/backend:ci
+            context: backend
+            dockerfile: backend/Dockerfile
+          - name: frontend
+            service: security-intelligence-platform-frontend
+            image: securityintel/frontend:ci
+            context: .
+            dockerfile: frontend/Dockerfile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build container image
+        run: docker build --file "${{ matrix.dockerfile }}" --tag "${{ matrix.image }}" "${{ matrix.context }}"
+
+      - name: Scan container image with Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ matrix.image }}
+          format: json
+          output: trivy-${{ matrix.name }}.json
+          scanners: vuln,misconfig,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+
+      - name: Ingest container report
+        env:
+          PLATFORM_URL: ${{ secrets.SECURITY_INTEL_API_URL }}
+          INGESTION_TOKEN: ${{ secrets.SCAN_INGESTION_TOKEN }}
+          SERVICE_NAME: ${{ matrix.service }}
+        run: |
+          set -euo pipefail
+          platform_url="${PLATFORM_URL%/}"
+          platform_url="${platform_url%/api}"
+
+          curl --fail-with-body --silent --show-error \
+            -X POST "$platform_url/api/integrations/scans/github-actions" \
+            -H "Authorization: Bearer $INGESTION_TOKEN" \
+            -F "file=@trivy-${{ matrix.name }}.json" \
+            -F "serviceName=$SERVICE_NAME" \
+            -F "repository=https://github.com/${{ github.repository }}" \
+            -F "organizationUrl=https://github.com/${{ github.repository_owner }}" \
+            -F "branch=${{ github.ref_name }}" \
+            -F "commitId=${{ github.sha }}" \
+            -F "workflowRunId=${{ github.run_id }}" \
+            -F "environment=PRODUCTION"
+
+      - name: Upload container report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-${{ matrix.name }}-report
+          path: trivy-${{ matrix.name }}.json
+          if-no-files-found: warn
+          retention-days: 30
 
     steps:
       - name: Checkout
